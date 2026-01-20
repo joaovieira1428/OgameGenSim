@@ -1,0 +1,88 @@
+# .gitignore file created for free with Tower (https://www.git-tower.com/)
+# For suggestions or improvements please contact us using support@git-tower.com
+# Generated on 2026-01-20
+# Includes: csharp, vscode, dotnet
+
+### Universal ###
+# Common files that should be ignored in all projects
+
+# Logs
+*.log
+# Temporary files
+*.tmp
+*~
+
+*.bak
+# Environment files (containing secrets, API keys, credentials)
+.env
+*.env
+.env.*
+
+# Local configuration that shouldn't be shared
+*.local
+
+### Csharp ###
+# csharp specific files
+
+bin/
+obj/
+*.user
+*.suo
+
+### Vscode ###
+# Visual Studio Code editor settings and workspace files
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+.history/
+*.vsix
+.ionide
+
+.vs/
+*.code-workspace
+.vscode-test
+.vscodeignore
+.vscode/chrome
+
+.vscode-server/
+.vscode/sftp.json
+.vscode/tags
+.devcontainer/
+
+### Dotnet ###
+# .NET build outputs and development files
+
+bin/
+obj/
+*.user
+*.userosscache
+*.sln.docstates
+
+.vs/
+*_i.c
+*_p.c
+*.ncb
+*.suo
+
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.ilk
+
+*.log
+*.lib
+*.sbr
+*.sdf
+packages/
+
+TestResults/
+[Bb]in/
+[Dd]ebug/
+[Rr]elease/
