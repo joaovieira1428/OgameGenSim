@@ -20,7 +20,7 @@ public static class RapidFire
     public static readonly int ESPIONAGE_PROBE = 210;
     public static readonly int SOLAR_SATELLITE = 212;
     public static readonly int CRAWLER = 217;
-    public static readonly int RAIDER = 218;
+    public static readonly int REAPER = 218;
     public static readonly int PATHFINDER = 219;
 
 
@@ -85,8 +85,79 @@ public static class RapidFire
         { new Key(BOMBER, LIGHT_LASER),  0.9},
         { new Key(BOMBER, BATTLECRUISER),  0.5},
 
-        
+        { new Key(DESTROYER, ESPIONAGE_PROBE),  0.8},
+        { new Key(DESTROYER, SOLAR_SATELLITE),  0.8},
+        { new Key(DESTROYER, CRAWLER),  0.8},
+        { new Key(DESTROYER, LIGHT_LASER),  0.9},
+        { new Key(DESTROYER, BATTLECRUISER),  0.5},
 
+        {new Key(DEATHSTAR, ESPIONAGE_PROBE), 0.996},
+        {new Key(DEATHSTAR, SOLAR_SATELLITE), 0.996},
+        {new Key(DEATHSTAR, LIGHT_FIGHTER), 0.995},
+        {new Key(DEATHSTAR, HEAVY_FIGHTER), 0.99},
+        {new Key(DEATHSTAR, CRUISER), 0.9697},
+        {new Key(DEATHSTAR, BATTLESHIP), 0.9667},
+        {new Key(DEATHSTAR, BOMBER), 0.96},
+        {new Key(DEATHSTAR, DESTROYER), 0.8},
+        {new Key(DEATHSTAR, SMALL_CARGO), 0.996},
+        {new Key(DEATHSTAR, LARGE_CARGO), 0.996},
+        {new Key(DEATHSTAR, COLONY_SHIP), 0.996},
+        {new Key(DEATHSTAR, RECYCLER), 0.996},
+        {new Key(DEATHSTAR, ESPIONAGE_PROBE), 0.996},
+        {new Key(DEATHSTAR, ROCKET_LAUNCHER), 0.995},
+        {new Key(DEATHSTAR, LIGHT_LASER), 0.995},
+        {new Key(DEATHSTAR, HEAVY_LASER), 0.99},
+        {new Key(DEATHSTAR, ION_CANNON), 0.99},
+        {new Key(DEATHSTAR, GAUSS_CANNON), 0.98},
+        {new Key(DEATHSTAR, BATTLECRUISER), 0.9334},
+        {new Key(DEATHSTAR, PATHFINDER), 0.9667},
+        {new Key(DEATHSTAR, REAPER), 0.90},
+        {new Key(DEATHSTAR, CRAWLER), 0.996},
+
+        { new Key(DESTROYER, ESPIONAGE_PROBE),  0.8},
+        { new Key(DESTROYER, SOLAR_SATELLITE),  0.8},
+        { new Key(DESTROYER, CRAWLER),  0.8},
+        { new Key(DESTROYER, CRUISER),  0.6667},
+        { new Key(DESTROYER, LIGHT_FIGHTER),  0.6667},
+        { new Key(DESTROYER, HEAVY_FIGHTER),  0.5},
+
+        { new Key(DESTROYER, ESPIONAGE_PROBE),  0.8},
+        { new Key(DESTROYER, SOLAR_SATELLITE),  0.8},
+        { new Key(DESTROYER, CRAWLER),  0.8},
+        { new Key(DESTROYER, BATTLESHIP),  0.8572},
+        { new Key(DESTROYER, BOMBER),  0.75},
+        { new Key(DESTROYER, DESTROYER),  0.6667},
+
+        { new Key(ION_CANNON, REAPER),  0.5},
     };
+
+    public static bool IsRapidFire(int attackerUnit, int defenderUnit)
+    {
+        if(rapidFireMapping.TryGetValue(new Key(attackerUnit, defenderUnit), out double rapidFireValue))
+        {
+            return RollSuccess(rapidFireValue);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Rolls a success based on the rapid fire value.
+    /// Done with AI, gona keep it as a pet
+    /// 
+    /// PS: Changed some things though
+    /// </summary>
+    /// <param name="rapidFireValue"></param>
+    /// <returns></returns>
+    public static bool RollSuccess(double rapidFireValue)
+    {
+        if (double.IsNaN(rapidFireValue) || double.IsInfinity(rapidFireValue))
+            return false;
+
+        if (rapidFireValue < 0.0 || rapidFireValue > 1.0)
+            return false;
+
+        return Random.Shared.NextDouble() < rapidFireValue;
+    }
 
 }
