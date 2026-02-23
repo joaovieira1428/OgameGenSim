@@ -148,7 +148,7 @@ public static class RapidFire
     /// PS: Changed some things though
     /// </summary>
     /// <param name="rapidFireValue"></param>
-    /// <returns></returns>
+    /// <returns>True if is successfull and False if is unsuccessful</returns>
     public static bool RollSuccess(double rapidFireValue)
     {
         if (double.IsNaN(rapidFireValue) || double.IsInfinity(rapidFireValue))

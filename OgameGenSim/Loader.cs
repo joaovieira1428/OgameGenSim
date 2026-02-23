@@ -30,8 +30,19 @@ public class Loader(HttpClient client)
             };
 
         }
+        
+        //var myFile = File.ReadAllText(@"file_here");
+
+        //var data = JsonObject.Parse(myFile);
+        
         var jsonString = await espionageResult.Content.ReadAsStringAsync();
-        var espionageReport = JsonSerializer.Deserialize<EspionageReport>(jsonString);
+
+        var jsonObject = JsonNode.Parse(jsonString);
+
+        var espionageReport = jsonObject["RESULT_DATA"]["details"]["combatInformation"].Deserialize<CombatInformation>(new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        });
 
         if(espionageReport == null)
         {
@@ -46,11 +57,14 @@ public class Loader(HttpClient client)
         {
             StatusCode = espionageResult.StatusCode,
             Message = "Success",
-            CombatInformation = espionageReport.ResultData.Details.CombatInformation
+            CombatInformation = espionageReport
         };
 
         return  espionageReportResult;
     }
+
+    public 
+
 }
 
 public class EspionageReportResult
@@ -60,40 +74,18 @@ public class EspionageReportResult
     public CombatInformation CombatInformation { get; set; }
 }
 
-public class EspionageReport
-{
-    [JsonPropertyName("RESULT_DATA")]
-    public EspionageReportResulltData ResultData { get; set; }
-}
-
-public class EspionageReportResulltData
-{
-    [JsonPropertyName("details")]
-    public EspionageReportDetails Details { get; set; }
-}
-
-public class EspionageReportDetails
-{
-    [JsonPropertyName("combatInformation")]
-    public CombatInformation CombatInformation { get; set; }
-}
-
 public class CombatInformation
 {
-    //TODO: Change Type to something usefull
     [JsonPropertyName("coords")]
     public string Coordinates { get; set; } 
-    [JsonPropertyName("characterClassId")]
-    public PlayerClass CharacterClassId { get; set; }
-    [JsonPropertyName("allianceClassId")]
-    public AllianceClass AllianceClassId { get; set; }
-    [JsonPropertyName("researches")]
+    public int CharacterClassId { get; set; }
+    public int AllianceClassId { get; set; }
+
     public Researches Researches { get; set; }
-    [JsonPropertyName("bonuses")]
+    public Dictionary<int, UnitStats> Defenses { get; set; }
+    public Dictionary<int, ShipStats> Ships { get; set; }
+    public Dictionary<int, MissileStats> Missiles { get; set; }
     public Bonuses Bonuses { get; set; }
-    [JsonPropertyName("characterClassBooster")]
-    public CharacterClassBooster CharacterClassBooster { get; set; }
-    [JsonPropertyName("resources")]
     public Resources Resources { get; set; }
 }
 
@@ -133,6 +125,7 @@ public class Bonuses
     public int LifeformProtection { get; set; }
     public int SpaceDockExtender { get; set; }
     public DenCapacity DenCapacity { get; set; }
+    public CharacterClassBooster CharacterClassBooster { get; set; }
 }
 
 public class DenCapacity
@@ -144,9 +137,12 @@ public class DenCapacity
 
 public class CharacterClassBooster
 {
-    public PlayerClass Collector { get; set; }
-    public PlayerClass General { get; set; }
-    public PlayerClass Discoverer { get; set; }
+    [JsonPropertyName("1")]
+    public int Collector { get; set; }
+    [JsonPropertyName("2")]
+    public int General { get; set; }
+    [JsonPropertyName("3")]
+    public int Discoverer { get; set; }
 }
 
 public class Resources
@@ -158,4 +154,24 @@ public class Resources
     public int Food { get; set; }
 }
 
-//TODO: Do Batle Units
+public class UnitStats
+{
+    public int Amount { get; set; }
+    public double Weapon { get; set; }
+    public double Shield { get; set; }
+    public double Armor { get; set; }
+}
+
+
+public class ShipStats : UnitStats
+{
+    public double Cargo { get; set; }
+    public double Speed { get; set; }
+    public double Fuel { get; set; }
+}
+
+
+public class MissileStats
+{
+    public int Amount { get; set; }
+}
