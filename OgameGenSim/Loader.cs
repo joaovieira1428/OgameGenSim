@@ -3,6 +3,8 @@ using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using OgameSimulatorPack;
+using OgameSimulatorPack.SimUtilities;
 using SimulatorPack;
 
 namespace OgameGenSim;
@@ -63,7 +65,52 @@ public class Loader(HttpClient client)
         return  espionageReportResult;
     }
 
-    public 
+    public SimCombatInformation GetCleanData(CombatInformation combatInformation)
+    {
+        SimCombatInformation cleanData = InsertCombatInfo(combatInformation);
+
+        var ships = new List<CombatUnit>();
+
+        foreach(var ship in combatInformation.Ships)
+        {
+            var newShip = new CombatUnit();
+
+            ///TODO: Add Research Values to DefaultValues, It needs an util thingy to calculate the weapon, shield and hull values based on the researches of the player.
+            if(UnitDefaultValues.DefaultValues.TryGetValue(ship.Key, out var defaultValue))
+            {
+                newShip.Weapon = (float)(defaultValue.Weapon * ship.Value.Weapon);
+                newShip.Shield = (float)(defaultValue.Shield * ship.Value.Shield);
+                newShip.Hull = (float)(defaultValue.Hull * ship.Value.Armor);
+
+                ships.Add(newShip);
+            }
+            else
+            {      
+                Console.WriteLine($"Warning: Unit ID {ship.Key} not found in default values. Skipping.");
+                continue; 
+            }
+        }
+
+        return cleanData;
+    }
+
+    private static SimCombatInformation InsertCombatInfo(CombatInformation combatInformation)
+    {
+        return new SimCombatInformation()
+        {
+            Defender = new Defender()
+            {
+                AllianceClass = (AllianceClass)combatInformation.AllianceClassId,
+                PlayerClass = (PlayerClass)combatInformation.CharacterClassId,
+                Armor = combatInformation.Researches.ArmourTechnology,
+                Shield = combatInformation.Researches.ShieldingTechnology,
+                Weapon = combatInformation.Researches.WeaponsTechnology,
+                Metal = combatInformation.Resources.Metal,
+                Crystal = combatInformation.Resources.Crystal,
+                Deuterium = combatInformation.Resources.Deuterium,
+            }
+        };
+    }
 
 }
 
@@ -80,7 +127,6 @@ public class CombatInformation
     public string Coordinates { get; set; } 
     public int CharacterClassId { get; set; }
     public int AllianceClassId { get; set; }
-
     public Researches Researches { get; set; }
     public Dictionary<int, UnitStats> Defenses { get; set; }
     public Dictionary<int, ShipStats> Ships { get; set; }
