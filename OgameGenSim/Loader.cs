@@ -2,7 +2,8 @@ using System;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
+using OgameGenSim.Classes;
+using OgameGenSim.Utils;
 using OgameSimulatorPack;
 using OgameSimulatorPack.SimUtilities;
 using SimulatorPack;
@@ -69,29 +70,37 @@ public class Loader(HttpClient client)
     {
         SimCombatInformation cleanData = InsertCombatInfo(combatInformation);
 
-        var ships = new List<CombatUnit>();
+        cleanData.Defender.Fleet = GetCleanUnitData(combatInformation.Researches, combatInformation.Ships.ToUnitStatsDictionary(), combatInformation.CharacterClassId, combatInformation.AllianceClassId);
 
-        foreach(var ship in combatInformation.Ships)
+        cleanData.Defender.Defense = GetCleanUnitData(combatInformation.Researches, combatInformation.Defenses, combatInformation.CharacterClassId, combatInformation.AllianceClassId);
+
+        return cleanData;
+    }
+
+    private static List<CombatUnit> GetCleanUnitData(Researches researches, Dictionary<int, UnitStats> units, int charatcterClassId, int allianceClassId)
+    {
+        var cleanUnits = new List<CombatUnit>();
+
+        foreach (var ship in units)
         {
             var newShip = new CombatUnit();
 
-            ///TODO: Add Research Values to DefaultValues, It needs an util thingy to calculate the weapon, shield and hull values based on the researches of the player.
-            if(UnitDefaultValues.DefaultValues.TryGetValue(ship.Key, out var defaultValue))
+            if (UnitDefaultValues.DefaultValues.TryGetValue(ship.Key, out var defaultValue))
             {
-                newShip.Weapon = CalculateCombatValueWithBonuses(defaultValue.Weapon, ship.Value.Weapon, ResearchesIds.WEAPONS_TECH, combatInformation.Researches.WeaponsTechnology, combatInformation.CharacterClassId, combatInformation.AllianceClassId);
-                newShip.Shield = CalculateCombatValueWithBonuses(defaultValue.Shield, ship.Value.Shield, ResearchesIds.SHIELDING_TECH, combatInformation.Researches.ShieldingTechnology, combatInformation.CharacterClassId, combatInformation.AllianceClassId);
-                newShip.Hull = CalculateCombatValueWithBonuses(defaultValue.Hull, ship.Value.Armor, ResearchesIds.ARMOUR_TECH, combatInformation.Researches.ArmourTechnology, combatInformation.CharacterClassId, combatInformation.AllianceClassId);
+                newShip.Weapon = CalculateCombatValueWithBonuses(defaultValue.Weapon, ship.Value.Weapon, ResearchesIds.WEAPONS_TECH, researches.WeaponsTechnology, charatcterClassId, allianceClassId);
+                newShip.Shield = CalculateCombatValueWithBonuses(defaultValue.Shield, ship.Value.Shield, ResearchesIds.SHIELDING_TECH, researches.ShieldingTechnology, charatcterClassId, allianceClassId);
+                newShip.Hull = CalculateCombatValueWithBonuses(defaultValue.Hull, ship.Value.Armor, ResearchesIds.ARMOUR_TECH, researches.ArmourTechnology, charatcterClassId, allianceClassId);
 
-                ships.Add(newShip);
+                cleanUnits.Add(newShip);
             }
             else
-            {      
+            {
                 Console.WriteLine($"Warning: Unit ID {ship.Key} not found in default values. Skipping.");
-                continue; 
+                continue;
             }
         }
 
-        return cleanData;
+        return cleanUnits;
     }
 
     public static float CalculateCombatValueWithBonuses(float defaultValue, double LFBonus, int techId, int techLevel, int charatcterClassId, int allianceClassId)
@@ -129,101 +138,4 @@ public class Loader(HttpClient client)
         };
     }
 
-}
-
-public class EspionageReportResult
-{
-    public HttpStatusCode StatusCode { get; set; }
-    public required string Message { get; set; }
-    public CombatInformation CombatInformation { get; set; }
-}
-
-public class CombatInformation
-{
-    [JsonPropertyName("coords")]
-    public string Coordinates { get; set; } 
-    public int CharacterClassId { get; set; }
-    public int AllianceClassId { get; set; }
-    public Researches Researches { get; set; }
-    public Dictionary<int, UnitStats> Defenses { get; set; }
-    public Dictionary<int, ShipStats> Ships { get; set; }
-    public Dictionary<int, MissileStats> Missiles { get; set; }
-    public Bonuses Bonuses { get; set; }
-    public Resources Resources { get; set; }
-}
-
-public class Researches
-{
-    [JsonPropertyName("109")]
-    public int WeaponsTechnology { get; set; }
-    [JsonPropertyName("110")]
-    public int ShieldingTechnology { get; set; }
-    [JsonPropertyName("111")]
-    public int ArmourTechnology { get; set; }
-    [JsonPropertyName("114")]
-    public int HyperspaceTechnology { get; set; }
-    [JsonPropertyName("115")]
-    public int CombustionDrive { get; set; }
-    [JsonPropertyName("117")]
-    public int ImpulseDrive { get; set; }
-    [JsonPropertyName("118")]
-    public int HyperspaceDrive { get; set; }
-}
-
-public class Bonuses
-{
-    public int RecycleAttackerFleet { get; set; }
-    public int MoonChanceIncrease { get; set; }
-    public int LifeformProtection { get; set; }
-    public int SpaceDockExtender { get; set; }
-    public DenCapacity DenCapacity { get; set; }
-    public CharacterClassBooster CharacterClassBooster { get; set; }
-}
-
-public class DenCapacity
-{
-    public int Metal { get; set; }
-    public int Crystal { get; set; }
-    public int Deuterium { get; set; }
-}
-
-public class CharacterClassBooster
-{
-    [JsonPropertyName("1")]
-    public int Collector { get; set; }
-    [JsonPropertyName("2")]
-    public int General { get; set; }
-    [JsonPropertyName("3")]
-    public int Discoverer { get; set; }
-}
-
-public class Resources
-{
-    public int Metal { get; set; }
-    public int Crystal { get; set; }
-    public int Deuterium { get; set; }
-    public int Population { get; set; }
-    public int Food { get; set; }
-}
-
-public class UnitStats
-{
-    public int Amount { get; set; }
-    public double Weapon { get; set; }
-    public double Shield { get; set; }
-    public double Armor { get; set; }
-}
-
-
-public class ShipStats : UnitStats
-{
-    public double Cargo { get; set; }
-    public double Speed { get; set; }
-    public double Fuel { get; set; }
-}
-
-
-public class MissileStats
-{
-    public int Amount { get; set; }
 }
