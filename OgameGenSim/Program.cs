@@ -7,6 +7,7 @@ Console.WriteLine("Hello, World!");
 HttpClient client = new();
 var loader = new Loader(client);
 var report = await loader.GetReportDataAsync("sr-en-271-462aa196ee4b52b7d54217fc234f704dce610b71");
+var cleanData = loader.GetCleanData(report.CombatInformation);
 var asd = 1;
 
 

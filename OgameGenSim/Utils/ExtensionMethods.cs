@@ -1,4 +1,5 @@
 using OgameGenSim.Classes;
+using OgameSimulatorPack.SimUtilities;
 
 namespace OgameGenSim.Utils;
 
@@ -15,7 +16,7 @@ public static class ExtensionMethods
         };
     }
 
-    public static Dictionary<int, UnitStats> ToUnitStatsDictionary<T>(this Dictionary<int, T> ships) where T : UnitStats
+    public static Dictionary<UnitType, UnitStats> ToUnitStatsDictionary<T>(this Dictionary<UnitType, T> ships) where T : UnitStats
     {
         return ships.ToDictionary(x => x.Key, x => x.Value.ToUnitStat());
     }

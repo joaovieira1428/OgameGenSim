@@ -1,7 +1,10 @@
+using OgameSimulatorPack.SimUtilities;
+
 namespace SimulatorPack;
 
 public class CombatUnit
 {
+    public UnitType ShipType { get; set; }
     public float Weapon { get; set; }
     public float Shield { get; set; }
     public float Hull { get; set; }

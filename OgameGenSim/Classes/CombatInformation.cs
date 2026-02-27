@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using OgameSimulatorPack.SimUtilities;
 
 namespace OgameGenSim.Classes;
 
@@ -9,9 +10,9 @@ public class CombatInformation
     public int CharacterClassId { get; set; }
     public int AllianceClassId { get; set; }
     public Researches Researches { get; set; }
-    public Dictionary<int, UnitStats> Defenses { get; set; }
-    public Dictionary<int, ShipStats> Ships { get; set; }
-    public Dictionary<int, MissileStats> Missiles { get; set; }
+    public Dictionary<UnitType, UnitStats> Defenses { get; set; }
+    public Dictionary<UnitType, ShipStats> Ships { get; set; }
+    public Dictionary<UnitType, MissileStats> Missiles { get; set; }
     public Bonuses Bonuses { get; set; }
     public Resources Resources { get; set; }
 }

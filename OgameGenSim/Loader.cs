@@ -77,7 +77,7 @@ public class Loader(HttpClient client)
         return cleanData;
     }
 
-    private static List<CombatUnit> GetCleanUnitData(Researches researches, Dictionary<int, UnitStats> units, int charatcterClassId, int allianceClassId)
+    private static List<CombatUnit> GetCleanUnitData(Researches researches, Dictionary<UnitType, UnitStats> units, int charatcterClassId, int allianceClassId)
     {
         var cleanUnits = new List<CombatUnit>();
 
@@ -90,8 +90,9 @@ public class Loader(HttpClient client)
                 newShip.Weapon = CalculateCombatValueWithBonuses(defaultValue.Weapon, ship.Value.Weapon, ResearchesIds.WEAPONS_TECH, researches.WeaponsTechnology, charatcterClassId, allianceClassId);
                 newShip.Shield = CalculateCombatValueWithBonuses(defaultValue.Shield, ship.Value.Shield, ResearchesIds.SHIELDING_TECH, researches.ShieldingTechnology, charatcterClassId, allianceClassId);
                 newShip.Hull = CalculateCombatValueWithBonuses(defaultValue.Hull, ship.Value.Armor, ResearchesIds.ARMOUR_TECH, researches.ArmourTechnology, charatcterClassId, allianceClassId);
+                newShip.ShipType = ship.Key;
 
-                cleanUnits.Add(newShip);
+                cleanUnits.AddRange(Enumerable.Repeat(newShip, ship.Value.Amount));
             }
             else
             {
