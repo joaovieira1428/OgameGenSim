@@ -78,9 +78,9 @@ public class Loader(HttpClient client)
             ///TODO: Add Research Values to DefaultValues, It needs an util thingy to calculate the weapon, shield and hull values based on the researches of the player.
             if(UnitDefaultValues.DefaultValues.TryGetValue(ship.Key, out var defaultValue))
             {
-                newShip.Weapon = (float)(defaultValue.Weapon * ship.Value.Weapon);
-                newShip.Shield = (float)(defaultValue.Shield * ship.Value.Shield);
-                newShip.Hull = (float)(defaultValue.Hull * ship.Value.Armor);
+                newShip.Weapon = CalculateCombatValueWithBonuses(defaultValue.Weapon, ship.Value.Weapon, ResearchesIds.WEAPONS_TECH, combatInformation.Researches.WeaponsTechnology, combatInformation.CharacterClassId, combatInformation.AllianceClassId);
+                newShip.Shield = CalculateCombatValueWithBonuses(defaultValue.Shield, ship.Value.Shield, ResearchesIds.SHIELDING_TECH, combatInformation.Researches.ShieldingTechnology, combatInformation.CharacterClassId, combatInformation.AllianceClassId);
+                newShip.Hull = CalculateCombatValueWithBonuses(defaultValue.Hull, ship.Value.Armor, ResearchesIds.ARMOUR_TECH, combatInformation.Researches.ArmourTechnology, combatInformation.CharacterClassId, combatInformation.AllianceClassId);
 
                 ships.Add(newShip);
             }
@@ -92,6 +92,23 @@ public class Loader(HttpClient client)
         }
 
         return cleanData;
+    }
+
+    public static float CalculateCombatValueWithBonuses(float defaultValue, double LFBonus, int techId, int techLevel, int charatcterClassId, int allianceClassId)
+    {
+        if(charatcterClassId == (int)PlayerClass.General)
+        {
+            techLevel +=2; // General class grants an effective +2 levels to all combat researches
+        }
+
+        if(allianceClassId == (int)AllianceClass.Warrior)
+        {
+            techLevel +=1; // War alliance class grants an effective +1 level to all combat researches
+        }
+
+        var techBonus = ResearchesIds.ResearchLevelMapping.GetValueOrDefault(techId) * techLevel;
+
+        return (float)(defaultValue + (defaultValue * (LFBonus + techBonus)));
     }
 
     private static SimCombatInformation InsertCombatInfo(CombatInformation combatInformation)
@@ -151,17 +168,6 @@ public class Researches
     public int ImpulseDrive { get; set; }
     [JsonPropertyName("118")]
     public int HyperspaceDrive { get; set; }
-}
-
-
-public enum ResearchEnum {
-    WeaponsTechnology = 109,
-    ShieldingTechnology = 110,
-    ArmourTechnology = 111,
-    HyperspaceTechnology = 114,
-    CombustionDrive = 115,
-    ImpulseDrive = 117,
-    HyperspaceDrive = 118
 }
 
 public class Bonuses
