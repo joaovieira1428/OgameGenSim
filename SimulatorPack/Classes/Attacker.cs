@@ -1,4 +1,4 @@
-namespace SimulatorPack;
+namespace OgameSimulatorPack.Classes;
 
 public class Attacker
 {

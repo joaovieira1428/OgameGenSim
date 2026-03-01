@@ -1,6 +1,6 @@
 using OgameSimulatorPack.SimUtilities;
 
-namespace OgameSimulatorPack;
+namespace OgameSimulatorPack.Classes;
 
 public class CombatUnit
 {

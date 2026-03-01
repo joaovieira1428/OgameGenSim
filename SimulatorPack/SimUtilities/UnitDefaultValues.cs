@@ -1,5 +1,5 @@
 using System;
-using SimulatorPack;
+using OgameSimulatorPack.Classes;
 
 namespace OgameSimulatorPack.SimUtilities;
 

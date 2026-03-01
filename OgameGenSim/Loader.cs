@@ -4,9 +4,8 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using OgameGenSim.Classes;
 using OgameGenSim.Utils;
-using OgameSimulatorPack;
+using OgameSimulatorPack.Classes;
 using OgameSimulatorPack.SimUtilities;
-using SimulatorPack;
 
 namespace OgameGenSim;
 
@@ -66,13 +65,15 @@ public class Loader(HttpClient client)
         return  espionageReportResult;
     }
 
-    public SimCombatInformation GetCleanData(CombatInformation combatInformation)
+    public SimCombatInformation GetCleanData(CombatInformation combatInformation, CombatInformation attackerData)
     {
-        SimCombatInformation cleanData = InsertCombatInfo(combatInformation);
+        SimCombatInformation cleanData = InsertCombatInfo(combatInformation, attackerData);
 
         cleanData.Defender.Fleet = GetCleanUnitData(combatInformation.Researches, combatInformation.Ships.ToUnitStatsDictionary(), combatInformation.CharacterClassId, combatInformation.AllianceClassId);
 
         cleanData.Defender.Defense = GetCleanUnitData(combatInformation.Researches, combatInformation.Defenses, combatInformation.CharacterClassId, combatInformation.AllianceClassId);
+
+        cleanData.Attacker.Fleet = GetCleanUnitData(attackerData.Researches, attackerData.Ships.ToUnitStatsDictionary(), attackerData.CharacterClassId, attackerData.AllianceClassId);
 
         return cleanData;
     }
@@ -104,7 +105,7 @@ public class Loader(HttpClient client)
         return cleanUnits;
     }
 
-    public static float CalculateCombatValueWithBonuses(float defaultValue, double LFBonus, int techId, int techLevel, int charatcterClassId, int allianceClassId)
+    private static float CalculateCombatValueWithBonuses(float defaultValue, double LFBonus, int techId, int techLevel, int charatcterClassId, int allianceClassId)
     {
         if(charatcterClassId == (int)PlayerClass.General)
         {
@@ -121,7 +122,7 @@ public class Loader(HttpClient client)
         return (float)(defaultValue + (defaultValue * (LFBonus + techBonus)));
     }
 
-    private static SimCombatInformation InsertCombatInfo(CombatInformation combatInformation)
+    private static SimCombatInformation InsertCombatInfo(CombatInformation combatInformation, CombatInformation attackerData)
     {
         return new SimCombatInformation()
         {
@@ -135,8 +136,50 @@ public class Loader(HttpClient client)
                 Metal = combatInformation.Resources.Metal,
                 Crystal = combatInformation.Resources.Crystal,
                 Deuterium = combatInformation.Resources.Deuterium,
+            },
+            Attacker = new Attacker()
+            {
+                AllianceClass = (AllianceClass)attackerData.AllianceClassId,
+                PlayerClass = (PlayerClass)attackerData.CharacterClassId,
+                Armor = attackerData.Researches.ArmourTechnology,
+                Shield = attackerData.Researches.ShieldingTechnology,
+                Weapon = attackerData.Researches.WeaponsTechnology,
             }
         };
     }
 
+    public CombatInformation ParseAttackerData()
+    {
+        string? attackerJson = null;
+
+        while(attackerJson == null || attackerJson.Trim() == "")
+        {
+            Console.WriteLine("Insert attacker API: ");
+            attackerJson = Console.ReadLine();
+        }
+
+        try
+        {
+            JsonNode.Parse(attackerJson);
+        }
+        catch (JsonException)
+        {
+            Console.WriteLine("Invalid JSON format. Please try again.");
+            return ParseAttackerData();
+        }
+        var jsonObject = JsonNode.Parse(attackerJson);
+
+        var combatInformation = jsonObject.Deserialize<CombatInformation>(new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        });
+        
+        if(combatInformation == null)
+        {
+            Console.WriteLine($"Warning: Failed to deserialize attacker data. Please check the input format.");
+            ParseAttackerData();
+        }
+     
+        return combatInformation;
+    }
 }

@@ -1,6 +1,6 @@
 using System;
 
-namespace OgameSimulatorPack;
+namespace OgameSimulatorPack.Classes;
 
 public class SimCombatInformation
 {

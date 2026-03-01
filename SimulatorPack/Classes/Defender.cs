@@ -1,4 +1,4 @@
-namespace OgameSimulatorPack;
+namespace OgameSimulatorPack.Classes;
 
 public class Defender
 {

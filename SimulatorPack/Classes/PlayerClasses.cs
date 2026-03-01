@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace OgameSimulatorPack;
+namespace OgameSimulatorPack.Classes;
 
 public enum PlayerClass
 {
