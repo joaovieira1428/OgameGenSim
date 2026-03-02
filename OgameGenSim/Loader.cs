@@ -69,9 +69,9 @@ public class Loader(HttpClient client)
     {
         SimCombatInformation cleanData = InsertCombatInfo(combatInformation, attackerData);
 
-        cleanData.Defender.Fleet = GetCleanUnitData(combatInformation.Researches, combatInformation.Ships.ToUnitStatsDictionary(), combatInformation.CharacterClassId, combatInformation.AllianceClassId);
+        cleanData.Defender.Units = GetCleanUnitData(combatInformation.Researches, combatInformation.Ships.ToUnitStatsDictionary(), combatInformation.CharacterClassId, combatInformation.AllianceClassId);
 
-        cleanData.Defender.Defense = GetCleanUnitData(combatInformation.Researches, combatInformation.Defenses, combatInformation.CharacterClassId, combatInformation.AllianceClassId);
+        cleanData.Defender.Units.AddRange(GetCleanUnitData(combatInformation.Researches, combatInformation.Defenses, combatInformation.CharacterClassId, combatInformation.AllianceClassId));
 
         cleanData.Attacker.Fleet = GetCleanUnitData(attackerData.Researches, attackerData.Ships.ToUnitStatsDictionary(), attackerData.CharacterClassId, attackerData.AllianceClassId);
 
@@ -84,16 +84,27 @@ public class Loader(HttpClient client)
 
         foreach (var ship in units)
         {
-            var newShip = new CombatUnit();
-
             if (UnitDefaultValues.DefaultValues.TryGetValue(ship.Key, out var defaultValue))
             {
-                newShip.Weapon = CalculateCombatValueWithBonuses(defaultValue.Weapon, ship.Value.Weapon, ResearchesIds.WEAPONS_TECH, researches.WeaponsTechnology, charatcterClassId, allianceClassId);
-                newShip.Shield = CalculateCombatValueWithBonuses(defaultValue.Shield, ship.Value.Shield, ResearchesIds.SHIELDING_TECH, researches.ShieldingTechnology, charatcterClassId, allianceClassId);
-                newShip.Hull = CalculateCombatValueWithBonuses(defaultValue.Hull, ship.Value.Armor, ResearchesIds.ARMOUR_TECH, researches.ArmourTechnology, charatcterClassId, allianceClassId);
-                newShip.ShipType = ship.Key;
+                var shieldValue = CalculateCombatValueWithBonuses(defaultValue.Shield, ship.Value.Shield, ResearchesIds.SHIELDING_TECH, researches.ShieldingTechnology, charatcterClassId, allianceClassId);
+                var hullValue = CalculateCombatValueWithBonuses(defaultValue.Hull, ship.Value.Armor, ResearchesIds.ARMOUR_TECH, researches.ArmourTechnology, charatcterClassId, allianceClassId);
+                var weaponValue = CalculateCombatValueWithBonuses(defaultValue.Weapon, ship.Value.Weapon, ResearchesIds.WEAPONS_TECH, researches.WeaponsTechnology, charatcterClassId, allianceClassId);
+                
+                for(var i = 0; i < ship.Value.Amount; i++)
+                {
+                    var unit = new CombatUnit
+                    {
+                        ShipType = ship.Key,
+                        Weapon = weaponValue,
+                        Shield = shieldValue,
+                        FullShieldValue = shieldValue,
+                        Hull = hullValue,
+                        FullHullValue = hullValue,
+                        IsDestroyed = false
+                    };
 
-                cleanUnits.AddRange(Enumerable.Repeat(newShip, ship.Value.Amount));
+                    cleanUnits.Add(unit);
+                }
             }
             else
             {

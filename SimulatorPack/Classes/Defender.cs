@@ -10,6 +10,5 @@ public class Defender
     public int Metal { get; set; }  
     public int Crystal { get; set; }
     public int Deuterium { get; set; }
-    public List<CombatUnit> Fleet { get; set; } = [];
-    public List<CombatUnit> Defense { get; set; } = [];
+    public List<CombatUnit> Units { get; set; } = [];
 }

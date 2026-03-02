@@ -49,12 +49,6 @@ public static class RapidFire
         { new Key(UnitType.BOMBER, UnitType.GAUSS_CANNON),  0.8},
         { new Key(UnitType.BOMBER, UnitType.PLASMA_TURRET),  0.8},
 
-        { new Key(UnitType.BOMBER, UnitType.ESPIONAGE_PROBE),  0.8},
-        { new Key(UnitType.BOMBER, UnitType.SOLAR_SATELLITE),  0.8},
-        { new Key(UnitType.BOMBER, UnitType.CRAWLER),  0.8},
-        { new Key(UnitType.BOMBER, UnitType.LIGHT_LASER),  0.9},
-        { new Key(UnitType.BOMBER, UnitType.BATTLECRUISER),  0.5},
-
         { new Key(UnitType.DESTROYER, UnitType.ESPIONAGE_PROBE),  0.8},
         { new Key(UnitType.DESTROYER, UnitType.SOLAR_SATELLITE),  0.8},
         { new Key(UnitType.DESTROYER, UnitType.CRAWLER),  0.8},
@@ -73,7 +67,6 @@ public static class RapidFire
         { new Key(UnitType.DEATHSTAR, UnitType.LARGE_CARGO), 0.996},
         { new Key(UnitType.DEATHSTAR, UnitType.COLONY_SHIP), 0.996},
         { new Key(UnitType.DEATHSTAR, UnitType.RECYCLER), 0.996},
-        { new Key(UnitType.DEATHSTAR, UnitType.ESPIONAGE_PROBE), 0.996},
         { new Key(UnitType.DEATHSTAR, UnitType.ROCKET_LAUNCHER), 0.995},
         { new Key(UnitType.DEATHSTAR, UnitType.LIGHT_LASER), 0.995},
         { new Key(UnitType.DEATHSTAR, UnitType.HEAVY_LASER), 0.99},
@@ -84,19 +77,19 @@ public static class RapidFire
         { new Key(UnitType.DEATHSTAR, UnitType.REAPER), 0.90},
         { new Key(UnitType.DEATHSTAR, UnitType.CRAWLER), 0.996},
 
-        { new Key(UnitType.DESTROYER, UnitType.ESPIONAGE_PROBE),  0.8},
-        { new Key(UnitType.DESTROYER, UnitType.SOLAR_SATELLITE),  0.8},
-        { new Key(UnitType.DESTROYER, UnitType.CRAWLER),  0.8},
-        { new Key(UnitType.DESTROYER, UnitType.CRUISER),  0.6667},
-        { new Key(UnitType.DESTROYER, UnitType.LIGHT_FIGHTER),  0.6667},
-        { new Key(UnitType.DESTROYER, UnitType.HEAVY_FIGHTER),  0.5},
+        { new Key(UnitType.PATHFINDER, UnitType.ESPIONAGE_PROBE),  0.8},
+        { new Key(UnitType.PATHFINDER, UnitType.SOLAR_SATELLITE),  0.8},
+        { new Key(UnitType.PATHFINDER, UnitType.CRAWLER),  0.8},
+        { new Key(UnitType.PATHFINDER, UnitType.CRUISER),  0.6667},
+        { new Key(UnitType.PATHFINDER, UnitType.LIGHT_FIGHTER),  0.6667},
+        { new Key(UnitType.PATHFINDER, UnitType.HEAVY_FIGHTER),  0.5},
 
-        { new Key(UnitType.DESTROYER, UnitType.ESPIONAGE_PROBE),  0.8},
-        { new Key(UnitType.DESTROYER, UnitType.SOLAR_SATELLITE),  0.8},
-        { new Key(UnitType.DESTROYER, UnitType.CRAWLER),  0.8},
-        { new Key(UnitType.DESTROYER, UnitType.BATTLESHIP),  0.8572},
-        { new Key(UnitType.DESTROYER, UnitType.BOMBER),  0.75},
-        { new Key(UnitType.DESTROYER, UnitType.DESTROYER),  0.6667},
+        { new Key(UnitType.REAPER, UnitType.ESPIONAGE_PROBE),  0.8},
+        { new Key(UnitType.REAPER, UnitType.SOLAR_SATELLITE),  0.8},
+        { new Key(UnitType.REAPER, UnitType.CRAWLER),  0.8},
+        { new Key(UnitType.REAPER, UnitType.BATTLESHIP),  0.8572},
+        { new Key(UnitType.REAPER, UnitType.BOMBER),  0.75},
+        { new Key(UnitType.REAPER, UnitType.DESTROYER),  0.6667},
 
         { new Key(UnitType.ION_CANNON, UnitType.REAPER),  0.5},
     };
@@ -105,29 +98,12 @@ public static class RapidFire
     {
         if(rapidFireMapping.TryGetValue(new Key(attackerUnit, defenderUnit), out double rapidFireValue))
         {
-            return RollSuccess(rapidFireValue);
+            return Utils.RollSuccess(rapidFireValue);
         }
 
         return false;
     }
 
-    /// <summary>
-    /// Rolls a success based on the rapid fire value.
-    /// Done with AI, gona keep it as a pet
-    /// 
-    /// PS: Changed some things though
-    /// </summary>
-    /// <param name="rapidFireValue"></param>
-    /// <returns>True if is successfull and False if is unsuccessful</returns>
-    public static bool RollSuccess(double rapidFireValue)
-    {
-        if (double.IsNaN(rapidFireValue) || double.IsInfinity(rapidFireValue))
-            return false;
 
-        if (rapidFireValue < 0.0 || rapidFireValue > 1.0)
-            return false;
-
-        return Random.Shared.NextDouble() < rapidFireValue;
-    }
 
 }
