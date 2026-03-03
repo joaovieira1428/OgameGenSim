@@ -69,16 +69,16 @@ public class Loader(HttpClient client)
     {
         SimCombatInformation cleanData = InsertCombatInfo(combatInformation, attackerData);
 
-        cleanData.Defender.Units = GetCleanUnitData(combatInformation.Researches, combatInformation.Ships.ToUnitStatsDictionary(), combatInformation.CharacterClassId, combatInformation.AllianceClassId);
+        cleanData.Defender.Units = GetCleanUnitData(combatInformation.Researches, combatInformation.Ships, combatInformation.CharacterClassId, combatInformation.AllianceClassId);
 
         cleanData.Defender.Units.AddRange(GetCleanUnitData(combatInformation.Researches, combatInformation.Defenses, combatInformation.CharacterClassId, combatInformation.AllianceClassId));
 
-        cleanData.Attacker.Fleet = GetCleanUnitData(attackerData.Researches, attackerData.Ships.ToUnitStatsDictionary(), attackerData.CharacterClassId, attackerData.AllianceClassId);
+        cleanData.Attacker.Fleet = GetCleanUnitData(attackerData.Researches, attackerData.Ships, attackerData.CharacterClassId, attackerData.AllianceClassId);
 
         return cleanData;
     }
 
-    private static List<CombatUnit> GetCleanUnitData(Researches researches, Dictionary<UnitType, UnitStats> units, int charatcterClassId, int allianceClassId)
+    private static List<CombatUnit> GetCleanUnitData<T>(Researches researches, Dictionary<UnitType, T> units, int charatcterClassId, int allianceClassId) where T : UnitStats
     {
         var cleanUnits = new List<CombatUnit>();
 
@@ -94,6 +94,7 @@ public class Loader(HttpClient client)
                 {
                     var unit = new CombatUnit
                     {
+                        Id = i,
                         ShipType = ship.Key,
                         Weapon = weaponValue,
                         Shield = shieldValue,

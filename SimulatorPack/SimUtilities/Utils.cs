@@ -12,7 +12,7 @@ public static class Utils
     /// </summary>
     /// <param name="probability"></param>
     /// <returns>True if is successfull and False if is unsuccessful</returns>
-    public static bool RollSuccess(double probability)
+    /*public static bool RollSuccess(double probability)
     {
         if (double.IsNaN(probability) || double.IsInfinity(probability))
             return false;
@@ -21,5 +21,11 @@ public static class Utils
             return false;
     
         return Random.Shared.NextDouble() < probability;
+    }*/
+
+    public static bool RollSuccess(double probability)
+    {
+        probability *= 100.0;
+        return Random.Shared.Next(0, 100) < probability;
     }
 }

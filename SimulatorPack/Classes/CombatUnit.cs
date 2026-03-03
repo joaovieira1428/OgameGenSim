@@ -4,6 +4,7 @@ namespace OgameSimulatorPack.Classes;
 
 public class CombatUnit
 {
+    public int Id { get; set; }
     public UnitType ShipType { get; set; }
     public float Weapon { get; set; }
     public float Shield { get; set; }

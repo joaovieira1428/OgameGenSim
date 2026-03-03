@@ -7,9 +7,11 @@ namespace OgameSimulatorPack;
 public static class Battle
 {
     public static int countCombats = 0;
-    public static int igonredCombats = 0;
-
+    public static float absorbedShields = 0;
+    public static float DemageDealt = 0;
     public static int probabilityDestroyed = 0;
+    public static int probabilityDestroyedNew = 0;
+    public static int totalUnitsDestroyed = 0;
     public static SimCombatInformation DoBattle(SimCombatInformation simCombatInformation)
     {
         var rounds = 1;
@@ -33,7 +35,7 @@ public static class Battle
             //Attack random unit from defender's fleet or defense
             simCombatInformation.Defender.Units = Combat(a_Unit, simCombatInformation.Defender.Units);
         }
-
+        
         foreach(var d_Unit in simCombatInformation.Defender.Units)
         {
             //Attack random unit from attacker's fleet
@@ -53,49 +55,70 @@ public static class Battle
     }
 
     private static List<CombatUnit> Combat(CombatUnit attacker, List<CombatUnit> defenders)
-    {
-        var isRapidFire = true;
+    {    
+        countCombats++;
+    
+        var index = GetRandomUnitIndex(defenders.Count);
+        var defender = defenders[index];
 
-        while (isRapidFire)
+        if(defender.IsDestroyed)
+        {         
+            if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
+                Combat(attacker, defenders);
+            }
+
+            return defenders; 
+        }
+
+        if (attacker.Weapon < defender.Shield * 0.01)
         {
-            var index = GetRandomUnitIndex(defenders.Count);
-            var defender = defenders[1565115];
-
-            if(defender.IsDestroyed)
-            {
-                isRapidFire = RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType);
-                continue;
+            if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
+                Combat(attacker, defenders);
             }
 
-            if (attacker.Weapon < defender.Shield * 0.01)
-            {
-                igonredCombats++;
-                isRapidFire = RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType);
-                continue;
-            }
+            return defenders; 
+        }
 
+
+        if(defender.Shield > 0)
+        {
             if (attacker.Weapon < defender.Shield)
             {
+                absorbedShields += attacker.Weapon;
+
                 defender.Shield -= attacker.Weapon;
             }else
             {
+                absorbedShields += defender.Shield;
                 defender.Hull -= attacker.Weapon - defender.Shield;
                 defender.Shield = 0;
             }
-
-            if (IsTargetDestroyed(defender))
-            {
-                defender.Hull = 0;
-                defender.Shield = 0;
-                defender.IsDestroyed = true;
-
-                //Add debri to debri field
-            }
-
-            isRapidFire = RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType);
-
-            countCombats++;
         }
+        else
+        {
+            DemageDealt += attacker.Weapon;
+            defender.Hull -= attacker.Weapon;
+        }
+
+        if (IsTargetDestroyed(defender))
+        {
+
+            defender.Hull = 0;
+            defender.Shield = 0;
+            defender.IsDestroyed = true;
+            totalUnitsDestroyed++;
+
+            //Add debri to debri field
+        }
+
+        if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
+            if(attacker.ShipType == UnitType.BATTLECRUISER){
+                var asd = 1;
+            }
+            Combat(attacker, defenders);
+        }
+
+        
 
         return defenders; 
     }
@@ -116,6 +139,17 @@ public static class Battle
             if(isDestroyed) probabilityDestroyed++;
 
             return isDestroyed;
+
+        }
+
+        if(target.Hull / target.FullHullValue < 0.7)
+        {
+            var probability = 100.00 - (target.Hull / target.FullHullValue * 100);
+
+            bool isDestroyed = GetRandomUnitIndex(100) < probability;
+
+            if(isDestroyed) probabilityDestroyedNew++;
+
         }
 
         return false;

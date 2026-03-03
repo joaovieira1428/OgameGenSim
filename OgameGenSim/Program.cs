@@ -42,7 +42,9 @@ var cleanData2 = new OgameSimulatorPack.Classes.SimCombatInformation
                 ShipType = OgameSimulatorPack.SimUtilities.UnitType.CRUISER,
                 Weapon = 400,
                 Shield = 50,
-                Hull = 2700
+                Hull = 2700,
+                FullHullValue = 2700,
+                FullShieldValue = 50
             },
         }
     },
@@ -63,21 +65,27 @@ var cleanData2 = new OgameSimulatorPack.Classes.SimCombatInformation
                 ShipType = OgameSimulatorPack.SimUtilities.UnitType.ROCKET_LAUNCHER,
                 Weapon = 80,
                 Shield = 20,
-                Hull = 200
+                Hull = 200,
+                FullHullValue = 200,
+                FullShieldValue = 20
             },
             new OgameSimulatorPack.Classes.CombatUnit
             {
                 ShipType = OgameSimulatorPack.SimUtilities.UnitType.ROCKET_LAUNCHER,
                 Weapon = 80,
                 Shield = 20,
-                Hull = 200
+                Hull = 200,
+                FullHullValue = 200,
+                FullShieldValue = 20
             },
             new OgameSimulatorPack.Classes.CombatUnit
             {
                 ShipType = OgameSimulatorPack.SimUtilities.UnitType.HEAVY_LASER,
                 Weapon = 250,
                 Shield = 100,
-                Hull = 800
+                Hull = 800,
+                FullHullValue = 800,
+                FullShieldValue = 100
             },
         }
     }
