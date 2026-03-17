@@ -1,6 +1,7 @@
 using System;
 using OgameSimulatorPack.Classes;
 using OgameSimulatorPack.SimUtilities;
+using OgameSimulatorPack.Statistics;
 
 namespace OgameSimulatorPack;
 
@@ -18,7 +19,12 @@ public static class Battle
 
         while(rounds <= 6 && simCombatInformation.Attacker.Fleet.Count > 0 && simCombatInformation.Defender.Units.Count > 0)
         {
-            simCombatInformation = DoRound(simCombatInformation);
+            var battleStatistics = new BattleStatistics();
+
+            simCombatInformation = DoRound(simCombatInformation, battleStatistics);
+
+            StatisticsUtils.WriteStatsToConsole(battleStatistics);
+
             rounds++;
         }
 
@@ -28,20 +34,26 @@ public static class Battle
     }
 
 
-    private static SimCombatInformation DoRound(SimCombatInformation simCombatInformation)
+    private static SimCombatInformation DoRound(SimCombatInformation simCombatInformation, BattleStatistics battleStatistics)
     {
+        var attackerStats = new PlayerStatistics();
+        var defenderStats = new PlayerStatistics();
+
         foreach(var a_Unit in simCombatInformation.Attacker.Fleet)
         {
             //Attack random unit from defender's fleet or defense
-            simCombatInformation.Defender.Units = Combat(a_Unit, simCombatInformation.Defender.Units);
+            simCombatInformation.Defender.Units = Combat(a_Unit, simCombatInformation.Defender.Units, attackerStats, defenderStats);
         }
         
         foreach(var d_Unit in simCombatInformation.Defender.Units)
         {
+
             //Attack random unit from attacker's fleet
-            simCombatInformation.Attacker.Fleet = Combat(d_Unit, simCombatInformation.Attacker.Fleet);
+            simCombatInformation.Attacker.Fleet = Combat(d_Unit, simCombatInformation.Attacker.Fleet, defenderStats, attackerStats);
         }
 
+        battleStatistics.Attackers.Add(attackerStats);
+        battleStatistics.Defenders.Add(defenderStats);
 
         var count1 = simCombatInformation.Defender.Units.Count(x => x.IsDestroyed);
         simCombatInformation.Defender.Units.RemoveAll(x => x.IsDestroyed);
@@ -54,17 +66,20 @@ public static class Battle
         return simCombatInformation;
     }
 
-    private static List<CombatUnit> Combat(CombatUnit attacker, List<CombatUnit> defenders)
+    private static List<CombatUnit> Combat(CombatUnit attacker, List<CombatUnit> defenders, PlayerStatistics attackerStats, PlayerStatistics defenderStats)
     {    
         countCombats++;
+        attackerStats.ShotsFired++;
     
         var index = GetRandomUnitIndex(defenders.Count);
         var defender = defenders[index];
 
         if(defender.IsDestroyed)
-        {         
+        {     
+            attackerStats.DemageDealt += attacker.Weapon; 
+
             if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
-                Combat(attacker, defenders);
+                Combat(attacker, defenders, attackerStats, defenderStats);
             }
 
             return defenders; 
@@ -73,7 +88,7 @@ public static class Battle
         if (attacker.Weapon < defender.Shield * 0.01)
         {
             if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
-                Combat(attacker, defenders);
+                Combat(attacker, defenders, attackerStats, defenderStats);
             }
 
             return defenders; 
@@ -87,17 +102,27 @@ public static class Battle
                 absorbedShields += attacker.Weapon;
 
                 defender.Shield -= attacker.Weapon;
+
+                attackerStats.DemageDealt += attacker.Weapon;
+                attackerStats.DemageAbsorbedByDefendingPlayer += attacker.Weapon;
             }else
             {
                 absorbedShields += defender.Shield;
                 defender.Hull -= attacker.Weapon - defender.Shield;
                 defender.Shield = 0;
+                
+                attackerStats.DemageDealt += attacker.Weapon;
+                attackerStats.DemageAbsorbedByDefendingPlayer += defender.Shield;
+                attackerStats.DemageTakenByDefendingPlayer += attacker.Weapon - defender.Shield;
             }
         }
         else
         {
             DemageDealt += attacker.Weapon;
             defender.Hull -= attacker.Weapon;
+
+            attackerStats.DemageDealt += attacker.Weapon;
+            attackerStats.DemageTakenByDefendingPlayer += attacker.Weapon;
         }
 
         if (IsTargetDestroyed(defender))
@@ -108,17 +133,14 @@ public static class Battle
             defender.IsDestroyed = true;
             totalUnitsDestroyed++;
 
+            defenderStats.LostShips.Add(defender);
+
             //Add debri to debri field
         }
 
         if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
-            if(attacker.ShipType == UnitType.BATTLECRUISER){
-                var asd = 1;
-            }
-            Combat(attacker, defenders);
-        }
-
-        
+            Combat(attacker, defenders, attackerStats, defenderStats);
+        }  
 
         return defenders; 
     }
