@@ -26,11 +26,12 @@ public static class Utils
     public static bool RollSuccess(double probability)
     {
         probability *= 100.0;
-        return Random.Shared.Next(0, 100) < probability;
+        return Random.Shared.Next(0, 101) < probability;
     }
 
-    public static bool RollSuccessByFloatPoint(double floatPoint)
+    public static bool RollSuccessWithNoRoundInt(double probability)
     {
-        return Random.Shared.Next(0,1) > floatPoint;
+        int intProbability = (int) Math.Truncate(probability*100);
+        return  Random.Shared.Next(0, 100) < intProbability;
     }
 }

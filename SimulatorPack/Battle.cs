@@ -75,7 +75,7 @@ public static class Battle
 
         if(defender.IsDestroyed)
         {     
-            //attackerStats.DemageDealt += attacker.Weapon; 
+            attackerStats.DemageDealt += attacker.Weapon; 
 
             if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
                 Combat(attacker, defenders, attackerStats, defenderStats);
@@ -86,17 +86,6 @@ public static class Battle
 
         if (attacker.Weapon < defender.Shield * 0.01)
         {
-            if (IsTargetDestroyed(defender))
-            {
-                defenderStats.LostShips.Add(defender);
-
-                defender.Hull = 0;
-                defender.Shield = 0;
-                defender.IsDestroyed = true;
-
-                //Add debri to debri field
-            }
-
             if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
                 Combat(attacker, defenders, attackerStats, defenderStats);
             }
@@ -151,10 +140,8 @@ public static class Battle
 
     private static bool IsTargetDestroyed(CombatUnit target)
     {
-        /*if(target.Hull <= 0)
-        {
-            return true;
-        }*/
+        if(target.Hull <= 0) return true;
+        
 
         if(target.Hull / target.FullHullValue < 0.7)
         {
