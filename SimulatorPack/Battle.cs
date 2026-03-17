@@ -8,14 +8,13 @@ namespace OgameSimulatorPack;
 public static class Battle
 {
     public static int countCombats = 0;
-    public static float absorbedShields = 0;
-    public static float DemageDealt = 0;
     public static int probabilityDestroyed = 0;
     public static int probabilityDestroyedNew = 0;
-    public static int totalUnitsDestroyed = 0;
     public static SimCombatInformation DoBattle(SimCombatInformation simCombatInformation)
     {
         var rounds = 1;
+
+        StatisticsUtils.WriteUnitStatsToConsole(simCombatInformation.Attacker.Fleet, simCombatInformation.Defender.Units);
 
         while(rounds <= 6 && simCombatInformation.Attacker.Fleet.Count > 0 && simCombatInformation.Defender.Units.Count > 0)
         {
@@ -76,7 +75,7 @@ public static class Battle
 
         if(defender.IsDestroyed)
         {     
-            attackerStats.DemageDealt += attacker.Weapon; 
+            //attackerStats.DemageDealt += attacker.Weapon; 
 
             if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
                 Combat(attacker, defenders, attackerStats, defenderStats);
@@ -87,6 +86,17 @@ public static class Battle
 
         if (attacker.Weapon < defender.Shield * 0.01)
         {
+            if (IsTargetDestroyed(defender))
+            {
+                defenderStats.LostShips.Add(defender);
+
+                defender.Hull = 0;
+                defender.Shield = 0;
+                defender.IsDestroyed = true;
+
+                //Add debri to debri field
+            }
+
             if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
                 Combat(attacker, defenders, attackerStats, defenderStats);
             }
@@ -99,41 +109,35 @@ public static class Battle
         {
             if (attacker.Weapon < defender.Shield)
             {
-                absorbedShields += attacker.Weapon;
-
-                defender.Shield -= attacker.Weapon;
-
                 attackerStats.DemageDealt += attacker.Weapon;
                 attackerStats.DemageAbsorbedByDefendingPlayer += attacker.Weapon;
+
+                defender.Shield -= attacker.Weapon;
             }else
             {
-                absorbedShields += defender.Shield;
-                defender.Hull -= attacker.Weapon - defender.Shield;
-                defender.Shield = 0;
-                
                 attackerStats.DemageDealt += attacker.Weapon;
                 attackerStats.DemageAbsorbedByDefendingPlayer += defender.Shield;
                 attackerStats.DemageTakenByDefendingPlayer += attacker.Weapon - defender.Shield;
+
+                defender.Hull -= attacker.Weapon - defender.Shield;
+                defender.Shield = 0;
             }
         }
         else
         {
-            DemageDealt += attacker.Weapon;
-            defender.Hull -= attacker.Weapon;
-
             attackerStats.DemageDealt += attacker.Weapon;
             attackerStats.DemageTakenByDefendingPlayer += attacker.Weapon;
+
+            defender.Hull -= attacker.Weapon;
         }
 
         if (IsTargetDestroyed(defender))
         {
+            defenderStats.LostShips.Add(defender);
 
             defender.Hull = 0;
             defender.Shield = 0;
             defender.IsDestroyed = true;
-            totalUnitsDestroyed++;
-
-            defenderStats.LostShips.Add(defender);
 
             //Add debri to debri field
         }
@@ -147,10 +151,10 @@ public static class Battle
 
     private static bool IsTargetDestroyed(CombatUnit target)
     {
-        if(target.Hull <= 0)
+        /*if(target.Hull <= 0)
         {
             return true;
-        }
+        }*/
 
         if(target.Hull / target.FullHullValue < 0.7)
         {

@@ -28,4 +28,9 @@ public static class Utils
         probability *= 100.0;
         return Random.Shared.Next(0, 100) < probability;
     }
+
+    public static bool RollSuccessByFloatPoint(double floatPoint)
+    {
+        return Random.Shared.Next(0,1) > floatPoint;
+    }
 }

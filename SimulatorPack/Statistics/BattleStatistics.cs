@@ -15,9 +15,9 @@ public class PlayerStatistics
     //TODO: Add this to Attacker and Defender Classes (It will be usefull for ACS)
     public string NickName { get; set; }
     public int ShotsFired { get; set; } = 0;
-    public float DemageDealt { get; set; } = 0;
-    public float DemageAbsorbedByDefendingPlayer { get; set; } = 0;
-    public float DemageTakenByDefendingPlayer { get; set; } = 0;
+    public double DemageDealt { get; set; } = 0;
+    public double DemageAbsorbedByDefendingPlayer { get; set; } = 0;
+    public double DemageTakenByDefendingPlayer { get; set; } = 0;
     public List<CombatUnit> LostShips { get; set; } = [];
 }
 
@@ -34,6 +34,8 @@ public static class StatisticsUtils
             attackerStatsString.AppendLine($"Atacante dispara um total de {attacker.ShotsFired} tiros contra o defensor ");
             attackerStatsString.Append($"com uma força total de {attacker.DemageDealt}.");
             attackerStatsString.AppendLine($"Os escudos do defensor absorvem {attacker.DemageAbsorbedByDefendingPlayer} pontos de dano.");
+            attackerStatsString.AppendLine($"O dano concreto foi {attacker.DemageTakenByDefendingPlayer} pontos de dano.");
+
 
             var attackerLostShips = attacker.LostShips.GroupBy(x => x.ShipType).ToDictionary(x => x.Key, x => x.Count());
 
@@ -48,6 +50,7 @@ public static class StatisticsUtils
             defenderStatsString.AppendLine($"Defensor dispara um total de {defender.ShotsFired} tiros contra o atacante ");
             defenderStatsString.Append($"com uma força total de {defender.DemageDealt}.");
             defenderStatsString.AppendLine($"Os escudos do atacante absorvem {defender.DemageAbsorbedByDefendingPlayer} pontos de dano.");
+            defenderStatsString.AppendLine($"O dano concreto foi {defender.DemageTakenByDefendingPlayer} pontos de dano.");
 
             var defenderLostShips = defender.LostShips.GroupBy(x => x.ShipType).ToDictionary(x => x.Key, x => x.Count());
 
@@ -55,6 +58,36 @@ public static class StatisticsUtils
             {
                 defenderStatsString.AppendLine($"{lostShip.Key.ToString()}: {lostShip.Value} ");
             }
+        }
+
+        Console.WriteLine(attackerStatsString.ToString());
+        Console.WriteLine(defenderStatsString.ToString());
+    }
+
+    public static void WriteUnitStatsToConsole(List<CombatUnit> attackerUnits, List<CombatUnit> defenderUnits)
+    {
+        StringBuilder attackerStatsString = new();
+        StringBuilder defenderStatsString = new();
+
+        attackerUnits = [.. attackerUnits.DistinctBy(x => x.ShipType)];
+        defenderUnits = [.. defenderUnits.DistinctBy(x => x.ShipType)];
+
+        foreach(var unit in attackerUnits)
+        {
+            attackerStatsString.AppendLine($"{unit.ShipType.ToString()}:");
+            attackerStatsString.AppendLine($"{unit.Weapon}");
+            attackerStatsString.AppendLine($"{unit.Shield}");
+            attackerStatsString.AppendLine($"{unit.Hull}");
+            attackerStatsString.AppendLine();
+        }
+
+        foreach(var unit in defenderUnits)
+        {
+            defenderStatsString.AppendLine($"{unit.ShipType.ToString()}:");
+            defenderStatsString.AppendLine($"{unit.Weapon}");
+            defenderStatsString.AppendLine($"{unit.Shield}");
+            defenderStatsString.AppendLine($"{unit.Hull}");
+            defenderStatsString.AppendLine();
         }
 
         Console.WriteLine(attackerStatsString.ToString());

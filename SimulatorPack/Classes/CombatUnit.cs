@@ -6,11 +6,11 @@ public class CombatUnit
 {
     public int Id { get; set; }
     public UnitType ShipType { get; set; }
-    public float Weapon { get; set; }
-    public float Shield { get; set; }
-    public float FullShieldValue { get; set; }
-    public float Hull { get; set; }
-    public float FullHullValue { get; set; }
+    public double Weapon { get; set; }
+    public double Shield { get; set; }
+    public double FullShieldValue { get; set; }
+    public double Hull { get; set; }
+    public double FullHullValue { get; set; }
     public bool IsDestroyed { get; set; }
 }
 

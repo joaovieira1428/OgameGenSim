@@ -117,7 +117,7 @@ public class Loader(HttpClient client)
         return cleanUnits;
     }
 
-    private static float CalculateCombatValueWithBonuses(float defaultValue, double LFBonus, int techId, int techLevel, int charatcterClassId, int allianceClassId)
+    private static float CalculateCombatValueWithBonuses(double defaultValue, double LFBonus, int techId, int techLevel, int charatcterClassId, int allianceClassId)
     {
         if(charatcterClassId == (int)PlayerClass.General)
         {
