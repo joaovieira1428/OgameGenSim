@@ -5,8 +5,8 @@ namespace OgameSimulatorPack.Classes;
 public class SimCombatInformation
 {
     public Universe Universe { get; set; }
-    public Attacker Attacker { get; set; }
-    public Defender Defender { get; set; }
+    public List<Attacker> Attackers { get; set; } = [];
+    public List<Defender> Defenders { get; set; } = [];
 }
 
 

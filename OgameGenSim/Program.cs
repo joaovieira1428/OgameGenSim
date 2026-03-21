@@ -7,26 +7,20 @@ using OgameGenSim;
 HttpClient client = new();
 var loader = new Loader(client);
 
-var attackerData = loader.ParseAttackerData();
+Console.WriteLine("How many Attackers? ");
+int attackersCount = int.Parse(Console.ReadLine());
 
-Console.WriteLine("Insert an espionage report API: ");
-var espionageId = Console.ReadLine();
+Console.WriteLine("How many Defenders? ");
+int defendersCount = int.Parse(Console.ReadLine());
 
-var report = await loader.GetReportDataAsync(espionageId); //Id comes from user input
+var attackersData = loader.LoadAttackers(attackersCount);
 
-while(report.StatusCode != System.Net.HttpStatusCode.OK)
-{
-    Console.WriteLine($"Failed to get report data: {report.Message}");
-    Console.WriteLine("Please enter a valid espionage report API: ");
-    espionageId = Console.ReadLine();
-    report = await loader.GetReportDataAsync(espionageId);
-}
+var defendersData = await loader.LoadDefenders(defendersCount);
 
 ///TODO: maybe put this in a try catch block to handle potential deserialization errors
-var cleanData = loader.GetCleanData(report.CombatInformation, attackerData);
+var cleanData = loader.GetCleanData(attackersData, defendersData);
 
-
-var cleanData2 = new OgameSimulatorPack.Classes.SimCombatInformation
+/*var cleanData2 = new OgameSimulatorPack.Classes.SimCombatInformation
 {
     Attacker = new OgameSimulatorPack.Classes.Attacker
     {
@@ -90,19 +84,8 @@ var cleanData2 = new OgameSimulatorPack.Classes.SimCombatInformation
         }
     }
 };
+*/
 
 var result = OgameSimulatorPack.Battle.DoBattle(cleanData);
 
 var asd = 1;
-
-
-
-
-/*
-public record Key(int attacker, int defender);
-
-public Dictionary<Key, double> RapidFireMapping = new()
-{
-    { new Key(271, 302),  0.9},
-};
-*/

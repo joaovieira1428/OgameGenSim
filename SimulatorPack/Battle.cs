@@ -8,19 +8,22 @@ namespace OgameSimulatorPack;
 public static class Battle
 {
     public static int countCombats = 0;
-    public static int probabilityDestroyed = 0;
-    public static int probabilityDestroyedNew = 0;
+
     public static SimCombatInformation DoBattle(SimCombatInformation simCombatInformation)
     {
+        var attackerUnits = simCombatInformation.Attackers.SelectMany(a => a.Fleet).ToList();
+        var defenderUnits = simCombatInformation.Defenders.SelectMany(d => d.Units).ToList();
+
+
         var rounds = 1;
 
-        StatisticsUtils.WriteUnitStatsToConsole(simCombatInformation.Attacker.Fleet, simCombatInformation.Defender.Units);
+        StatisticsUtils.WriteUnitStatsToConsole(attackerUnits, defenderUnits);
 
-        while(rounds <= 6 && simCombatInformation.Attacker.Fleet.Count > 0 && simCombatInformation.Defender.Units.Count > 0)
+        while(rounds <= 6 && attackerUnits.Count > 0 && defenderUnits.Count > 0)
         {
             var battleStatistics = new BattleStatistics();
-
-            simCombatInformation = DoRound(simCombatInformation, battleStatistics);
+            
+            (attackerUnits, defenderUnits) = DoRound(attackerUnits, defenderUnits, battleStatistics);
 
             StatisticsUtils.WriteStatsToConsole(battleStatistics);
 
@@ -28,41 +31,42 @@ public static class Battle
         }
 
         //See if there's winners
+        //Change fleets with post sim results
 
         return simCombatInformation;
     }
 
 
-    private static SimCombatInformation DoRound(SimCombatInformation simCombatInformation, BattleStatistics battleStatistics)
+    private static (List<CombatUnit>, List<CombatUnit>) DoRound(List<CombatUnit> attackerUnits, List<CombatUnit> defenderUnits, BattleStatistics battleStatistics)
     {
         var attackerStats = new PlayerStatistics();
         var defenderStats = new PlayerStatistics();
 
-        foreach(var a_Unit in simCombatInformation.Attacker.Fleet)
+        foreach(var a_Unit in attackerUnits)
         {
             //Attack random unit from defender's fleet or defense
-            simCombatInformation.Defender.Units = Combat(a_Unit, simCombatInformation.Defender.Units, attackerStats, defenderStats);
+            defenderUnits = Combat(a_Unit, defenderUnits, attackerStats, defenderStats);
         }
         
-        foreach(var d_Unit in simCombatInformation.Defender.Units)
+        foreach(var d_Unit in defenderUnits)
         {
 
             //Attack random unit from attacker's fleet
-            simCombatInformation.Attacker.Fleet = Combat(d_Unit, simCombatInformation.Attacker.Fleet, defenderStats, attackerStats);
+            attackerUnits = Combat(d_Unit, attackerUnits, defenderStats, attackerStats);
         }
 
         battleStatistics.Attackers.Add(attackerStats);
         battleStatistics.Defenders.Add(defenderStats);
 
-        var count1 = simCombatInformation.Defender.Units.Count(x => x.IsDestroyed);
-        simCombatInformation.Defender.Units.RemoveAll(x => x.IsDestroyed);
-        var count2 = simCombatInformation.Attacker.Fleet.Count(x => x.IsDestroyed);
-        simCombatInformation.Attacker.Fleet.RemoveAll(x => x.IsDestroyed);
+        var count1 = defenderUnits.Count(x => x.IsDestroyed);
+        defenderUnits.RemoveAll(x => x.IsDestroyed);
+        var count2 = attackerUnits.Count(x => x.IsDestroyed);
+        attackerUnits.RemoveAll(x => x.IsDestroyed);
 
-        foreach(var a_Unit in simCombatInformation.Attacker.Fleet) a_Unit.Shield = a_Unit.FullShieldValue;
-        foreach(var d_Unit in simCombatInformation.Defender.Units) d_Unit.Shield = d_Unit.FullShieldValue;
+        foreach(var a_Unit in attackerUnits) a_Unit.Shield = a_Unit.FullShieldValue;
+        foreach(var d_Unit in defenderUnits) d_Unit.Shield = d_Unit.FullShieldValue;
 
-        return simCombatInformation;
+        return (attackerUnits, defenderUnits);
     }
 
     private static List<CombatUnit> Combat(CombatUnit attacker, List<CombatUnit> defenders, PlayerStatistics attackerStats, PlayerStatistics defenderStats)
@@ -70,10 +74,10 @@ public static class Battle
         countCombats++;
         attackerStats.ShotsFired++;
     
-        var index = GetRandomUnitIndex(defenders.Count);
+        var index = Utils.GetRandomUnitIndex(defenders.Count);
         var defender = defenders[index];
 
-        if(defender.IsDestroyed)
+        if(defender.IsDestroyed || attacker.Weapon < defender.Shield * 0.01)
         {     
             attackerStats.DemageDealt += attacker.Weapon; 
 
@@ -83,16 +87,6 @@ public static class Battle
 
             return defenders; 
         }
-
-        if (attacker.Weapon < defender.Shield * 0.01)
-        {
-            if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
-                Combat(attacker, defenders, attackerStats, defenderStats);
-            }
-
-            return defenders; 
-        }
-
 
         if(defender.Shield > 0)
         {
@@ -149,28 +143,13 @@ public static class Battle
 
             bool isDestroyed = Utils.RollSuccess(probability);
 
-            if(isDestroyed) probabilityDestroyed++;
-
             return isDestroyed;
-
-        }
-
-        if(target.Hull / target.FullHullValue < 0.7)
-        {
-            var probability = 100.00 - (target.Hull / target.FullHullValue * 100);
-
-            bool isDestroyed = GetRandomUnitIndex(100) < probability;
-
-            if(isDestroyed) probabilityDestroyedNew++;
 
         }
 
         return false;
     }
 
-    private static int GetRandomUnitIndex(int count)
-    {
-        return Random.Shared.Next(0, count);
-    }
+
     
 }

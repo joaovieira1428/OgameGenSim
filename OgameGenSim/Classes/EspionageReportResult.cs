@@ -6,5 +6,5 @@ public class EspionageReportResult
 {
     public HttpStatusCode StatusCode { get; set; }
     public required string Message { get; set; }
-    public CombatInformation CombatInformation { get; set; }
+    public PlayerInformation PlayerInformation { get; set; }
 }

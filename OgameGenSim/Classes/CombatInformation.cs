@@ -5,6 +5,12 @@ namespace OgameGenSim.Classes;
 
 public class CombatInformation
 {
+    public List<PlayerInformation> Attackers { get; set; } = [];
+    public List<PlayerInformation> Defenders { get; set; } = [];
+}
+
+public class PlayerInformation
+{
     [JsonPropertyName("coords")]
     public string Coordinates { get; set; } 
     public int CharacterClassId { get; set; }
