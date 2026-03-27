@@ -11,24 +11,23 @@ public static class Battle
 
     public static SimCombatInformation DoBattle(SimCombatInformation simCombatInformation)
     {
-        var attackerUnits = simCombatInformation.Attackers.SelectMany(a => a.Fleet).ToList();
-        var defenderUnits = simCombatInformation.Defenders.SelectMany(d => d.Units).ToList();
+        var attackersUnits = simCombatInformation.Attackers.SelectMany(a => a.Fleet).ToList();
+        var defendersUnits = simCombatInformation.Defenders.SelectMany(d => d.Units).ToList();
 
+        var rounds = 0;
 
-        var rounds = 1;
+        var battleStatistics = new BattleStatistics(simCombatInformation.Attackers, simCombatInformation.Defenders);
 
-        StatisticsUtils.WriteUnitStatsToConsole(attackerUnits, defenderUnits);
+        battleStatistics.WriteUnitStatistics();
 
-        while(rounds <= 6 && attackerUnits.Count > 0 && defenderUnits.Count > 0)
-        {
-            var battleStatistics = new BattleStatistics();
-            
-            (attackerUnits, defenderUnits) = DoRound(attackerUnits, defenderUnits, battleStatistics);
-
-            StatisticsUtils.WriteStatsToConsole(battleStatistics);
+        while(rounds < 6 && attackersUnits.Count > 0 && defendersUnits.Count > 0)
+        {            
+            (attackersUnits, defendersUnits) = DoRound(attackersUnits, defendersUnits, battleStatistics.RoundStatistics[rounds]);
 
             rounds++;
         }
+
+        battleStatistics.WriteRoundsStatistics();
 
         //See if there's winners
         //Change fleets with post sim results
@@ -37,52 +36,49 @@ public static class Battle
     }
 
 
-    private static (List<CombatUnit>, List<CombatUnit>) DoRound(List<CombatUnit> attackerUnits, List<CombatUnit> defenderUnits, BattleStatistics battleStatistics)
+    private static (List<CombatUnit>, List<CombatUnit>) DoRound(List<CombatUnit> attackersUnits, List<CombatUnit> defendersUnits, RoundStatistics roundStatistics)
     {
-        var attackerStats = new PlayerStatistics();
-        var defenderStats = new PlayerStatistics();
-
-        foreach(var a_Unit in attackerUnits)
+        foreach(var a_Unit in attackersUnits)
         {
             //Attack random unit from defender's fleet or defense
-            defenderUnits = Combat(a_Unit, defenderUnits, attackerStats, defenderStats);
+            defendersUnits = Combat(a_Unit, defendersUnits, roundStatistics.AttackerRoundStatistics, roundStatistics.DefenderRoundStatistics);
         }
         
-        foreach(var d_Unit in defenderUnits)
+        foreach(var d_Unit in defendersUnits)
         {
 
             //Attack random unit from attacker's fleet
-            attackerUnits = Combat(d_Unit, attackerUnits, defenderStats, attackerStats);
+            attackersUnits = Combat(d_Unit, attackersUnits, roundStatistics.DefenderRoundStatistics, roundStatistics.AttackerRoundStatistics);
         }
 
-        battleStatistics.Attackers.Add(attackerStats);
-        battleStatistics.Defenders.Add(defenderStats);
+        //battleStatistics.Attackers.Add(attackerStats);
+        //battleStatistics.Defenders.Add(defenderStats);
 
-        var count1 = defenderUnits.Count(x => x.IsDestroyed);
-        defenderUnits.RemoveAll(x => x.IsDestroyed);
-        var count2 = attackerUnits.Count(x => x.IsDestroyed);
-        attackerUnits.RemoveAll(x => x.IsDestroyed);
+        var count1 = defendersUnits.Count(x => x.IsDestroyed);
+        defendersUnits.RemoveAll(x => x.IsDestroyed);
+        var count2 = attackersUnits.Count(x => x.IsDestroyed);
+        attackersUnits.RemoveAll(x => x.IsDestroyed);
 
-        foreach(var a_Unit in attackerUnits) a_Unit.Shield = a_Unit.FullShieldValue;
-        foreach(var d_Unit in defenderUnits) d_Unit.Shield = d_Unit.FullShieldValue;
+        foreach(var a_Unit in attackersUnits) a_Unit.Shield = a_Unit.FullShieldValue;
+        foreach(var d_Unit in defendersUnits) d_Unit.Shield = d_Unit.FullShieldValue;
 
-        return (attackerUnits, defenderUnits);
+        return (attackersUnits, defendersUnits);
     }
 
-    private static List<CombatUnit> Combat(CombatUnit attacker, List<CombatUnit> defenders, PlayerStatistics attackerStats, PlayerStatistics defenderStats)
+    private static List<CombatUnit> Combat(CombatUnit attacker, List<CombatUnit> defenders, PlayerRoundStatistics attackerRoundStats, PlayerRoundStatistics defenderRoundStats)
     {    
         countCombats++;
-        attackerStats.ShotsFired++;
+        attackerRoundStats.ShotsFired++;
     
         var index = Utils.GetRandomUnitIndex(defenders.Count);
         var defender = defenders[index];
 
         if(defender.IsDestroyed || attacker.Weapon < defender.Shield * 0.01)
         {     
-            attackerStats.DemageDealt += attacker.Weapon; 
+            attackerRoundStats.DemageDealt += attacker.Weapon; 
 
             if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
-                Combat(attacker, defenders, attackerStats, defenderStats);
+                Combat(attacker, defenders, attackerRoundStats, defenderRoundStats);
             }
 
             return defenders; 
@@ -92,15 +88,15 @@ public static class Battle
         {
             if (attacker.Weapon < defender.Shield)
             {
-                attackerStats.DemageDealt += attacker.Weapon;
-                attackerStats.DemageAbsorbedByDefendingPlayer += attacker.Weapon;
+                attackerRoundStats.DemageDealt += attacker.Weapon;
+                attackerRoundStats.DemageAbsorbedByDefendingPlayer += attacker.Weapon;
 
                 defender.Shield -= attacker.Weapon;
             }else
             {
-                attackerStats.DemageDealt += attacker.Weapon;
-                attackerStats.DemageAbsorbedByDefendingPlayer += defender.Shield;
-                attackerStats.DemageTakenByDefendingPlayer += attacker.Weapon - defender.Shield;
+                attackerRoundStats.DemageDealt += attacker.Weapon;
+                attackerRoundStats.DemageAbsorbedByDefendingPlayer += defender.Shield;
+                attackerRoundStats.DemageTakenByDefendingPlayer += attacker.Weapon - defender.Shield;
 
                 defender.Hull -= attacker.Weapon - defender.Shield;
                 defender.Shield = 0;
@@ -108,25 +104,24 @@ public static class Battle
         }
         else
         {
-            attackerStats.DemageDealt += attacker.Weapon;
-            attackerStats.DemageTakenByDefendingPlayer += attacker.Weapon;
+            attackerRoundStats.DemageDealt += attacker.Weapon;
+            attackerRoundStats.DemageTakenByDefendingPlayer += attacker.Weapon;
 
             defender.Hull -= attacker.Weapon;
         }
 
         if (IsTargetDestroyed(defender))
         {
-            defenderStats.LostShips.Add(defender);
 
             defender.Hull = 0;
             defender.Shield = 0;
             defender.IsDestroyed = true;
 
-            //Add debri to debri field
+            defenderRoundStats.LostUnits.Add(defender);
         }
 
         if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
-            Combat(attacker, defenders, attackerStats, defenderStats);
+            Combat(attacker, defenders, attackerRoundStats, defenderRoundStats);
         }  
 
         return defenders; 

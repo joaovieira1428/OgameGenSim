@@ -2,6 +2,7 @@ namespace OgameSimulatorPack.Classes;
 
 public class Attacker
 {
+    public string Coordinates { get; set; }
     public PlayerClass PlayerClass;
     public AllianceClass AllianceClass { get; set; }
     public int Weapon {get; set;}

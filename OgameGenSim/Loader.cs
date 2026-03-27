@@ -118,13 +118,14 @@ public class Loader(HttpClient client)
 
     public Defender GetCleanDefenderData(PlayerInformation playerInformation)
     {
-        var units = GetCleanUnitData(playerInformation.Researches, playerInformation.Ships, playerInformation.CharacterClassId, playerInformation.AllianceClassId);
+        var units = GetCleanUnitData(playerInformation.Researches, playerInformation.Ships, playerInformation.Coordinates, playerInformation.CharacterClassId, playerInformation.AllianceClassId);
 
-        units.AddRange(GetCleanUnitData(playerInformation.Researches, playerInformation.Defenses, playerInformation.CharacterClassId, playerInformation.AllianceClassId));
+        units.AddRange(GetCleanUnitData(playerInformation.Researches, playerInformation.Defenses, playerInformation.Coordinates, playerInformation.CharacterClassId, playerInformation.AllianceClassId));
 
 
         return new Defender()
         {
+            Coordinates = playerInformation.Coordinates,
             AllianceClass = (AllianceClass)playerInformation.AllianceClassId,
             PlayerClass = (PlayerClass)playerInformation.CharacterClassId,
             Armor = playerInformation.Researches.ArmourTechnology,
@@ -142,16 +143,17 @@ public class Loader(HttpClient client)
         
         return new Attacker()
         {
+            Coordinates = playerInformation.Coordinates,
             AllianceClass = (AllianceClass)playerInformation.AllianceClassId,
             PlayerClass = (PlayerClass)playerInformation.CharacterClassId,
             Armor = playerInformation.Researches.ArmourTechnology,
             Shield = playerInformation.Researches.ShieldingTechnology,
             Weapon = playerInformation.Researches.WeaponsTechnology,
-            Fleet = GetCleanUnitData(playerInformation.Researches, playerInformation.Ships, playerInformation.CharacterClassId, playerInformation.AllianceClassId)
+            Fleet = GetCleanUnitData(playerInformation.Researches, playerInformation.Ships, playerInformation.Coordinates, playerInformation.CharacterClassId, playerInformation.AllianceClassId)
         };
     }
 
-    private static List<CombatUnit> GetCleanUnitData<T>(Researches researches, Dictionary<UnitType, T> units, int charatcterClassId, int allianceClassId) where T : UnitStats
+    private static List<CombatUnit> GetCleanUnitData<T>(Researches researches, Dictionary<UnitType, T> units, string coords, int charatcterClassId, int allianceClassId) where T : UnitStats
     {
         var cleanUnits = new List<CombatUnit>();
 
@@ -167,7 +169,7 @@ public class Loader(HttpClient client)
                 {
                     var unit = new CombatUnit
                     {
-                        Id = i,
+                        PlayerCoordinates = coords,
                         ShipType = ship.Key,
                         Weapon = weaponValue,
                         Shield = shieldValue,
