@@ -96,5 +96,5 @@ public enum UnitType
 
     // Missiles
     ANTI_BALLISTIC_MISSILES = 502,
-    INTERPLANETARY_MISSILES = 503
+    INTERPLANETARY_MISSILES = 503,
 }

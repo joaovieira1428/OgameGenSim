@@ -1,17 +1,17 @@
 using System;
 using System.Text;
 using OgameSimulatorPack.Classes;
+using OgameSimulatorPack.SimUtilities;
 
 namespace OgameSimulatorPack.Statistics;
 
-public class BattleStatistics(List<Attacker> Attackers, List<Defender> Defenders)
+public class BattleStatistics()
 {
-    public List<PlayerStatistics> Attackers { get; set; } = [.. Attackers.Select(a => new PlayerStatistics(a))];
-    public List<PlayerStatistics> Defenders { get; set; } = [.. Defenders.Select(d => new PlayerStatistics(d))];
-    public List<RoundStatistics> RoundStatistics { get; set; } =[];
-
+    public List<RoundStatistics> RoundStatistics { get; set; } = [];
+    
 
     //TODO: Change this to foreach
+    //TODO: Move this out of the library
     public void WriteRoundsStatistics()
     {
         //TODO: Do Lost Units here
@@ -22,14 +22,15 @@ public class BattleStatistics(List<Attacker> Attackers, List<Defender> Defenders
         }
     }
 
+    //TODO: Move this out of the library
     //TODO: Change this to recieve Round instead on roundIndex; Do validation before it arries here
     public void WriteRoundStatistics(int roundNumber)
     {
         if(RoundStatistics.Count()-1 < roundNumber) Console.WriteLine("Invalid round number");
 
         var round = RoundStatistics[roundNumber];
-        var attacker = round.AttackerRoundStatistics;
-        var defender = round.DefenderRoundStatistics;
+        var attacker = round.AttackersRoundStatistics;
+        var defender = round.DefendersRoundStatistics;
 
         StringBuilder attackerStatsString = new();
         StringBuilder defenderStatsString = new();
@@ -66,12 +67,13 @@ public class BattleStatistics(List<Attacker> Attackers, List<Defender> Defenders
         Console.WriteLine(defenderStatsString.ToString());
     }
 
+    //TODO: Move this out of the library
     public void WriteUnitStatistics()
     {
         StringBuilder attackerStatsString = new();
         StringBuilder defenderStatsString = new();
 
-        foreach(var attacker in Attackers)
+        /*foreach(var attacker in Attackers)
         {
             attackerStatsString.AppendLine($"Attacker: {attacker.Coordinates}: ");
 
@@ -86,6 +88,7 @@ public class BattleStatistics(List<Attacker> Attackers, List<Defender> Defenders
                 attackerStatsString.AppendLine();
             }
         }
+        
 
         foreach(var defender in Defenders)
         {
@@ -105,6 +108,7 @@ public class BattleStatistics(List<Attacker> Attackers, List<Defender> Defenders
 
         Console.WriteLine(attackerStatsString.ToString());
         Console.WriteLine(defenderStatsString.ToString());
+        */
     }
         
 }
@@ -112,32 +116,38 @@ public class BattleStatistics(List<Attacker> Attackers, List<Defender> Defenders
 public class PlayerStatistics
 {
     public string Coordinates { get; set; }
-    public List<CombatUnit> Units { get; set; } = [];
-    public List<CombatUnit> LostUnits { get; set; } = [];
+    public Dictionary<UnitType, int> UnitAmount { get; set; }
+    public Dictionary<UnitType, int> UnitLostAmount { get; set; }
 
     public PlayerStatistics(Attacker attacker)
     {
         Coordinates = attacker.Coordinates;
-        Units = attacker.Fleet;
+        UnitAmount = attacker.UnitTypeAmounts;
+        UnitLostAmount = Utils.GetInitialUnitTypeAmounts();
     }
+
     public PlayerStatistics(Defender defender)
     {
         Coordinates = defender.Coordinates;
-        Units = defender.Units;
-    }   
+        UnitAmount = defender.UnitTypeAmounts;
+        UnitLostAmount = Utils.GetInitialUnitTypeAmounts();
+    }
 }
 
-public class RoundStatistics
+public class RoundStatistics(Dictionary<UnitType, int> globalUnitAmount, List<Attacker> attackers, List<Defender> defenders)
 {
-    public PlayerRoundStatistics AttackerRoundStatistics { get; set; } = new PlayerRoundStatistics();
-    public PlayerRoundStatistics DefenderRoundStatistics { get; set; } = new PlayerRoundStatistics();
+    public PlayersRoundStatistics AttackersRoundStatistics { get; set; } = new PlayersRoundStatistics(globalUnitAmount,attackers, defenders);
+    public PlayersRoundStatistics DefendersRoundStatistics { get; set; } = new PlayersRoundStatistics(globalUnitAmount, attackers, defenders);
 }
 
-public class PlayerRoundStatistics
+public class PlayersRoundStatistics(Dictionary<UnitType, int> globalUnitAmount, List<Attacker> attackers, List<Defender> defenders)
 {
     public int ShotsFired { get; set; } = 0;
     public double DemageDealt { get; set; } = 0;
     public double DemageAbsorbedByDefendingPlayer { get; set; } = 0;
     public double DemageTakenByDefendingPlayer { get; set; } = 0;
-    public List<CombatUnit> LostUnits { get; set; } = [];
+    public Dictionary<UnitType, int> GlobalUnitAmount { get; set; } = globalUnitAmount;
+    public Dictionary<UnitType, int> GlobalUnitLostAmount { get; set; } = Utils.GetInitialUnitTypeAmounts();
+    public List<PlayerStatistics> Attackers { get; set; } //= [.. attackers.Select(a => new PlayerStatistics(a))];
+    public List<PlayerStatistics> Defenders { get; set; } //= [.. defenders.Select(d => new PlayerStatistics(d))];
 }

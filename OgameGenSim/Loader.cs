@@ -105,12 +105,18 @@ public class Loader(HttpClient client)
 
         foreach(var attacker in attakcers)
         {
-            combatInfo.Attackers.Add(GetCleanAttackerData(attacker));
-        }
+            var attackerData = GetCleanAttackerData(attacker);
+            combatInfo.Attackers.Add(attackerData);
 
+            attackerData.UnitTypeAmounts.Select(x => combatInfo.GlobalUnitTypeAmounts[x.Key] += x.Value);
+        }
+        
         foreach(var defender in defenders)
         {
-            combatInfo.Defenders.Add(GetCleanDefenderData(defender));
+            var defenderData = GetCleanDefenderData(defender);
+            combatInfo.Defenders.Add(defenderData);
+
+            defenderData.UnitTypeAmounts.Select(x => combatInfo.GlobalUnitTypeAmounts[x.Key] += x.Value);
         }
 
         return combatInfo;
@@ -134,13 +140,13 @@ public class Loader(HttpClient client)
             Metal = playerInformation.Resources.Metal,
             Crystal = playerInformation.Resources.Crystal,
             Deuterium = playerInformation.Resources.Deuterium,
+            UnitTypeAmounts = playerInformation.Ships.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value.Amount)).ToDictionary(),
             Units = units
         };
     }
 
     public Attacker GetCleanAttackerData(PlayerInformation playerInformation)
-    {
-        
+    {   
         return new Attacker()
         {
             Coordinates = playerInformation.Coordinates,
@@ -149,6 +155,7 @@ public class Loader(HttpClient client)
             Armor = playerInformation.Researches.ArmourTechnology,
             Shield = playerInformation.Researches.ShieldingTechnology,
             Weapon = playerInformation.Researches.WeaponsTechnology,
+            UnitTypeAmounts = playerInformation.Ships.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value.Amount)).ToDictionary(),
             Fleet = GetCleanUnitData(playerInformation.Researches, playerInformation.Ships, playerInformation.Coordinates, playerInformation.CharacterClassId, playerInformation.AllianceClassId)
         };
     }

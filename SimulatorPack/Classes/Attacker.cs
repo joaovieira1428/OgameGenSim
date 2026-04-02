@@ -1,3 +1,5 @@
+using OgameSimulatorPack.SimUtilities;
+
 namespace OgameSimulatorPack.Classes;
 
 public class Attacker
@@ -8,5 +10,6 @@ public class Attacker
     public int Weapon {get; set;}
     public int Shield { get; set; }
     public int Armor { get; set; }
+    public Dictionary<UnitType, int> UnitTypeAmounts { get; set; } = [];
     public List<CombatUnit> Fleet { get; set; } = [];
 }

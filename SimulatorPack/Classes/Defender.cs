@@ -1,3 +1,5 @@
+using OgameSimulatorPack.SimUtilities;
+
 namespace OgameSimulatorPack.Classes;
 
 public class Defender
@@ -12,6 +14,7 @@ public class Defender
     public int Metal { get; set; }  
     public int Crystal { get; set; }
     public int Deuterium { get; set; }
+    public Dictionary<UnitType, int> UnitTypeAmounts { get; set; } = [];
     public List<CombatUnit> Units { get; set; } = [];
     
 }

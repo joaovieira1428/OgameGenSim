@@ -28,4 +28,9 @@ public static class Utils
         return Random.Shared.Next(0, count);
     }
 
+    public static Dictionary<UnitType, int> GetInitialUnitTypeAmounts()
+    {
+        return Enum.GetValues<UnitType>().Select(x => new KeyValuePair<UnitType, int>(x, 0)).ToDictionary();
+    }
+
 }
