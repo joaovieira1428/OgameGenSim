@@ -1,0 +1,113 @@
+using System;
+using System.Net;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using OgameGenSim.Classes;
+using static OgameGenSim.Utils.ClientResult;
+
+namespace OgameGenSim.Utils;
+
+public class GenSimClient(HttpClient client)
+{
+    private readonly HttpClient bankClient = client;
+
+    private const string FREE_API_URL = "https://ogapi.faw-kes.de/v1/report/" ;
+    private const string UNI_INFO_URL = "https://lobby.ogame.gameforge.com/api/servers";
+
+    public async Task<ClientResultObject<UniverseInformation>> LoadUniversesDataAsync(string language, int universeNumber)
+    {
+        var universesResult = await client.GetAsync(UNI_INFO_URL);
+
+        try
+        {
+            universesResult.EnsureSuccessStatusCode();
+        }
+        catch (HttpRequestException e)
+        {
+            //TODO: Change this out of here
+            /*Console.WriteLine($"Failed to load universes data: {e.Message}");*/
+
+            return new ClientResultObject<UniverseInformation>
+            {
+                StatusCode = (int)(e.StatusCode ?? HttpStatusCode.InternalServerError),
+                ErrorMessage = e.Message,
+            };
+        }
+
+        var jsonString = await universesResult.Content.ReadAsStringAsync();
+
+        var jsonArray = JsonNode.Parse(jsonString).AsArray();
+
+        var universesInfo = jsonArray.Select(x => x.Deserialize<UniverseInformation>(new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        }));
+
+
+        if(universesInfo == null)
+        {
+
+            //TODO: Change this out of here
+            //Console.WriteLine($"Failed to get report data: {report.Message}");
+
+            return new ClientResultObject<UniverseInformation>
+            {
+                StatusCode = (int)HttpStatusCode.InternalServerError,
+                ErrorMessage = "Failed to deserialize universes data"
+            };
+        }
+
+        var universeInformation = universesInfo.FirstOrDefault(x => x.Language == language && x.Number == universeNumber);
+
+        var universeInformationResult = new ClientResultObject<UniverseInformation>
+        {
+            StatusCode = (int) universesResult.StatusCode,
+            Result = universeInformation
+        };
+
+        return universeInformationResult;
+    }
+
+
+    public async Task<ClientResultObject<PlayerInformation>> GetReportDataAsync(string espionageId)
+    {
+        var espionageResult = await client.GetAsync(FREE_API_URL + espionageId);
+
+        try
+        {
+            espionageResult.EnsureSuccessStatusCode();
+        }
+        catch (HttpRequestException e)
+        {
+            return new ClientResultObject<PlayerInformation>
+            {
+                StatusCode = (int)(e.StatusCode ?? HttpStatusCode.InternalServerError),
+                ErrorMessage = e.Message
+            };
+        }
+        
+        var jsonString = await espionageResult.Content.ReadAsStringAsync();
+
+        var jsonObject = JsonNode.Parse(jsonString);
+
+        var playerInformation = jsonObject["RESULT_DATA"]["details"]["combatInformation"].Deserialize<PlayerInformation>(new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        if(playerInformation == null)
+        {
+            return new ClientResultObject<PlayerInformation>
+            {
+                StatusCode = (int)HttpStatusCode.InternalServerError,
+                ErrorMessage = "Failed to deserialize espionage report"
+            };
+        }
+
+        return  new ClientResultObject<PlayerInformation>
+        {
+            StatusCode = (int)espionageResult.StatusCode,
+            Result = playerInformation
+        };
+    }
+}

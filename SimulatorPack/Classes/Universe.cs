@@ -7,7 +7,7 @@ public class Universe
     public int PeacfullSpeed { get; set; }
     public int HoldingSpeed { get; set; }
     public int DebriPercentile { get; set; }
-    public bool DefenseDebrisPercentile { get; set; }
+    public int DefenseDebrisPercentile { get; set; }
     public bool DeutOnDebris { get; set; }
     public int Systems { get; set; }
     public int Galaxies { get; set; }

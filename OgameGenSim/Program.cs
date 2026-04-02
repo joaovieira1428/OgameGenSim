@@ -7,6 +7,9 @@ using OgameGenSim;
 HttpClient client = new();
 var loader = new Loader(client);
 
+//var universeInfo = await loader.LoadUniversesDataAsync();
+
+
 Console.WriteLine("How many Attackers? ");
 int attackersCount = int.Parse(Console.ReadLine());
 
@@ -18,7 +21,7 @@ var attackersData = loader.LoadAttackers(attackersCount);
 var defendersData = await loader.LoadDefenders(defendersCount);
 
 ///TODO: maybe put this in a try catch block to handle potential deserialization errors
-var cleanData = loader.GetCleanData(attackersData, defendersData);
+//var cleanData = loader.GetCleanData(attackersData, defendersData);
 
 /*var cleanData2 = new OgameSimulatorPack.Classes.SimCombatInformation
 {
@@ -86,6 +89,6 @@ var cleanData = loader.GetCleanData(attackersData, defendersData);
 };
 */
 
-var result = OgameSimulatorPack.Battle.DoBattle(cleanData);
+//var result = OgameSimulatorPack.Battle.DoBattle(cleanData);
 
 var asd = 1;

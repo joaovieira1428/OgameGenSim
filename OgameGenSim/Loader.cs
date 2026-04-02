@@ -11,93 +11,72 @@ namespace OgameGenSim;
 
 public class Loader(HttpClient client)
 {
-    public const string FREE_API_URL = "https://ogapi.faw-kes.de/v1/report/" ;
     private HttpClient Client { get; set; } = client;
+    private GenSimClient GenSimClient { get; set; } = new GenSimClient(client);
+    private string reportIdForUniverseData = string.Empty;
 
+    public async Task<SimCombatInformation> LoadCombatInformation()
+    {
+        Console.WriteLine("How many attackers? ");
+        var attackersCount = int.Parse(Console.ReadLine() ?? "0");
+
+        Console.WriteLine("How many defenders? ");
+        var defendersCount = int.Parse(Console.ReadLine() ?? "0");
+
+        var attackers = LoadAttackers(attackersCount);
+        var defenders = await LoadDefenders(defendersCount);
+
+        string[] splitReportId = reportIdForUniverseData.Split("-");
+        var universeLanguage = splitReportId[1];        
+        int.TryParse(splitReportId[2], out int universeNumber);
+
+        var universeInfo = await GenSimClient.LoadUniversesDataAsync(universeLanguage, universeNumber);
+
+        return GetCleanData(attackers, defenders, universeInfo.Result);
+    }
 
     public async Task<List<PlayerInformation>> LoadDefenders(int defendersCount)
     {
         List<PlayerInformation> defenders = [];
 
-        for(var i = 0; i < defendersCount; i++)
+        var isSuccessStatus = false;
+
+        while(defendersCount > 0 && !isSuccessStatus)
         {
-            var statusCode = HttpStatusCode.NoContent;
+            Console.WriteLine("Insert an espionage report API: ");
+            reportIdForUniverseData = Console.ReadLine();
 
-            PlayerInformation playerInformation = new();
+            var report = await GenSimClient.GetReportDataAsync(reportIdForUniverseData);
 
-            while(statusCode != HttpStatusCode.OK)
+            if (report.IsSuccessStatusCode)
             {
-                var report = await GetReportDataAsync();
-
-                playerInformation = report.PlayerInformation;
-
-                statusCode = report.StatusCode;
+                defenders.Add(report.Result);
+                defendersCount--;
             }
-        
-            defenders.Add(playerInformation);
+            else
+            {
+                Console.WriteLine($"Failed to get report data: {report.ErrorMessage}");
+            }
+
+            isSuccessStatus = report.IsSuccessStatusCode;
         }
 
         return defenders;
     }
 
-    public async Task<EspionageReportResult> GetReportDataAsync()
+    public List<PlayerInformation> LoadAttackers(int attackersCount)
     {
-        Console.WriteLine("Insert an espionage report API: ");
-        var espionageId = Console.ReadLine();
+        List<PlayerInformation> attackers = [];
 
-        var espionageResult = await Client.GetAsync(FREE_API_URL + espionageId);
-
-        try
+        for(var i = 0; i < attackersCount; i++)
         {
-            espionageResult.EnsureSuccessStatusCode();
-        }
-        catch (HttpRequestException e)
-        {
-            return new EspionageReportResult
-            {
-                StatusCode = e.StatusCode ?? HttpStatusCode.InternalServerError,
-                Message = e.Message
-            };
-
-        }
-        
-        //var myFile = File.ReadAllText(@"file_here");
-
-        //var data = JsonObject.Parse(myFile);
-        
-        var jsonString = await espionageResult.Content.ReadAsStringAsync();
-
-        var jsonObject = JsonNode.Parse(jsonString);
-
-        var espionageReport = jsonObject["RESULT_DATA"]["details"]["combatInformation"].Deserialize<PlayerInformation>(new JsonSerializerOptions()
-        {
-            PropertyNameCaseInsensitive = true
-        });
-
-        if(espionageReport == null)
-        {
-            var report = new EspionageReportResult
-            {
-                StatusCode = HttpStatusCode.InternalServerError,
-                Message = "Failed to deserialize espionage report"
-            };
-
-            Console.WriteLine($"Failed to get report data: {report.Message}");
-
-            return report;
+            attackers.Add(ParseAttackerData());
         }
 
-        var espionageReportResult = new EspionageReportResult
-        {
-            StatusCode = espionageResult.StatusCode,
-            Message = "Success",
-            PlayerInformation = espionageReport
-        };
-
-        return  espionageReportResult;
+        return attackers;
     }
 
-    public SimCombatInformation GetCleanData(List<PlayerInformation> attakcers, List<PlayerInformation> defenders)
+    public SimCombatInformation GetCleanData(List<PlayerInformation> attakcers, List<PlayerInformation> defenders, UniverseInformation universeInformation)
     {
         //TOOD: GetUniverseData()
         
@@ -118,6 +97,34 @@ public class Loader(HttpClient client)
 
             defenderData.UnitTypeAmounts.Select(x => combatInfo.GlobalUnitTypeAmounts[x.Key] += x.Value);
         }
+
+        combatInfo.Universe = new Universe()
+        {
+            EcoSpeed = universeInformation.Settings.EconomySpeed,
+            WarSpeed = universeInformation.Settings.FleetSpeedWar,
+            PeacfullSpeed = universeInformation.Settings.FleetSpeedPeaceful,
+            HoldingSpeed = universeInformation.Settings.FleetSpeedHolding,
+            DebriPercentile = universeInformation.Settings.DebrisFieldFactorShips,
+            DefenseDebrisPercentile = universeInformation.Settings.DebrisFieldFactorDefence,
+            //DeutOnDebris = universeInformation.Settings.
+        };
+
+
+        /*
+            public int EcoSpeed { get; set; }
+    public int WarSpeed { get; set; }
+    public int PeacfullSpeed { get; set; }
+    public int HoldingSpeed { get; set; }
+    public int DebriPercentile { get; set; }
+    public bool DefenseDebrisPercentile { get; set; }
+    public bool DeutOnDebris { get; set; }
+    public int Systems { get; set; }
+    public int Galaxies { get; set; }
+    public int DeutConsumptionPercentile { get; set; }
+    public bool IgnoreSystem { get; set; }
+    public bool IgnoreInactive { get; set; }
+        
+        */
 
         return combatInfo;
     }
@@ -214,18 +221,6 @@ public class Loader(HttpClient client)
         var techBonus = ResearchesIds.ResearchLevelMapping.GetValueOrDefault(techId) * techLevel;
 
         return (float)(defaultValue + (defaultValue * (LFBonus + techBonus)));
-    }
-
-    public List<PlayerInformation> LoadAttackers(int attackersCount)
-    {
-        List<PlayerInformation> attackers = [];
-
-        for(var i = 0; i < attackersCount; i++)
-        {
-            attackers.Add(ParseAttackerData());
-        }
-
-        return attackers;
     }
 
     public PlayerInformation ParseAttackerData()

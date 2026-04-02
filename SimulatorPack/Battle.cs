@@ -28,8 +28,7 @@ public static class Battle
             rounds++;
         }
 
-        //See if there's winners
-        //Change fleets with post sim results
+        battleStatistics.AttackerWon = defendersUnits.Count == 0 ? true : false;
 
         return simCombatInformation;
     }
@@ -49,9 +48,6 @@ public static class Battle
             //Attack random unit from attacker's fleet
             attackersUnits = Combat(d_Unit, attackersUnits, roundStatistics.DefendersRoundStatistics, roundStatistics.AttackersRoundStatistics);
         }
-
-        //battleStatistics.Attackers.Add(attackerStats);
-        //battleStatistics.Defenders.Add(defenderStats);
 
         var count1 = defendersUnits.Count(x => x.IsDestroyed);
         defendersUnits.RemoveAll(x => x.IsDestroyed);
@@ -111,12 +107,12 @@ public static class Battle
 
         if (IsTargetDestroyed(defender))
         {
-
             defender.Hull = 0;
             defender.Shield = 0;
             defender.IsDestroyed = true;
 
             defenderRoundStats.GlobalUnitLostAmount[defender.ShipType]++;
+            
         }
 
         if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){

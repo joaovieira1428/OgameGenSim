@@ -7,6 +7,7 @@ public class CombatInformation
 {
     public List<PlayerInformation> Attackers { get; set; } = [];
     public List<PlayerInformation> Defenders { get; set; } = [];
+    public UniverseInformation UniverseInformation { get; set; }
 }
 
 public class PlayerInformation

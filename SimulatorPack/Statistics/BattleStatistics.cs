@@ -8,7 +8,11 @@ namespace OgameSimulatorPack.Statistics;
 public class BattleStatistics()
 {
     public List<RoundStatistics> RoundStatistics { get; set; } = [];
-    
+    public int MetalDebri { get; set; }
+    public int CrystalDebri { get; set; }
+    public int DeuteriumDebri { get; set; }
+    public bool AttackerWon { get; set; }
+    //public bool DefenderWon { get; set; }
 
     //TODO: Change this to foreach
     //TODO: Move this out of the library
