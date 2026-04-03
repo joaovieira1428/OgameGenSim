@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Xml;
 using OgameGenSim.Classes;
 using static OgameGenSim.Utils.ClientResult;
 
@@ -12,11 +13,12 @@ public class GenSimClient(HttpClient client)
     private readonly HttpClient bankClient = client;
 
     private const string FREE_API_URL = "https://ogapi.faw-kes.de/v1/report/" ;
-    private const string UNI_INFO_URL = "https://lobby.ogame.gameforge.com/api/servers";
+    private const string UNI_INFO_URL = $"https://s{{0}}-{{1}}.ogame.gameforge.com/api/serverData.xml";
 
     public async Task<ClientResultObject<UniverseInformation>> LoadUniversesDataAsync(string language, int universeNumber)
     {
-        var universesResult = await client.GetAsync(UNI_INFO_URL);
+        var url = string.Format(UNI_INFO_URL, universeNumber, language);
+        var universesResult = await client.GetAsync(url);
 
         try
         {
@@ -24,48 +26,40 @@ public class GenSimClient(HttpClient client)
         }
         catch (HttpRequestException e)
         {
-            //TODO: Change this out of here
-            /*Console.WriteLine($"Failed to load universes data: {e.Message}");*/
-
             return new ClientResultObject<UniverseInformation>
             {
                 StatusCode = (int)(e.StatusCode ?? HttpStatusCode.InternalServerError),
                 ErrorMessage = e.Message,
             };
         }
+      
+        var xmlString = await universesResult.Content.ReadAsStringAsync();
 
-        var jsonString = await universesResult.Content.ReadAsStringAsync();
+        var xmlSerializer = new System.Xml.Serialization.XmlSerializer(typeof(UniverseInformation), 
+        new System.Xml.Serialization.XmlRootAttribute("serverData"));
 
-        var jsonArray = JsonNode.Parse(jsonString).AsArray();
-
-        var universesInfo = jsonArray.Select(x => x.Deserialize<UniverseInformation>(new JsonSerializerOptions()
+        using (var stringReader = new StringReader(xmlString))
         {
-            PropertyNameCaseInsensitive = true
-        }));
+            var universesInfo = xmlSerializer.Deserialize(stringReader);
 
-
-        if(universesInfo == null)
-        {
-
-            //TODO: Change this out of here
-            //Console.WriteLine($"Failed to get report data: {report.Message}");
-
-            return new ClientResultObject<UniverseInformation>
+            if(universesInfo == null)
             {
-                StatusCode = (int)HttpStatusCode.InternalServerError,
-                ErrorMessage = "Failed to deserialize universes data"
+                return new ClientResultObject<UniverseInformation>
+                {
+                    StatusCode = (int)HttpStatusCode.InternalServerError,
+                    ErrorMessage = "Failed to deserialize universes data"
+                };
+            }
+            
+            var universeInformationResult = new ClientResultObject<UniverseInformation>
+            {
+                StatusCode = (int) universesResult.StatusCode,
+                Result = (UniverseInformation) universesInfo
             };
-        }
 
-        var universeInformation = universesInfo.FirstOrDefault(x => x.Language == language && x.Number == universeNumber);
-
-        var universeInformationResult = new ClientResultObject<UniverseInformation>
-        {
-            StatusCode = (int) universesResult.StatusCode,
-            Result = universeInformation
+            return universeInformationResult;
         };
-
-        return universeInformationResult;
+        
     }
 
 

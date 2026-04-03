@@ -11,12 +11,12 @@ namespace OgameGenSim;
 
 public class Loader(HttpClient client)
 {
-    private HttpClient Client { get; set; } = client;
     private GenSimClient GenSimClient { get; set; } = new GenSimClient(client);
     private string reportIdForUniverseData = string.Empty;
 
     public async Task<SimCombatInformation> LoadCombatInformation()
     {
+        //TODO: Protect this shit or it will break
         Console.WriteLine("How many attackers? ");
         var attackersCount = int.Parse(Console.ReadLine() ?? "0");
 
@@ -32,7 +32,18 @@ public class Loader(HttpClient client)
 
         var universeInfo = await GenSimClient.LoadUniversesDataAsync(universeLanguage, universeNumber);
 
-        return GetCleanData(attackers, defenders, universeInfo.Result);
+        if (!universeInfo.IsSuccessStatusCode)
+        {
+            return GetCleanData(attackers, defenders, universeInfo.Result);
+        }
+        else
+        {
+            Console.WriteLine($"Failed to get universe data: {universeInfo.ErrorMessage}");
+
+            //TODO: Put universeInfo to null and document it and protect methods accordingly
+            return GetCleanData(attackers, defenders, new UniverseInformation());
+        }
+
     }
 
     public async Task<List<PlayerInformation>> LoadDefenders(int defendersCount)
@@ -100,31 +111,19 @@ public class Loader(HttpClient client)
 
         combatInfo.Universe = new Universe()
         {
-            EcoSpeed = universeInformation.Settings.EconomySpeed,
-            WarSpeed = universeInformation.Settings.FleetSpeedWar,
-            PeacfullSpeed = universeInformation.Settings.FleetSpeedPeaceful,
-            HoldingSpeed = universeInformation.Settings.FleetSpeedHolding,
-            DebriPercentile = universeInformation.Settings.DebrisFieldFactorShips,
-            DefenseDebrisPercentile = universeInformation.Settings.DebrisFieldFactorDefence,
-            //DeutOnDebris = universeInformation.Settings.
+            EcoSpeed = universeInformation.Speed,
+            WarSpeed = universeInformation.SpeedFleetWar,
+            PeacfullSpeed = universeInformation.SpeedFleetPeaceful,
+            HoldingSpeed = universeInformation.SpeedFleetHolding,
+            Debrifactor = universeInformation.DebrisFactor,
+            DefenseDebrisFactor = universeInformation.DebrisFactorDef,
+            //DeuteriumOnDebris = universeInformation.DeuteriumInDebris,
+            Systems = universeInformation.Systems,
+            Galaxies = universeInformation.Galaxies,
+            DeuteriumSaveFactor = universeInformation.GlobalDeuteriumSaveFactor,
+            //IgnoreInactiveSystem = universeInformation.FleetIgnoreInactiveSystems,
+            //IgnoreEmptySystem = universeInformation.FleetIgnoreEmptySystems
         };
-
-
-        /*
-            public int EcoSpeed { get; set; }
-    public int WarSpeed { get; set; }
-    public int PeacfullSpeed { get; set; }
-    public int HoldingSpeed { get; set; }
-    public int DebriPercentile { get; set; }
-    public bool DefenseDebrisPercentile { get; set; }
-    public bool DeutOnDebris { get; set; }
-    public int Systems { get; set; }
-    public int Galaxies { get; set; }
-    public int DeutConsumptionPercentile { get; set; }
-    public bool IgnoreSystem { get; set; }
-    public bool IgnoreInactive { get; set; }
-        
-        */
 
         return combatInfo;
     }

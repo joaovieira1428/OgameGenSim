@@ -6,12 +6,12 @@ public class Universe
     public int WarSpeed { get; set; }
     public int PeacfullSpeed { get; set; }
     public int HoldingSpeed { get; set; }
-    public int DebriPercentile { get; set; }
-    public int DefenseDebrisPercentile { get; set; }
-    public bool DeutOnDebris { get; set; }
+    public double Debrifactor { get; set; }
+    public double DefenseDebrisFactor { get; set; }
+    public bool DeuteriumOnDebris { get; set; }
     public int Systems { get; set; }
     public int Galaxies { get; set; }
-    public int DeutConsumptionPercentile { get; set; }
-    public bool IgnoreSystem { get; set; }
-    public bool IgnoreInactive { get; set; }
+    public double DeuteriumSaveFactor { get; set; }
+    public bool IgnoreEmptySystem { get; set; }
+    public bool IgnoreInactiveSystem { get; set; }
 }

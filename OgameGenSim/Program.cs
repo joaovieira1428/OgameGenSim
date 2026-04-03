@@ -2,26 +2,14 @@
 using OgameGenSim;
 
 //sr-en-271-c5a37ce8be7144f68f295f5acea2c7b834708113
-//sr-en-271-676bffac5e804034944cd136fd4754130d637d87 - flava's fleet
+//sr-en-273-8d3743a9170236490cc30f42a19d07aa708f0cd4
 
 HttpClient client = new();
 var loader = new Loader(client);
 
-//var universeInfo = await loader.LoadUniversesDataAsync();
-
-
-Console.WriteLine("How many Attackers? ");
-int attackersCount = int.Parse(Console.ReadLine());
-
-Console.WriteLine("How many Defenders? ");
-int defendersCount = int.Parse(Console.ReadLine());
-
-var attackersData = loader.LoadAttackers(attackersCount);
-
-var defendersData = await loader.LoadDefenders(defendersCount);
 
 ///TODO: maybe put this in a try catch block to handle potential deserialization errors
-//var cleanData = loader.GetCleanData(attackersData, defendersData);
+var cleanData = await loader.LoadCombatInformation();
 
 /*var cleanData2 = new OgameSimulatorPack.Classes.SimCombatInformation
 {
@@ -89,6 +77,6 @@ var defendersData = await loader.LoadDefenders(defendersCount);
 };
 */
 
-//var result = OgameSimulatorPack.Battle.DoBattle(cleanData);
+var result = OgameSimulatorPack.Battle.DoBattle(cleanData);
 
 var asd = 1;
