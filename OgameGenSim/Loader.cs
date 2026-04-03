@@ -46,7 +46,7 @@ public class Loader(HttpClient client)
 
     }
 
-    public async Task<List<PlayerInformation>> LoadDefenders(int defendersCount)
+    private async Task<List<PlayerInformation>> LoadDefenders(int defendersCount)
     {
         List<PlayerInformation> defenders = [];
 
@@ -75,7 +75,7 @@ public class Loader(HttpClient client)
         return defenders;
     }
 
-    public List<PlayerInformation> LoadAttackers(int attackersCount)
+    private List<PlayerInformation> LoadAttackers(int attackersCount)
     {
         List<PlayerInformation> attackers = [];
 
@@ -87,7 +87,7 @@ public class Loader(HttpClient client)
         return attackers;
     }
 
-    public SimCombatInformation GetCleanData(List<PlayerInformation> attakcers, List<PlayerInformation> defenders, UniverseInformation universeInformation)
+    private SimCombatInformation GetCleanData(List<PlayerInformation> attakcers, List<PlayerInformation> defenders, UniverseInformation universeInformation)
     {
         //TOOD: GetUniverseData()
         
@@ -98,7 +98,7 @@ public class Loader(HttpClient client)
             var attackerData = GetCleanAttackerData(attacker);
             combatInfo.Attackers.Add(attackerData);
 
-            attackerData.UnitTypeAmounts.Select(x => combatInfo.GlobalUnitTypeAmounts[x.Key] += x.Value);
+            attackerData.UnitTypeAmounts.Select(x => combatInfo.AttackersGlobalUnitTypeAmounts[x.Key] += x.Value);
         }
         
         foreach(var defender in defenders)
@@ -106,7 +106,7 @@ public class Loader(HttpClient client)
             var defenderData = GetCleanDefenderData(defender);
             combatInfo.Defenders.Add(defenderData);
 
-            defenderData.UnitTypeAmounts.Select(x => combatInfo.GlobalUnitTypeAmounts[x.Key] += x.Value);
+            defenderData.UnitTypeAmounts.Select(x => combatInfo.DefendersGlobalUnitTypeAmounts[x.Key] += x.Value);
         }
 
         combatInfo.Universe = new Universe()
@@ -117,18 +117,18 @@ public class Loader(HttpClient client)
             HoldingSpeed = universeInformation.SpeedFleetHolding,
             Debrifactor = universeInformation.DebrisFactor,
             DefenseDebrisFactor = universeInformation.DebrisFactorDef,
-            //DeuteriumOnDebris = universeInformation.DeuteriumInDebris,
+            DeuteriumOnDebris = Convert.ToBoolean(universeInformation.DeuteriumInDebris),
             Systems = universeInformation.Systems,
             Galaxies = universeInformation.Galaxies,
             DeuteriumSaveFactor = universeInformation.GlobalDeuteriumSaveFactor,
-            //IgnoreInactiveSystem = universeInformation.FleetIgnoreInactiveSystems,
-            //IgnoreEmptySystem = universeInformation.FleetIgnoreEmptySystems
+            IgnoreInactiveSystem = Convert.ToBoolean(universeInformation.FleetIgnoreInactiveSystems),
+            IgnoreEmptySystem = Convert.ToBoolean(universeInformation.FleetIgnoreEmptySystems)
         };
 
         return combatInfo;
     }
 
-    public Defender GetCleanDefenderData(PlayerInformation playerInformation)
+    private Defender GetCleanDefenderData(PlayerInformation playerInformation)
     {
         var units = GetCleanUnitData(playerInformation.Researches, playerInformation.Ships, playerInformation.Coordinates, playerInformation.CharacterClassId, playerInformation.AllianceClassId);
 
@@ -151,7 +151,7 @@ public class Loader(HttpClient client)
         };
     }
 
-    public Attacker GetCleanAttackerData(PlayerInformation playerInformation)
+    private Attacker GetCleanAttackerData(PlayerInformation playerInformation)
     {   
         return new Attacker()
         {
@@ -222,7 +222,7 @@ public class Loader(HttpClient client)
         return (float)(defaultValue + (defaultValue * (LFBonus + techBonus)));
     }
 
-    public PlayerInformation ParseAttackerData()
+    private PlayerInformation ParseAttackerData()
     {
         string? attackerJson = null;
 

@@ -12,6 +12,14 @@ public class CombatUnit
     public double Hull { get; set; }
     public double FullHullValue { get; set; }
     public bool IsDestroyed { get; set; }
+    public int MetalCost { get; set; }
+    public int CrystalCost { get; set; }
+    public int DeuteriumCost { get; set; }
+
+    internal bool IsShip()
+    {
+        return (int)ShipType < 400;
+    }
 }
 
 public class Ships : CombatUnit

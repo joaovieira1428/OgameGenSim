@@ -5,7 +5,7 @@ using OgameSimulatorPack.SimUtilities;
 
 namespace OgameSimulatorPack.Statistics;
 
-public class BattleStatistics()
+public class BattleStatistics
 {
     public List<RoundStatistics> RoundStatistics { get; set; } = [];
     public int MetalDebri { get; set; }
@@ -138,10 +138,10 @@ public class PlayerStatistics
     }
 }
 
-public class RoundStatistics(Dictionary<UnitType, int> globalUnitAmount, List<Attacker> attackers, List<Defender> defenders)
+public class RoundStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, Dictionary<UnitType, int> defendersGlobalUnitAmount, List<Attacker> attackers, List<Defender> defenders)
 {
-    public PlayersRoundStatistics AttackersRoundStatistics { get; set; } = new PlayersRoundStatistics(globalUnitAmount,attackers, defenders);
-    public PlayersRoundStatistics DefendersRoundStatistics { get; set; } = new PlayersRoundStatistics(globalUnitAmount, attackers, defenders);
+    public PlayersRoundStatistics AttackersRoundStatistics { get; set; } = new PlayersRoundStatistics(attackersGlobalUnitAmount,attackers, defenders);
+    public PlayersRoundStatistics DefendersRoundStatistics { get; set; } = new PlayersRoundStatistics(defendersGlobalUnitAmount, attackers, defenders);
 }
 
 public class PlayersRoundStatistics(Dictionary<UnitType, int> globalUnitAmount, List<Attacker> attackers, List<Defender> defenders)
@@ -150,6 +150,9 @@ public class PlayersRoundStatistics(Dictionary<UnitType, int> globalUnitAmount, 
     public double DemageDealt { get; set; } = 0;
     public double DemageAbsorbedByDefendingPlayer { get; set; } = 0;
     public double DemageTakenByDefendingPlayer { get; set; } = 0;
+    public int MetalDebri { get; set; }
+    public int CrystalDebri { get; set; }
+    public int DeuteriumDebri { get; set; }
     public Dictionary<UnitType, int> GlobalUnitAmount { get; set; } = globalUnitAmount;
     public Dictionary<UnitType, int> GlobalUnitLostAmount { get; set; } = Utils.GetInitialUnitTypeAmounts();
     public List<PlayerStatistics> Attackers { get; set; } //= [.. attackers.Select(a => new PlayerStatistics(a))];

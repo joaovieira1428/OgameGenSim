@@ -77,6 +77,8 @@ var cleanData = await loader.LoadCombatInformation();
 };
 */
 
-var result = OgameSimulatorPack.Battle.DoBattle(cleanData);
+var simlator = new OgameSimulatorPack.Battle(cleanData.Universe.Debrifactor, cleanData.Universe.DefenseDebrisFactor, cleanData.Universe.DeuteriumOnDebris);
+
+var result = simlator.DoBattle(cleanData);
 
 var asd = 1;

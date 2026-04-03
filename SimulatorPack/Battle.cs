@@ -5,11 +5,13 @@ using OgameSimulatorPack.Statistics;
 
 namespace OgameSimulatorPack;
 
-public static class Battle
+public class Battle(double debriFactor, double DefenseDebrisFactor, bool DeuteriumOnDebris)
 {
-    public static int countCombats = 0;
+    public double DebriFactor = debriFactor;
+    public double DefenseDebrisFactor = DefenseDebrisFactor;
+    public bool DeuteriumOnDebris = DeuteriumOnDebris;
 
-    public static SimCombatInformation DoBattle(SimCombatInformation simCombatInformation)
+    public BattleStatistics DoBattle(SimCombatInformation simCombatInformation)
     {
         var attackersUnits = simCombatInformation.Attackers.SelectMany(a => a.Fleet).ToList();
         var defendersUnits = simCombatInformation.Defenders.SelectMany(d => d.Units).ToList();
@@ -21,20 +23,33 @@ public static class Battle
 
         while(rounds < 6 && attackersUnits.Count > 0 && defendersUnits.Count > 0)
         {            
-            var roundStats = new RoundStatistics(simCombatInformation.GlobalUnitTypeAmounts, simCombatInformation.Attackers, simCombatInformation.Defenders);
+            var roundStats = new RoundStatistics(simCombatInformation.AttackersGlobalUnitTypeAmounts, simCombatInformation.DefendersGlobalUnitTypeAmounts, 
+                                                simCombatInformation.Attackers, simCombatInformation.Defenders);
+                                                
             (attackersUnits, defendersUnits) = DoRound(attackersUnits, defendersUnits, roundStats);
             battleStatistics.RoundStatistics.Add(roundStats);
 
             rounds++;
         }
 
-        battleStatistics.AttackerWon = defendersUnits.Count == 0 ? true : false;
+        foreach(var round in battleStatistics.RoundStatistics)
+        {
+            battleStatistics.MetalDebri += round.AttackersRoundStatistics.MetalDebri;
+            battleStatistics.CrystalDebri += round.AttackersRoundStatistics.CrystalDebri;
+            battleStatistics.DeuteriumDebri += round.AttackersRoundStatistics.DeuteriumDebri;
 
-        return simCombatInformation;
+            battleStatistics.MetalDebri += round.DefendersRoundStatistics.MetalDebri;
+            battleStatistics.CrystalDebri += round.DefendersRoundStatistics.CrystalDebri;
+            battleStatistics.DeuteriumDebri += round.DefendersRoundStatistics.DeuteriumDebri;
+        }
+
+        battleStatistics.AttackerWon = defendersUnits.Count == 0;
+
+        return battleStatistics;
     }
 
 
-    private static (List<CombatUnit>, List<CombatUnit>) DoRound(List<CombatUnit> attackersUnits, List<CombatUnit> defendersUnits, RoundStatistics roundStatistics)
+    private (List<CombatUnit>, List<CombatUnit>) DoRound(List<CombatUnit> attackersUnits, List<CombatUnit> defendersUnits, RoundStatistics roundStatistics)
     {
         foreach(var a_Unit in attackersUnits)
         {
@@ -60,9 +75,8 @@ public static class Battle
         return (attackersUnits, defendersUnits);
     }
 
-    private static List<CombatUnit> Combat(CombatUnit attacker, List<CombatUnit> defenders, PlayersRoundStatistics attackerRoundStats, PlayersRoundStatistics defenderRoundStats)
+    private List<CombatUnit> Combat(CombatUnit attacker, List<CombatUnit> defenders, PlayersRoundStatistics attackerRoundStats, PlayersRoundStatistics defenderRoundStats)
     {    
-        countCombats++;
         attackerRoundStats.ShotsFired++;
     
         var index = Utils.GetRandomUnitIndex(defenders.Count);
@@ -112,7 +126,24 @@ public static class Battle
             defender.IsDestroyed = true;
 
             defenderRoundStats.GlobalUnitLostAmount[defender.ShipType]++;
-            
+            defenderRoundStats.Defenders.First(x => x.Coordinates == defender.PlayerCoordinates).UnitLostAmount[defender.ShipType]++;
+
+            if (defender.IsShip())
+            {
+                defenderRoundStats.MetalDebri += (int)(defender.MetalCost * DebriFactor);
+                defenderRoundStats.CrystalDebri += (int)(defender.CrystalCost * DebriFactor);
+
+                if(DeuteriumOnDebris) 
+                    defenderRoundStats.DeuteriumDebri += (int)(defender.DeuteriumCost * DebriFactor);
+            }
+            else
+            {
+                defenderRoundStats.MetalDebri += (int)(defender.MetalCost * DefenseDebrisFactor);
+                defenderRoundStats.CrystalDebri += (int)(defender.CrystalCost * DefenseDebrisFactor);
+
+                if(DeuteriumOnDebris) 
+                    defenderRoundStats.DeuteriumDebri += (int)(defender.DeuteriumCost * DefenseDebrisFactor);
+            }
         }
 
         if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
@@ -122,7 +153,7 @@ public static class Battle
         return defenders; 
     }
 
-    private static bool IsTargetDestroyed(CombatUnit target)
+    private bool IsTargetDestroyed(CombatUnit target)
     {
         if(target.Hull <= 0) return true;
         
@@ -139,7 +170,4 @@ public static class Battle
 
         return false;
     }
-
-
-    
 }
