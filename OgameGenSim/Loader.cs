@@ -98,7 +98,7 @@ public class Loader(HttpClient client)
             var attackerData = GetCleanAttackerData(attacker);
             combatInfo.Attackers.Add(attackerData);
 
-            attackerData.UnitTypeAmounts.Select(x => combatInfo.AttackersGlobalUnitTypeAmounts[x.Key] += x.Value);
+            attackerData.UnitTypeAmounts.Select(x => combatInfo.GlobalAttackersUnitAmount[x.Key] += x.Value);
         }
         
         foreach(var defender in defenders)
@@ -106,7 +106,7 @@ public class Loader(HttpClient client)
             var defenderData = GetCleanDefenderData(defender);
             combatInfo.Defenders.Add(defenderData);
 
-            defenderData.UnitTypeAmounts.Select(x => combatInfo.DefendersGlobalUnitTypeAmounts[x.Key] += x.Value);
+            defenderData.UnitTypeAmounts.Select(x => combatInfo.GlobalDefendersUnitAmount[x.Key] += x.Value);
         }
 
         combatInfo.Universe = new Universe()
@@ -128,14 +128,14 @@ public class Loader(HttpClient client)
         return combatInfo;
     }
 
-    private Defender GetCleanDefenderData(PlayerInformation playerInformation)
+    private Player GetCleanDefenderData(PlayerInformation playerInformation)
     {
         var units = GetCleanUnitData(playerInformation.Researches, playerInformation.Ships, playerInformation.Coordinates, playerInformation.CharacterClassId, playerInformation.AllianceClassId);
 
         units.AddRange(GetCleanUnitData(playerInformation.Researches, playerInformation.Defenses, playerInformation.Coordinates, playerInformation.CharacterClassId, playerInformation.AllianceClassId));
 
 
-        return new Defender()
+        return new Player()
         {
             Coordinates = playerInformation.Coordinates,
             AllianceClass = (AllianceClass)playerInformation.AllianceClassId,
@@ -143,17 +143,17 @@ public class Loader(HttpClient client)
             Armor = playerInformation.Researches.ArmourTechnology,
             Shield = playerInformation.Researches.ShieldingTechnology,
             Weapon = playerInformation.Researches.WeaponsTechnology,
-            Metal = playerInformation.Resources.Metal,
-            Crystal = playerInformation.Resources.Crystal,
-            Deuterium = playerInformation.Resources.Deuterium,
+            //Metal = playerInformation.Resources.Metal,
+            //Crystal = playerInformation.Resources.Crystal,
+            //Deuterium = playerInformation.Resources.Deuterium,
             UnitTypeAmounts = playerInformation.Ships.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value.Amount)).ToDictionary(),
             Units = units
         };
     }
 
-    private Attacker GetCleanAttackerData(PlayerInformation playerInformation)
+    private Player GetCleanAttackerData(PlayerInformation playerInformation)
     {   
-        return new Attacker()
+        return new Player()
         {
             Coordinates = playerInformation.Coordinates,
             AllianceClass = (AllianceClass)playerInformation.AllianceClassId,
@@ -162,7 +162,7 @@ public class Loader(HttpClient client)
             Shield = playerInformation.Researches.ShieldingTechnology,
             Weapon = playerInformation.Researches.WeaponsTechnology,
             UnitTypeAmounts = playerInformation.Ships.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value.Amount)).ToDictionary(),
-            Fleet = GetCleanUnitData(playerInformation.Researches, playerInformation.Ships, playerInformation.Coordinates, playerInformation.CharacterClassId, playerInformation.AllianceClassId)
+            Units = GetCleanUnitData(playerInformation.Researches, playerInformation.Ships, playerInformation.Coordinates, playerInformation.CharacterClassId, playerInformation.AllianceClassId)
         };
     }
 

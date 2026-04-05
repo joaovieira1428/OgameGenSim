@@ -13,21 +13,27 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
 
     public BattleStatistics DoBattle(SimCombatInformation simCombatInformation)
     {
-        var attackersUnits = simCombatInformation.Attackers.SelectMany(a => a.Fleet).ToList();
+        var attackersUnits = simCombatInformation.Attackers.SelectMany(a => a.Units).ToList();
         var defendersUnits = simCombatInformation.Defenders.SelectMany(d => d.Units).ToList();
+
+        var globalAttackersUnitAmount = simCombatInformation.GlobalAttackersUnitAmount;
+        var globalDefendersUnitAmount = simCombatInformation.GlobalDefendersUnitAmount;
 
         var rounds = 0;
 
         var battleStatistics = new BattleStatistics();
-
+        
 
         while(rounds < 6 && attackersUnits.Count > 0 && defendersUnits.Count > 0)
         {            
-            var roundStats = new RoundStatistics(simCombatInformation.AttackersGlobalUnitTypeAmounts, simCombatInformation.DefendersGlobalUnitTypeAmounts, 
+            var roundStats = new RoundStatistics(globalAttackersUnitAmount, globalDefendersUnitAmount, 
                                                 simCombatInformation.Attackers, simCombatInformation.Defenders);
                                                 
             (attackersUnits, defendersUnits) = DoRound(attackersUnits, defendersUnits, roundStats);
             battleStatistics.RoundStatistics.Add(roundStats);
+
+            globalAttackersUnitAmount = roundStats.AttackersRoundStatistics.GlobalUnitAmount;
+            globalDefendersUnitAmount = roundStats.DefendersRoundStatistics.GlobalUnitAmount;
 
             rounds++;
         }
@@ -71,7 +77,7 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
 
         foreach(var a_Unit in attackersUnits) a_Unit.Shield = a_Unit.FullShieldValue;
         foreach(var d_Unit in defendersUnits) d_Unit.Shield = d_Unit.FullShieldValue;
-
+        
         return (attackersUnits, defendersUnits);
     }
 
@@ -125,8 +131,12 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
             defender.Shield = 0;
             defender.IsDestroyed = true;
 
-            defenderRoundStats.GlobalUnitLostAmount[defender.ShipType]++;
-            defenderRoundStats.Defenders.First(x => x.Coordinates == defender.PlayerCoordinates).UnitLostAmount[defender.ShipType]++;
+            var defenderPlayerStats = defenderRoundStats.Players.First(x => x.Coordinates == defender.PlayerCoordinates);
+
+            defenderRoundStats.GlobalUnitLostAmount[defender.ShipType]++;;
+            defenderRoundStats.GlobalUnitAmount[defender.ShipType]--;
+            defenderPlayerStats.UnitLostAmount[defender.ShipType]++;
+            defenderPlayerStats.UnitAmount[defender.ShipType]--;
 
             if (defender.IsShip())
             {
