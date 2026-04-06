@@ -21,7 +21,8 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
 
         var rounds = 0;
 
-        var battleStatistics = new BattleStatistics();
+        var battleStatistics = new BattleStatistics(globalAttackersUnitAmount, globalDefendersUnitAmount, 
+                                                simCombatInformation.Attackers, simCombatInformation.Defenders);
         
 
         while(rounds < 6 && attackersUnits.Count > 0 && defendersUnits.Count > 0)

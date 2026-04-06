@@ -5,18 +5,20 @@ using OgameSimulatorPack.SimUtilities;
 
 namespace OgameSimulatorPack.Statistics;
 
-public class BattleStatistics()
+public class BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, Dictionary<UnitType, int> defendersGlobalUnitAmount, List<Player> attackers, List<Player> defenders)
 {
     public List<RoundStatistics> RoundStatistics { get; set; } = [];
+    public List<PlayerStatistics> Attackers { get; set; } = [.. attackers.Select(x => new PlayerStatistics(x))];
+    public List<PlayerStatistics> Defenders { get; set; } = [.. defenders.Select(x => new PlayerStatistics(x))];
+    public Dictionary<UnitType, int> GlobalAttackersAmount { get; set; } = attackersGlobalUnitAmount;
+    public Dictionary<UnitType, int> GlobalDefendersAmount { get; set; } = defendersGlobalUnitAmount;
     public int MetalDebri { get; set; }
     public int CrystalDebri { get; set; }
     public int DeuteriumDebri { get; set; }
     public bool AttackerWon { get; set; }
     //public bool DefenderWon { get; set; }
     
-    //TODO: See how to do the overall status
 
-    //TODO: Change this to foreach
     public void WriteRoundsStatistics()
     {
         foreach(var round in RoundStatistics)
@@ -25,7 +27,6 @@ public class BattleStatistics()
         }
     }
 
-    //TODO: Change this to recieve Round instead on roundIndex; Do validation before it arries here
     public void WriteRoundStatistics(RoundStatistics round)
     {
         var attacker = round.AttackersRoundStatistics;
@@ -65,7 +66,6 @@ public class BattleStatistics()
         Console.WriteLine(defenderStatsString.ToString());
     }
 
-    //TODO: Move this out of the library
     public void WriteUnitStatistics()
     {
         StringBuilder attackerStatsString = new();
@@ -109,6 +109,65 @@ public class BattleStatistics()
 
         Console.WriteLine(attackerStatsString.ToString());
         Console.WriteLine(defenderStatsString.ToString());  
+    }
+
+    public void WriteBattleStatistics()
+    {
+        var lostAttackers = Utils.GetInitialUnitTypeAmounts();
+        var lostDeffenders = Utils.GetInitialUnitTypeAmounts();
+
+        foreach(var round in RoundStatistics)
+        {
+            lostAttackers.ToDictionary(x => x.Key, x=> x.Value + round.AttackersRoundStatistics.GlobalUnitLostAmount[x.Key]);
+            lostDeffenders.ToDictionary(x => x.Key,  x => x.Value + round.DefendersRoundStatistics.GlobalUnitLostAmount[x.Key]);
+        }
+
+        foreach(var unitType in GlobalAttackersAmount)
+        {
+            var unitTypeCount = unitType.Value;
+            var lostUnitTypeCount = lostAttackers[unitType.Key];
+
+            Console.WriteLine($"{unitType.Key}: -{lostUnitTypeCount} : {unitTypeCount} ");
+        }
+
+        foreach(var unitType in GlobalDefendersAmount)
+        {
+            var unitTypeCount = unitType.Value;
+            var lostUnitTypeCount = lostDeffenders[unitType.Key];
+
+            Console.WriteLine($"{unitType.Key}: -{lostUnitTypeCount} : {unitTypeCount} ");
+        }
+    }
+
+    public void WriteBattleStatisticsPerPlayer(string playerCoordinates)
+    {
+        var player = Attackers.FirstOrDefault(x => x.Coordinates == playerCoordinates) 
+        ?? Defenders.FirstOrDefault(x => x.Coordinates == playerCoordinates);
+
+        if(player == null)
+        {
+            Console.WriteLine($"Player with coordinates {playerCoordinates} not found.");
+            return;
+        }
+
+        foreach(var round in RoundStatistics)
+        {
+            var playerRoundStats = round.AttackersRoundStatistics.Players.FirstOrDefault(x => x.Coordinates == playerCoordinates) 
+            ?? round.DefendersRoundStatistics.Players.FirstOrDefault(x => x.Coordinates == playerCoordinates);
+
+            if(playerRoundStats != null)
+            {
+                player.UnitLostAmount.ToDictionary(x => x.Key, x => x.Value + playerRoundStats.UnitLostAmount[x.Key]);
+            }
+        }
+
+        foreach(var unitType in player.UnitAmount)
+        {
+            var unitTypeCount = unitType.Value;
+            var lostUnitTypeCount = player.UnitLostAmount[unitType.Key];
+
+            Console.WriteLine($"{unitType.Key}: -{lostUnitTypeCount} : {unitTypeCount} ");
+        }
     }
 }
 
