@@ -32,7 +32,7 @@ public class Loader(HttpClient client)
 
         var universeInfo = await GenSimClient.LoadUniversesDataAsync(universeLanguage, universeNumber);
 
-        if (!universeInfo.IsSuccessStatusCode)
+        if (universeInfo.IsSuccessStatusCode)
         {
             return GetCleanData(attackers, defenders, universeInfo.Result);
         }
@@ -93,20 +93,26 @@ public class Loader(HttpClient client)
         
         SimCombatInformation combatInfo = new();
 
+        var counterForId = 0;
         foreach(var attacker in attakcers)
         {
-            var attackerData = GetCleanAttackerData(attacker);
+            var attackerData = GetCleanAttackerData(attacker, counterForId);
             combatInfo.Attackers.Add(attackerData);
 
-            attackerData.UnitTypeAmounts.Select(x => combatInfo.GlobalAttackersUnitAmount[x.Key] += x.Value);
+            combatInfo.GlobalAttackersUnitAmount = combatInfo.GlobalAttackersUnitAmount.Keys.Union(attackerData.UnitTypeAmounts.Keys)
+            .ToDictionary(x => x, x => combatInfo.GlobalAttackersUnitAmount.GetValueOrDefault(x) 
+                            + attackerData.UnitTypeAmounts.GetValueOrDefault(x));
         }
         
+        counterForId = 0;
         foreach(var defender in defenders)
         {
-            var defenderData = GetCleanDefenderData(defender);
+            var defenderData = GetCleanDefenderData(defender, counterForId);
             combatInfo.Defenders.Add(defenderData);
 
-            defenderData.UnitTypeAmounts.Select(x => combatInfo.GlobalDefendersUnitAmount[x.Key] += x.Value);
+            combatInfo.GlobalDefendersUnitAmount = combatInfo.GlobalDefendersUnitAmount.Keys.Union(defenderData.UnitTypeAmounts.Keys)
+            .ToDictionary(x => x, x => combatInfo.GlobalDefendersUnitAmount.GetValueOrDefault(x) 
+                            + defenderData.UnitTypeAmounts.GetValueOrDefault(x));
         }
 
         combatInfo.Universe = new Universe()
@@ -121,22 +127,25 @@ public class Loader(HttpClient client)
             Systems = universeInformation.Systems,
             Galaxies = universeInformation.Galaxies,
             DeuteriumSaveFactor = universeInformation.GlobalDeuteriumSaveFactor,
-            IgnoreInactiveSystem = Convert.ToBoolean(universeInformation.FleetIgnoreInactiveSystems),
-            IgnoreEmptySystem = Convert.ToBoolean(universeInformation.FleetIgnoreEmptySystems)
+            IgnoreInactiveSystem = string.IsNullOrEmpty(universeInformation.FleetIgnoreInactiveSystems) || Convert.ToBoolean(universeInformation.FleetIgnoreInactiveSystems),
+            IgnoreEmptySystem = string.IsNullOrEmpty(universeInformation.FleetIgnoreEmptySystems) || Convert.ToBoolean(universeInformation.FleetIgnoreEmptySystems)
         };
 
         return combatInfo;
     }
 
-    private Player GetCleanDefenderData(PlayerInformation playerInformation)
+    private Player GetCleanDefenderData(PlayerInformation playerInformation, int id)
     {
-        var units = GetCleanUnitData(playerInformation.Researches, playerInformation.Ships, playerInformation.Coordinates, playerInformation.CharacterClassId, playerInformation.AllianceClassId);
+        var units = GetCleanUnitData(playerInformation.Researches, playerInformation.Ships, id, playerInformation.CharacterClassId, playerInformation.AllianceClassId);
 
-        units.AddRange(GetCleanUnitData(playerInformation.Researches, playerInformation.Defenses, playerInformation.Coordinates, playerInformation.CharacterClassId, playerInformation.AllianceClassId));
+        units.AddRange(GetCleanUnitData(playerInformation.Researches, playerInformation.Defenses, id, playerInformation.CharacterClassId, playerInformation.AllianceClassId));
 
+        var shipAmounts = playerInformation.Ships.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value.Amount)).ToDictionary();
+        var defenseAmounts = playerInformation.Defenses.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value.Amount)).ToDictionary();
 
         return new Player()
         {
+            Id = id,
             Coordinates = playerInformation.Coordinates,
             AllianceClass = (AllianceClass)playerInformation.AllianceClassId,
             PlayerClass = (PlayerClass)playerInformation.CharacterClassId,
@@ -146,15 +155,17 @@ public class Loader(HttpClient client)
             //Metal = playerInformation.Resources.Metal,
             //Crystal = playerInformation.Resources.Crystal,
             //Deuterium = playerInformation.Resources.Deuterium,
-            UnitTypeAmounts = playerInformation.Ships.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value.Amount)).ToDictionary(),
+            UnitTypeAmounts = shipAmounts.Keys.Union(defenseAmounts.Keys)
+                .ToDictionary(x => x, x => shipAmounts.GetValueOrDefault(x) + defenseAmounts.GetValueOrDefault(x)),
             Units = units
         };
     }
 
-    private Player GetCleanAttackerData(PlayerInformation playerInformation)
+    private Player GetCleanAttackerData(PlayerInformation playerInformation, int id)
     {   
         return new Player()
         {
+            Id = id,
             Coordinates = playerInformation.Coordinates,
             AllianceClass = (AllianceClass)playerInformation.AllianceClassId,
             PlayerClass = (PlayerClass)playerInformation.CharacterClassId,
@@ -162,11 +173,11 @@ public class Loader(HttpClient client)
             Shield = playerInformation.Researches.ShieldingTechnology,
             Weapon = playerInformation.Researches.WeaponsTechnology,
             UnitTypeAmounts = playerInformation.Ships.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value.Amount)).ToDictionary(),
-            Units = GetCleanUnitData(playerInformation.Researches, playerInformation.Ships, playerInformation.Coordinates, playerInformation.CharacterClassId, playerInformation.AllianceClassId)
+            Units = GetCleanUnitData(playerInformation.Researches, playerInformation.Ships, id, playerInformation.CharacterClassId, playerInformation.AllianceClassId)
         };
     }
 
-    private static List<CombatUnit> GetCleanUnitData<T>(Researches researches, Dictionary<UnitType, T> units, string coords, int charatcterClassId, int allianceClassId) where T : UnitStats
+    private static List<CombatUnit> GetCleanUnitData<T>(Researches researches, Dictionary<UnitType, T> units, int id, int charatcterClassId, int allianceClassId) where T : UnitStats
     {
         var cleanUnits = new List<CombatUnit>();
 
@@ -182,13 +193,16 @@ public class Loader(HttpClient client)
                 {
                     var unit = new CombatUnit
                     {
-                        PlayerCoordinates = coords,
+                        Id = id,
                         ShipType = ship.Key,
                         Weapon = weaponValue,
                         Shield = shieldValue,
                         FullShieldValue = shieldValue,
                         Hull = hullValue,
                         FullHullValue = hullValue,
+                        MetalCost = defaultValue.MetalCost,
+                        CrystalCost = defaultValue.CrystalCost,
+                        DeuteriumCost = defaultValue.DeuteriumCost,
                         IsDestroyed = false
                     };
 

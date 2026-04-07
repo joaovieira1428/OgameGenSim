@@ -4,6 +4,7 @@ namespace OgameSimulatorPack.Classes;
 
 public class Player
 {
+    public int Id { get; set; }
     public string Coordinates { get; set; }
     public PlayerClass PlayerClass;
     public AllianceClass AllianceClass { get; set; }

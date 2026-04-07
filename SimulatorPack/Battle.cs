@@ -132,7 +132,7 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
             defender.Shield = 0;
             defender.IsDestroyed = true;
 
-            var defenderPlayerStats = defenderRoundStats.Players.First(x => x.Coordinates == defender.PlayerCoordinates);
+            var defenderPlayerStats = defenderRoundStats.Players.First(x => x.Id == defender.Id);
 
             defenderRoundStats.GlobalUnitLostAmount[defender.ShipType]++;;
             defenderRoundStats.GlobalUnitAmount[defender.ShipType]--;

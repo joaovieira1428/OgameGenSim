@@ -7,7 +7,6 @@ using OgameGenSim;
 HttpClient client = new();
 var loader = new Loader(client);
 
-
 ///TODO: maybe put this in a try catch block to handle potential deserialization errors
 var cleanData = await loader.LoadCombatInformation();
 
@@ -81,4 +80,44 @@ var simlator = new OgameSimulatorPack.Battle(cleanData.Universe.Debrifactor, cle
 
 var result = simlator.DoBattle(cleanData);
 
-var asd = 1;
+if(result.AttackerWon)
+{
+    Console.WriteLine("Attacker won the battle!");
+}
+else
+{
+    Console.WriteLine("Defender won the battle!");
+}
+
+Console.WriteLine();
+
+Console.WriteLine($"Metal Debri: {result.MetalDebri}");
+Console.WriteLine($"Crystal Debri: {result.CrystalDebri}");
+Console.WriteLine($"Deuterium Debri: {result.DeuteriumDebri}");
+
+Console.WriteLine();
+
+result.WriteBattleStatistics();
+
+Console.WriteLine();
+
+result.WriteBattleSummaryStatistics();
+
+Console.WriteLine("Battle Statistics:");
+Console.WriteLine("1 - Round Statistics");
+Console.WriteLine("2 - Player Statistics");
+
+var choice = Console.ReadLine();
+
+switch(choice)
+{
+    case "1":
+        result.WriteRoundsStatistics();
+        break;
+    case "2":
+        result.WriteUnitStatistics();
+        break;
+    default:
+        Console.WriteLine("Invalid choice.");
+        break;
+}

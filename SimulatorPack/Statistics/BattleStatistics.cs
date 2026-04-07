@@ -10,8 +10,8 @@ public class BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmoun
     public List<RoundStatistics> RoundStatistics { get; set; } = [];
     public List<PlayerStatistics> Attackers { get; set; } = [.. attackers.Select(x => new PlayerStatistics(x))];
     public List<PlayerStatistics> Defenders { get; set; } = [.. defenders.Select(x => new PlayerStatistics(x))];
-    public Dictionary<UnitType, int> GlobalAttackersAmount { get; set; } = attackersGlobalUnitAmount;
-    public Dictionary<UnitType, int> GlobalDefendersAmount { get; set; } = defendersGlobalUnitAmount;
+    public Dictionary<UnitType, int> GlobalAttackersAmount { get; set; } = attackersGlobalUnitAmount.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value)).ToDictionary();
+    public Dictionary<UnitType, int> GlobalDefendersAmount { get; set; } = defendersGlobalUnitAmount.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value)).ToDictionary();
     public int MetalDebri { get; set; }
     public int CrystalDebri { get; set; }
     public int DeuteriumDebri { get; set; }
@@ -51,16 +51,14 @@ public class BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmoun
             defenderStatsString.AppendLine($"{unitType.Key.ToString()}: -{lostUnitTypeCount} : {unitTypeCount} ");
         }
 
-
+        //TODO:Use summary statistics instead of round statistics for this
         attackerStatsString.AppendLine($"Atacante dispara um total de {attacker.ShotsFired} tiros contra o defensor ");
         attackerStatsString.Append($"com uma força total de {attacker.DemageDealt}.");
         attackerStatsString.AppendLine($"Os escudos do defensor absorvem {attacker.DemageAbsorbedByDefendingPlayer} pontos de dano.");
-        //attackerStatsString.AppendLine($"O dano concreto foi {attacker.DemageTakenByDefendingPlayer} pontos de dano.");
 
         defenderStatsString.AppendLine($"Defensor dispara um total de {defender.ShotsFired} tiros contra o atacante ");
         defenderStatsString.Append($"com uma força total de {defender.DemageDealt}.");
         defenderStatsString.AppendLine($"Os escudos do atacante absorvem {defender.DemageAbsorbedByDefendingPlayer} pontos de dano.");
-        //defenderStatsString.AppendLine($"O dano concreto foi {defender.DemageTakenByDefendingPlayer} pontos de dano.");
 
         Console.WriteLine(attackerStatsString.ToString());
         Console.WriteLine(defenderStatsString.ToString());
@@ -75,7 +73,7 @@ public class BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmoun
 
         foreach(var attacker in attackers)
         {
-            attackerStatsString.AppendLine($"Attacker: {attacker.Coordinates}: ");
+            attackerStatsString.AppendLine($"Attacker {attacker.Id}: ");
             
             var units = attacker.Units.DistinctBy(x => x.ShipType);
 
@@ -93,7 +91,7 @@ public class BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmoun
 
         foreach(var defender in defenders)
         {
-            defenderStatsString.AppendLine($"Defender: {defender.Coordinates}: ");
+            defenderStatsString.AppendLine($"Defender {defender.Id}: ");
 
             var units = defender.Units.DistinctBy(x => x.ShipType);
 
@@ -118,8 +116,8 @@ public class BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmoun
 
         foreach(var round in RoundStatistics)
         {
-            lostAttackers.ToDictionary(x => x.Key, x=> x.Value + round.AttackersRoundStatistics.GlobalUnitLostAmount[x.Key]);
-            lostDeffenders.ToDictionary(x => x.Key,  x => x.Value + round.DefendersRoundStatistics.GlobalUnitLostAmount[x.Key]);
+            lostAttackers = lostAttackers.ToDictionary(x => x.Key, x=> x.Value + round.AttackersRoundStatistics.GlobalUnitLostAmount[x.Key]);
+            lostDeffenders = lostDeffenders.ToDictionary(x => x.Key,  x => x.Value + round.DefendersRoundStatistics.GlobalUnitLostAmount[x.Key]);
         }
 
         foreach(var unitType in GlobalAttackersAmount)
@@ -130,6 +128,8 @@ public class BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmoun
             Console.WriteLine($"{unitType.Key}: -{lostUnitTypeCount} : {unitTypeCount} ");
         }
 
+        Console.WriteLine();
+
         foreach(var unitType in GlobalDefendersAmount)
         {
             var unitTypeCount = unitType.Value;
@@ -139,21 +139,22 @@ public class BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmoun
         }
     }
 
-    public void WriteBattleStatisticsPerPlayer(string playerCoordinates)
+    public void WriteBattleStatisticsPerPlayer(int id, bool isAttacker)
     {
-        var player = Attackers.FirstOrDefault(x => x.Coordinates == playerCoordinates) 
-        ?? Defenders.FirstOrDefault(x => x.Coordinates == playerCoordinates);
+        PlayerStatistics player = isAttacker 
+        ? Attackers.First(x => x.Id == id) 
+        : Defenders.First(x => x.Id == id);
 
-        if(player == null)
+        if (player == null)
         {
-            Console.WriteLine($"Player with coordinates {playerCoordinates} not found.");
+            Console.WriteLine($"Player with id {id} not found.");
             return;
         }
 
         foreach(var round in RoundStatistics)
         {
-            var playerRoundStats = round.AttackersRoundStatistics.Players.FirstOrDefault(x => x.Coordinates == playerCoordinates) 
-            ?? round.DefendersRoundStatistics.Players.FirstOrDefault(x => x.Coordinates == playerCoordinates);
+            var playerRoundStats = round.AttackersRoundStatistics.Players.FirstOrDefault(x => x.Id == id) 
+            ?? round.DefendersRoundStatistics.Players.FirstOrDefault(x => x.Id == id);
 
             if(playerRoundStats != null)
             {
@@ -169,11 +170,49 @@ public class BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmoun
             Console.WriteLine($"{unitType.Key}: -{lostUnitTypeCount} : {unitTypeCount} ");
         }
     }
+
+    public void WriteBattleSummaryStatistics()
+    {
+        int attackersShotsFired = 0;
+        double attackersDemageDealt = 0;
+        double attackersDemageAbsorbedByDefendingPlayer = 0;
+
+        int defendersShotsFired = 0;
+        double defendersDemageDealt = 0;
+        double defendersDemageAbsorbedByDefendingPlayer = 0;
+
+        foreach(var round in RoundStatistics)
+        {
+            attackersShotsFired += round.AttackersRoundStatistics.ShotsFired;
+            attackersDemageDealt += round.AttackersRoundStatistics.DemageDealt;
+            attackersDemageAbsorbedByDefendingPlayer += round.AttackersRoundStatistics.DemageAbsorbedByDefendingPlayer;
+
+            defendersShotsFired += round.DefendersRoundStatistics.ShotsFired;
+            defendersDemageDealt += round.DefendersRoundStatistics.DemageDealt;
+            defendersDemageAbsorbedByDefendingPlayer += round.DefendersRoundStatistics.DemageAbsorbedByDefendingPlayer;
+        }
+
+        Console.WriteLine($"Atacante dispara um total de {attackersShotsFired} tiros contra o defensor ");
+        Console.Write($"com uma força total de {attackersDemageDealt}.");
+        Console.WriteLine($"Os escudos do defensor absorvem {attackersDemageAbsorbedByDefendingPlayer} pontos de dano.");
+
+        Console.WriteLine($"Defensor dispara um total de {defendersShotsFired} tiros contra o atacante ");
+        Console.Write($"com uma força total de {defendersDemageDealt}.");
+        Console.WriteLine($"Os escudos do atacante absorvem {defendersDemageAbsorbedByDefendingPlayer} pontos de dano.");
+
+
+    }
+
+    public void WriteRoundSummaryStatistics()
+    {
+        
+    }
 }
 
 public class PlayerStatistics
 {
     public string Coordinates { get; set; }
+    public int Id { get; set; }
     public List<CombatUnit> Units { get; set; }
     public Dictionary<UnitType, int> UnitAmount { get; set; }
     public Dictionary<UnitType, int> UnitLostAmount { get; set; }
@@ -204,7 +243,7 @@ public class PlayersRoundStatistics(Dictionary<UnitType, int> globalUnitAmount, 
     public int MetalDebri { get; set; }
     public int CrystalDebri { get; set; }
     public int DeuteriumDebri { get; set; }
-    public Dictionary<UnitType, int> GlobalUnitAmount { get; set; } = globalUnitAmount;
+    public Dictionary<UnitType, int> GlobalUnitAmount { get; set; } = globalUnitAmount.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value)).ToDictionary();
     public Dictionary<UnitType, int> GlobalUnitLostAmount { get; set; } = Utils.GetInitialUnitTypeAmounts();
     public List<PlayerStatistics> Players { get; set; } = [.. players.Select(x => new PlayerStatistics(x))];
 }
