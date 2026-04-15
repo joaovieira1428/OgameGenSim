@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -7,8 +7,22 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="../SimulatorPack/OgameSimulatorPack.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RazorConsole.Core" Version="0.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Components/" />
   </ItemGroup>
 
 </Project>

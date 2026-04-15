@@ -14,14 +14,17 @@ public class Loader(HttpClient client)
     private GenSimClient GenSimClient { get; set; } = new GenSimClient(client);
     private string reportIdForUniverseData = string.Empty;
 
-    public async Task<SimCombatInformation> LoadCombatInformation()
+    public async Task<SimCombatInformation> LoadCombatInformation(int attackersCount, int defendersCount)
     {
         //TODO: Protect this shit or it will break
-        Console.WriteLine("How many attackers? ");
-        var attackersCount = int.Parse(Console.ReadLine() ?? "0");
+        
+        /*
+            Console.WriteLine("How many attackers? ");
+            var attackersCount = int.Parse(Console.ReadLine() ?? "0");
 
-        Console.WriteLine("How many defenders? ");
-        var defendersCount = int.Parse(Console.ReadLine() ?? "0");
+            Console.WriteLine("How many defenders? ");
+            var defendersCount = int.Parse(Console.ReadLine() ?? "0");
+        */
 
         var attackers = LoadAttackers(attackersCount);
         var defenders = await LoadDefenders(defendersCount);

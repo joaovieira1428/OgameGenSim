@@ -1,0 +1,50 @@
+﻿@page "/battleSimulator"
+
+@namespace OgameGenSim.Pages
+
+@using Microsoft.Extensions.Hosting
+@using OgameGenSim.Components
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using OgameSimulatorPack
+@using OgameSimulatorPack.Classes
+@using OgameSimulatorPack.Statistics
+@using RazorConsole.Components
+
+@inject NavigationManager Nav
+@inject BattleStatistics BattleStatistics
+
+<h3>BattleSimulatorPage</h3>
+
+<Align Width="200">
+    <TextInput Value="@_attackersNumber" Label="Number of attackers"></TextInput>
+    <TextInput Value="@_defendersNumber" Label="Number of defenders"></TextInput>
+    <TextButton Content="Next"></TextButton>
+</Align>
+
+@code {
+    private string _attackersNumber = string.Empty;
+    private string _defendersNumber = string.Empty;
+
+    private HttpClient _httpCliente = new HttpClient();
+
+    private void LoadPlayers(){
+        
+        Loader loader = new Loader(_httpCliente);
+
+        var isAttackersInt = int.TryParse(_attackersNumber, out int attackersNumber);
+
+        var isDefendersInt = int.TryParse(_attackersNumber, out int defendersNumber);
+
+        if(isAttackersInt && isDefendersInt){
+            SimCombatInformation cleanData = loader.LoadCombatInformation(attackersNumber, defendersNumber).Result;
+
+            Battle simlator = new OgameSimulatorPack.Battle(cleanData.Universe.Debrifactor, cleanData.Universe.DefenseDebrisFactor, cleanData.Universe.DeuteriumOnDebris);
+
+            BattleStatistics result = simlator.DoBattle(cleanData);
+
+            BattleStatistics = result;
+
+        } 
+    }
+}
