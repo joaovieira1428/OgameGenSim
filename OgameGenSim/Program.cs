@@ -8,9 +8,11 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Text;
 using OgameSimulatorPack.Statistics;
 
+
 //sr-en-271-c5a37ce8be7144f68f295f5acea2c7b834708113
 //sr-en-273-8d3743a9170236490cc30f42a19d07aa708f0cd4
 
+HttpClient httpClient = new();
 
 // Set console encoding to UTF-8 for Unicode characters (spinners, emojis, etc.)
 Console.OutputEncoding = Encoding.UTF8;
@@ -21,8 +23,9 @@ Console.InputEncoding = Encoding.UTF8;
 
 hostBuilder.ConfigureServices(services =>
 {
-    services.AddSingleton<BattleStatistics>();
-
+    //services.AddSingleton<BattleStatistics>();
+    services.AddSingleton(new Loader(httpClient));
+    services.AddSingleton(new BattleStatistics());
     // Configure console options
     services.Configure<ConsoleAppOptions>(options =>
     {

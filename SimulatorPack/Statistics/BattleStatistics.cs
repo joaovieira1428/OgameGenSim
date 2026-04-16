@@ -5,19 +5,30 @@ using OgameSimulatorPack.SimUtilities;
 
 namespace OgameSimulatorPack.Statistics;
 
-public class BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, Dictionary<UnitType, int> defendersGlobalUnitAmount, List<Player> attackers, List<Player> defenders)
+public class BattleStatistics
 {
     public List<RoundStatistics> RoundStatistics { get; set; } = [];
-    public List<PlayerStatistics> Attackers { get; set; } = [.. attackers.Select(x => new PlayerStatistics(x))];
-    public List<PlayerStatistics> Defenders { get; set; } = [.. defenders.Select(x => new PlayerStatistics(x))];
-    public Dictionary<UnitType, int> GlobalAttackersAmount { get; set; } = attackersGlobalUnitAmount.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value)).ToDictionary();
-    public Dictionary<UnitType, int> GlobalDefendersAmount { get; set; } = defendersGlobalUnitAmount.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value)).ToDictionary();
+    public List<PlayerStatistics> Attackers { get; set; } 
+    public List<PlayerStatistics> Defenders { get; set; } 
+    public Dictionary<UnitType, int> GlobalAttackersAmount { get; set; }
+    public Dictionary<UnitType, int> GlobalDefendersAmount { get; set; } 
     public int MetalDebri { get; set; }
     public int CrystalDebri { get; set; }
     public int DeuteriumDebri { get; set; }
     public bool AttackerWon { get; set; }
     //public bool DefenderWon { get; set; }
     
+    public BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, Dictionary<UnitType, int> defendersGlobalUnitAmount, List<Player> attackers, List<Player> defenders)
+    {
+        Attackers = [.. attackers.Select(x => new PlayerStatistics(x))];
+        Defenders = [.. defenders.Select(x => new PlayerStatistics(x))];
+        GlobalAttackersAmount = attackersGlobalUnitAmount.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value)).ToDictionary();
+        GlobalDefendersAmount = defendersGlobalUnitAmount.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value)).ToDictionary();
+    }
+
+    public BattleStatistics()
+    {
+    }
 
     public void WriteRoundsStatistics()
     {
