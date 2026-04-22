@@ -6,7 +6,8 @@ using OgameGenSim.Components;
 using OgameGenSim.Pages;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text;
-using OgameSimulatorPack.Statistics;
+using OgameGenSim.Services;
+using OgameGenSim.StateMachine;
 
 
 //sr-en-271-c5a37ce8be7144f68f295f5acea2c7b834708113
@@ -23,9 +24,14 @@ Console.InputEncoding = Encoding.UTF8;
 
 hostBuilder.ConfigureServices(services =>
 {
-    //services.AddSingleton<BattleStatistics>();
+    services.AddSingleton<BattleStatisticsService>();
     services.AddSingleton(new Loader(httpClient));
-    services.AddSingleton(new BattleStatistics());
+    services.AddSingleton(new StateMachine<BSimState, BSimTrigger>(BSimState.FleetNumber)
+        .ConfigureState((BSimState.FleetNumber, BSimTrigger.Next), BSimState.PlayerAPIs)
+        .ConfigureState((BSimState.PlayerAPIs, BSimTrigger.Next), BSimState.FleetComposition)
+        .ConfigureState((BSimState.PlayerAPIs, BSimTrigger.Previous), BSimState.FleetNumber)
+        .ConfigureState((BSimState.FleetComposition, BSimTrigger.Previous), BSimState.PlayerAPIs));
+
     // Configure console options
     services.Configure<ConsoleAppOptions>(options =>
     {

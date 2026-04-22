@@ -1,46 +1,95 @@
-﻿@namespace OgameGenSim.Pages
+﻿@page "/battleStatistics"
+@namespace OgameGenSim.Pages
 
 @using OgameGenSim.Components
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Web
+@using OgameSimulatorPack.SimUtilities
+@using OgameSimulatorPack.Statistics
 @using RazorConsole.Components
 
+@inject NavigationManager Nav
+@inject OgameGenSim.Services.BattleStatisticsService BattleStatisticsService
 
 <h3>BattleStatistics</h3>
 
 
-<FlexBox>
-    <Padder Padding=(new(0,0,2,0))>
-        <Panel>
-            <FlexBox >
-                <div>
-                    <p>Battleship</p>
-                    <p>Destroyer</p>
-                </div>
-                <div>
-                    <p>-231 : 400</p>
-                    <p>-300 : 600</p>
-                </div>
-            </FlexBox>
-        </Panel> 
-    </Padder> 
-    <Padder Padding=(new(2,0,0,0))>
-        <Panel>
-            <FlexBox>
-                <div>
-                    <p>Battleship</p>
-                    <p>Destroyer</p>
-                </div>
-                <div>
-                    <p>-231 : 400</p>
-                    <p>-300 : 600</p>
-                </div>
-            </FlexBox>
-        </Panel>
-    </Padder>
-</FlexBox>
+@if (BattleStatisticsService.BattleStatistics != null)
+{
+    <FlexBox>
+        <Padder Padding=(new(0,0,2,0))>
+            <Panel>
+                <FlexBox >
+                    <div>
+                        @foreach(var unit in BattleStatisticsService.BattleStatistics.GlobalAttackersAmount){
+                            <p>@unit.Key</p>
+                        }
+                    </div>
+                    <div>
+                        @foreach(var unit in BattleStatisticsService.BattleStatistics.GlobalAttackersAmount){
+                            <p>-@lostAttackers[unit.Key] : @unit.Value</p>
+                        }
+                    </div>
+                </FlexBox>
+            </Panel> 
+        </Padder> 
+        <Padder Padding=(new(2,0,0,0))>
+            <Panel>
+                <FlexBox>
+                    <div>
+                        @foreach(var unit in BattleStatisticsService.BattleStatistics.GlobalDefendersAmount){
+                            <p>@unit.Key</p>
+
+                            <p>-@lostDeffenders[unit.Key] : @unit.Value</p>
+                        }
+                    </div>
+                </FlexBox>
+            </Panel>
+        </Padder>
+    </FlexBox>
+}
+else
+{
+    <p>No battle statistics available.</p>
+}
 
 
 @code {
+    private Dictionary<UnitType, int> lostAttackers = [];
+    private Dictionary<UnitType, int> lostDeffenders = [];
 
+    protected override void OnInitialized()
+    {
+        if (BattleStatisticsService.BattleStatistics != null)
+        {
+            PopulateLostUnits();
+        }
+    }
+
+    private void PopulateLostUnits()
+    {
+        if (BattleStatisticsService.BattleStatistics == null) return;
+
+        lostAttackers = [];
+        lostDeffenders = [];
+
+        foreach (var round in BattleStatisticsService.BattleStatistics.RoundStatistics)
+        {
+            foreach (var kvp in round.AttackersRoundStatistics.GlobalUnitLostAmount)
+            {
+                if (lostAttackers.ContainsKey(kvp.Key))
+                    lostAttackers[kvp.Key] += kvp.Value;
+                else
+                    lostAttackers[kvp.Key] = kvp.Value;
+            }
+
+            foreach (var kvp in round.DefendersRoundStatistics.GlobalUnitLostAmount)
+            {
+                if (lostDeffenders.ContainsKey(kvp.Key))
+                    lostDeffenders[kvp.Key] += kvp.Value;
+                else
+                    lostDeffenders[kvp.Key] = kvp.Value;
+            }
+        }
+    }
 }

@@ -14,20 +14,10 @@ public class Loader(HttpClient client)
     private GenSimClient GenSimClient { get; set; } = new GenSimClient(client);
     private string reportIdForUniverseData = string.Empty;
 
-    public async Task<SimCombatInformation> LoadCombatInformation(int attackersCount, int defendersCount)
+    public async Task<SimCombatInformation> LoadCombatInformation(List<string> attackersAPI, List<string> defendersAPI)
     {
-        //TODO: Protect this shit or it will break
-        
-        /*
-            Console.WriteLine("How many attackers? ");
-            var attackersCount = int.Parse(Console.ReadLine() ?? "0");
-
-            Console.WriteLine("How many defenders? ");
-            var defendersCount = int.Parse(Console.ReadLine() ?? "0");
-        */
-
-        var attackers = LoadAttackers(attackersCount);
-        var defenders = await LoadDefenders(defendersCount);
+        var attackers = LoadAttackers(attackersAPI);
+        var defenders = await LoadDefenders(defendersAPI);
 
         string[] splitReportId = reportIdForUniverseData.Split("-");
         var universeLanguage = splitReportId[1];        
@@ -49,42 +39,53 @@ public class Loader(HttpClient client)
 
     }
 
-    private async Task<List<PlayerInformation>> LoadDefenders(int defendersCount)
+    private async Task<List<PlayerInformation>> LoadDefenders(List<string> defendersAPI)
     {
         List<PlayerInformation> defenders = [];
 
-        var isSuccessStatus = false;
-
-        while(defendersCount > 0 && !isSuccessStatus)
+        for(var i = 0; i < defendersAPI.Count; i++)
         {
-            Console.WriteLine("Insert an espionage report API: ");
-            reportIdForUniverseData = Console.ReadLine();
-
-            var report = await GenSimClient.GetReportDataAsync(reportIdForUniverseData);
-
-            if (report.IsSuccessStatusCode)
-            {
-                defenders.Add(report.Result);
-                defendersCount--;
-            }
-            else
-            {
-                Console.WriteLine($"Failed to get report data: {report.ErrorMessage}");
-            }
-
-            isSuccessStatus = report.IsSuccessStatusCode;
+            defenders.Add(await LoaderDefender(defendersAPI[i], i+1));
         }
 
         return defenders;
     }
 
-    private List<PlayerInformation> LoadAttackers(int attackersCount)
+    private async Task<PlayerInformation> LoaderDefender(string defendersAPI, int index)
+    {
+        string? defenderAPI = defendersAPI;
+
+        while (defenderAPI == null || defenderAPI.Trim() == "")
+        {
+            Console.WriteLine($"Insert defender API for defender {index}: ");
+            defenderAPI = Console.ReadLine();
+        }
+
+        var report = await GenSimClient.GetReportDataAsync(defenderAPI);
+
+        if (report.IsSuccessStatusCode)
+        {
+            reportIdForUniverseData = defendersAPI;
+            return report.Result;
+        }
+        else
+        {
+            Console.WriteLine($"Failed to get report data: {report.ErrorMessage} for defender {index}");
+
+            Console.WriteLine($"Insert defender API for defender {index}: ");
+            defenderAPI = Console.ReadLine();
+
+            return await LoaderDefender(defenderAPI, index);
+        }
+    }
+
+    private List<PlayerInformation> LoadAttackers(List<string> attackersAPI)
     {
         List<PlayerInformation> attackers = [];
 
-        for(var i = 0; i < attackersCount; i++)
+        for(var i = 0; i < attackersAPI.Count; i++)
         {
-            attackers.Add(ParseAttackerData());
+            attackers.Add(ParseAttackerData(attackersAPI[i], i+1));
         }
 
         return attackers;
@@ -239,13 +240,13 @@ public class Loader(HttpClient client)
         return (float)(defaultValue + (defaultValue * (LFBonus + techBonus)));
     }
 
-    private PlayerInformation ParseAttackerData()
+    private PlayerInformation ParseAttackerData(string attackerApi, int index)
     {
-        string? attackerJson = null;
+        string? attackerJson = attackerApi;
 
         while(attackerJson == null || attackerJson.Trim() == "")
         {
-            Console.WriteLine("Insert attacker API: ");
+            Console.WriteLine($"Attakcer {index} is empty. Insert attacker API for attacker {index}: ");
             attackerJson = Console.ReadLine();
         }
 
@@ -255,8 +256,12 @@ public class Loader(HttpClient client)
         }
         catch (JsonException)
         {
-            Console.WriteLine("Invalid JSON format. Please try again.");
-            return ParseAttackerData();
+            Console.WriteLine($"Invalid JSON format for attacker {index}. Please try again.");
+
+            Console.WriteLine($"Insert attacker API for attacker {index}: ");
+            attackerJson = Console.ReadLine();
+
+            return ParseAttackerData(attackerJson, index);
         }
         var jsonObject = JsonNode.Parse(attackerJson);
 
@@ -267,8 +272,11 @@ public class Loader(HttpClient client)
         
         if(combatInformation == null)
         {
-            Console.WriteLine($"Warning: Failed to deserialize attacker data. Please check the input format.");
-            return ParseAttackerData();
+            Console.WriteLine($"Warning: Failed to deserialize attacker data for attacker {index}. Please check the input format.");
+
+            attackerJson = Console.ReadLine();
+
+            return ParseAttackerData(attackerJson, index);
         }
      
         return combatInformation;

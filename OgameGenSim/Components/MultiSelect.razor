@@ -1,0 +1,56 @@
+﻿@using System.Security.AccessControl
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using RazorConsole.Components
+
+@foreach(var item in Objects){
+    <TextButton Content="@GetContentString(item)" OnClick="@( () => ToggleSelectionV2(item))"></TextButton>
+}
+@code {
+    [Parameter]
+    public List<string> Options { get; set; } = new();
+
+    [Parameter]
+    public List<string> Value { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<List<string>> ValueChanged { get; set; }
+
+    public List<MultiSelectObject> Objects = new();
+
+    protected override void OnParametersSet()
+    {
+        Value ??= new();
+
+        if (Options != default)
+        {
+            Objects = Options
+                .Select(x => new MultiSelectObject { Content = x, IsSelected = Value.Contains(x) })
+                .ToList();
+        }
+    }
+
+    public class MultiSelectObject
+    {
+        public string Content { get; set; } = "";
+        public bool IsSelected { get; set; }
+    }
+
+    public string GetContentString(MultiSelectObject item)
+    {
+        return item.IsSelected ? $"[x]{item.Content}" : $"[]{item.Content}";
+    }
+
+    private async Task ToggleSelectionV2(MultiSelectObject item)
+    {
+        item.IsSelected = !item.IsSelected;
+        StateHasChanged();
+
+        if (item.IsSelected)
+            Value.Add(item.Content);
+        else
+            Value.Remove(item.Content);
+
+        await ValueChanged.InvokeAsync(Value);
+    }
+}
