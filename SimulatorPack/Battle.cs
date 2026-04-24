@@ -48,6 +48,28 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
             battleStatistics.MetalDebri += round.DefendersRoundStatistics.MetalDebri;
             battleStatistics.CrystalDebri += round.DefendersRoundStatistics.CrystalDebri;
             battleStatistics.DeuteriumDebri += round.DefendersRoundStatistics.DeuteriumDebri;
+        
+            foreach(var attacker in round.AttackersRoundStatistics.Players)
+            {
+                var globalAttacker = battleStatistics.Attackers.FirstOrDefault(x => x.Coordinates == attacker.Coordinates);
+                
+                if(globalAttacker == null) continue;
+
+                globalAttacker.UnitLostAmount = globalAttacker.UnitLostAmount.ToDictionary(x => x.Key, x => x.Value + attacker.UnitLostAmount[x.Key]);   
+            }
+
+            foreach(var defender in round.DefendersRoundStatistics.Players)
+            {
+                var globalDefender = battleStatistics.Defenders.FirstOrDefault(x => x.Coordinates == defender.Coordinates);
+                
+                if(globalDefender == null) continue;
+
+                globalDefender.UnitLostAmount = globalDefender.UnitLostAmount.ToDictionary(x => x.Key, x => x.Value + defender.UnitLostAmount[x.Key]);   
+            }
+
+            //battleStatistics.Attackers[0].UnitAmount;
+
+            //var asd = round.AttackersRoundStatistics.Players[0].UnitAmount;
         }
 
         battleStatistics.AttackerWon = defendersUnits.Count == 0;

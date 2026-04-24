@@ -5,10 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Attach to Process",
+            "name": "Launch OgameGenSim (external terminal)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/OgameGenSim/bin/Debug/net10.0/OgameGenSim.dll",
+            "cwd": "${workspaceFolder}/OgameGenSim",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+//            "requireExactSource": false
+        },
+        {
+            "name": "Attach to OgameGenSim process",
             "type": "coreclr",
             "request": "attach",
-            "processId": "${command:pickProcess}"
+            "processId": "${command:pickProcess}",
         }
     ]
 }

@@ -20,7 +20,7 @@
 <h3>BattleSimulatorPage</h3>
 
 @if(BattleSimStateMachine.CurrentState == BSimState.FleetNumber){
-    <Align Width="200">
+    <Align>
         <TextInput Value="@_attackersNumber" ValueChanged="OnAttackersChanged" Label="Number of attackers"></TextInput>
         <TextInput Value="@_defendersNumber" ValueChanged="OnDefendersChanged" Label="Number of defenders"></TextInput>
         <FlexBox>
@@ -31,7 +31,7 @@
 }
 
 @if(BattleSimStateMachine.CurrentState == BSimState.PlayerAPIs){
-    <Align Width="200">
+    <Align>
         @for(var i = 0; i < _attackersAPI.Count ; i++){
             var index = i;
             <TextInput Value="@_attackersAPI[i]" ValueChanged="@(value => OnAttackersAPIChanged(value, index))" Label="@("Attacker " + (i+1))"></TextInput>
@@ -50,7 +50,7 @@
 }
 
 @if(BattleSimStateMachine.CurrentState == BSimState.FleetComposition){
-    <Align Width="200">
+    <Align>
         <MultiSelect @bind-Value="_selectedFleetComposition" Options="@fleetCompositionOptions"></MultiSelect>
 
         <p>Note* - Takes priority over Cargos (just enough for steal)</p>

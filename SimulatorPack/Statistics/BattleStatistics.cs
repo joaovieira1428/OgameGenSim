@@ -8,8 +8,8 @@ namespace OgameSimulatorPack.Statistics;
 public class BattleStatistics
 {
     public List<RoundStatistics> RoundStatistics { get; set; } = [];
-    public List<PlayerStatistics> Attackers { get; set; } 
-    public List<PlayerStatistics> Defenders { get; set; } 
+    public List<PlayerStatistics> Attackers { get; set; }
+    public List<PlayerStatistics> Defenders { get; set; }
     public Dictionary<UnitType, int> GlobalAttackersAmount { get; set; }
     public Dictionary<UnitType, int> GlobalDefendersAmount { get; set; } 
     public int MetalDebri { get; set; }
@@ -22,12 +22,12 @@ public class BattleStatistics
     {
         Attackers = [.. attackers.Select(x => new PlayerStatistics(x))];
         Defenders = [.. defenders.Select(x => new PlayerStatistics(x))];
+
+        //attackers.ForEach(x => Attackers.Add(new PlayerStatistics(x)));
+        //defenders.ForEach(x => Defenders.Add(new PlayerStatistics(x)));
+
         GlobalAttackersAmount = attackersGlobalUnitAmount.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value)).ToDictionary();
         GlobalDefendersAmount = defendersGlobalUnitAmount.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value)).ToDictionary();
-    }
-
-    public BattleStatistics()
-    {
     }
 
     public void WriteRoundsStatistics()
@@ -224,18 +224,24 @@ public class PlayerStatistics
 {
     public string Coordinates { get; set; }
     public int Id { get; set; }
-    public List<CombatUnit> Units { get; set; }
-    public Dictionary<UnitType, int> UnitAmount { get; set; }
-    public Dictionary<UnitType, int> UnitLostAmount { get; set; }
+    public List<CombatUnit> Units { get; set; } = [];
+    public Dictionary<UnitType, int> UnitAmount { get; set; } = [];
+    public Dictionary<UnitType, int> UnitLostAmount { get; set; } = [];
 
 
     public PlayerStatistics(Player attacker)
     {
-        Coordinates = attacker.Coordinates;
-        UnitAmount = attacker.UnitTypeAmounts;
-        Units = attacker.Units;
-        UnitLostAmount = Utils.GetInitialUnitTypeAmounts();
+        Coordinates = attacker.Coordinates;    
+        //UnitAmount = attacker.UnitTypeAmounts.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value)).ToDictionary();
 
+        foreach(var unitType in attacker.UnitTypeAmounts)
+        {
+            UnitAmount.Add(unitType.Key, unitType.Value);
+        }
+
+        attacker.Units.ForEach(Units.Add);
+        UnitLostAmount = Utils.GetInitialUnitTypeAmounts();
+        Id = attacker.Id;
     }
 }
 
@@ -245,7 +251,7 @@ public class RoundStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount
     public PlayersRoundStatistics DefendersRoundStatistics { get; set; } = new PlayersRoundStatistics(defendersGlobalUnitAmount, defenders);
 }
 
-public class PlayersRoundStatistics(Dictionary<UnitType, int> globalUnitAmount, List<Player> players)
+public class PlayersRoundStatistics
 {
     public int ShotsFired { get; set; } = 0;
     public double DemageDealt { get; set; } = 0;
@@ -254,7 +260,17 @@ public class PlayersRoundStatistics(Dictionary<UnitType, int> globalUnitAmount, 
     public int MetalDebri { get; set; }
     public int CrystalDebri { get; set; }
     public int DeuteriumDebri { get; set; }
-    public Dictionary<UnitType, int> GlobalUnitAmount { get; set; } = globalUnitAmount.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value)).ToDictionary();
+    public Dictionary<UnitType, int> GlobalUnitAmount { get; set; } = [];
     public Dictionary<UnitType, int> GlobalUnitLostAmount { get; set; } = Utils.GetInitialUnitTypeAmounts();
-    public List<PlayerStatistics> Players { get; set; } = [.. players.Select(x => new PlayerStatistics(x))];
+    public List<PlayerStatistics> Players { get; set; }
+
+    public PlayersRoundStatistics(Dictionary<UnitType, int> globalUnitAmount, List<Player> players)
+    {        
+        foreach(var unit in globalUnitAmount)
+        {
+            GlobalUnitAmount.Add(unit.Key, unit.Value);
+        }
+        
+        Players = [.. players.Select(x => new PlayerStatistics(x))];
+    }
 }
