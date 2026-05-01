@@ -106,6 +106,7 @@ public class Loader(HttpClient client)
             combatInfo.GlobalAttackersUnitAmount = combatInfo.GlobalAttackersUnitAmount.Keys.Union(attackerData.UnitTypeAmounts.Keys)
             .ToDictionary(x => x, x => combatInfo.GlobalAttackersUnitAmount.GetValueOrDefault(x) 
                             + attackerData.UnitTypeAmounts.GetValueOrDefault(x));
+        counterForId++;
         }
         
         counterForId = 0;
@@ -117,6 +118,7 @@ public class Loader(HttpClient client)
             combatInfo.GlobalDefendersUnitAmount = combatInfo.GlobalDefendersUnitAmount.Keys.Union(defenderData.UnitTypeAmounts.Keys)
             .ToDictionary(x => x, x => combatInfo.GlobalDefendersUnitAmount.GetValueOrDefault(x) 
                             + defenderData.UnitTypeAmounts.GetValueOrDefault(x));
+        counterForId++;
         }
 
         combatInfo.Universe = new Universe()
@@ -167,6 +169,7 @@ public class Loader(HttpClient client)
 
     private Player GetCleanAttackerData(PlayerInformation playerInformation, int id)
     {   
+        var shipsToAdd = playerInformation.Ships.Where(x => x.Key != UnitType.SOLAR_SATELLITE).ToDictionary();
         return new Player()
         {
             Id = id,
@@ -176,8 +179,8 @@ public class Loader(HttpClient client)
             Armor = playerInformation.Researches.ArmourTechnology,
             Shield = playerInformation.Researches.ShieldingTechnology,
             Weapon = playerInformation.Researches.WeaponsTechnology,
-            UnitTypeAmounts = playerInformation.Ships.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value.Amount)).ToDictionary(),
-            Units = GetCleanUnitData(playerInformation.Researches, playerInformation.Ships, id, playerInformation.CharacterClassId, playerInformation.AllianceClassId)
+            UnitTypeAmounts = shipsToAdd.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value.Amount)).ToDictionary(),
+            Units = GetCleanUnitData(playerInformation.Researches, shipsToAdd, id, playerInformation.CharacterClassId, playerInformation.AllianceClassId)
         };
     }
 

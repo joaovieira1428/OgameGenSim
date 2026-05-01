@@ -49,6 +49,7 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
             battleStatistics.CrystalDebri += round.DefendersRoundStatistics.CrystalDebri;
             battleStatistics.DeuteriumDebri += round.DefendersRoundStatistics.DeuteriumDebri;
         
+        
             foreach(var attacker in round.AttackersRoundStatistics.Players)
             {
                 var globalAttacker = battleStatistics.Attackers.FirstOrDefault(x => x.Coordinates == attacker.Coordinates);
@@ -66,7 +67,7 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
 
                 globalDefender.UnitLostAmount = globalDefender.UnitLostAmount.ToDictionary(x => x.Key, x => x.Value + defender.UnitLostAmount[x.Key]);   
             }
-
+        
             //battleStatistics.Attackers[0].UnitAmount;
 
             //var asd = round.AttackersRoundStatistics.Players[0].UnitAmount;
@@ -113,7 +114,7 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
 
         if(defender.IsDestroyed || attacker.Weapon < defender.Shield * 0.01)
         {     
-            attackerRoundStats.DemageDealt += attacker.Weapon; 
+            attackerRoundStats.DamageDealt += attacker.Weapon; 
 
             if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
                 Combat(attacker, defenders, attackerRoundStats, defenderRoundStats);
@@ -126,15 +127,15 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
         {
             if (attacker.Weapon < defender.Shield)
             {
-                attackerRoundStats.DemageDealt += attacker.Weapon;
-                attackerRoundStats.DemageAbsorbedByDefendingPlayer += attacker.Weapon;
+                attackerRoundStats.DamageDealt += attacker.Weapon;
+                attackerRoundStats.DamageAbsorbedByDefendingPlayer += attacker.Weapon;
 
                 defender.Shield -= attacker.Weapon;
             }else
             {
-                attackerRoundStats.DemageDealt += attacker.Weapon;
-                attackerRoundStats.DemageAbsorbedByDefendingPlayer += defender.Shield;
-                attackerRoundStats.DemageTakenByDefendingPlayer += attacker.Weapon - defender.Shield;
+                attackerRoundStats.DamageDealt += attacker.Weapon;
+                attackerRoundStats.DamageAbsorbedByDefendingPlayer += defender.Shield;
+                attackerRoundStats.DamageTakenByDefendingPlayer += attacker.Weapon - defender.Shield;
 
                 defender.Hull -= attacker.Weapon - defender.Shield;
                 defender.Shield = 0;
@@ -142,8 +143,8 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
         }
         else
         {
-            attackerRoundStats.DemageDealt += attacker.Weapon;
-            attackerRoundStats.DemageTakenByDefendingPlayer += attacker.Weapon;
+            attackerRoundStats.DamageDealt += attacker.Weapon;
+            attackerRoundStats.DamageTakenByDefendingPlayer += attacker.Weapon;
 
             defender.Hull -= attacker.Weapon;
         }
@@ -156,7 +157,7 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
 
             var defenderPlayerStats = defenderRoundStats.Players.First(x => x.Id == defender.Id);
 
-            defenderRoundStats.GlobalUnitLostAmount[defender.ShipType]++;;
+            defenderRoundStats.GlobalUnitLostAmount[defender.ShipType]++;
             defenderRoundStats.GlobalUnitAmount[defender.ShipType]--;
             defenderPlayerStats.UnitLostAmount[defender.ShipType]++;
             defenderPlayerStats.UnitAmount[defender.ShipType]--;

@@ -158,10 +158,10 @@ else
     private Task OnAttackerSelectChange(string? value){
         if(value == null) return Task.CompletedTask;
 
-        attackerAmount = Utils.GetInitialUnitTypeAmounts();;
-        defenderAmount = Utils.GetInitialUnitTypeAmounts();;
-        lostAttacker = Utils.GetInitialUnitTypeAmounts();;
-        lostDefender = Utils.GetInitialUnitTypeAmounts();;
+        attackerAmount = Utils.GetInitialUnitTypeAmounts();
+        defenderAmount = Utils.GetInitialUnitTypeAmounts();
+        lostAttacker = Utils.GetInitialUnitTypeAmounts();
+        lostDefender = Utils.GetInitialUnitTypeAmounts();
 
         _selectedAttackingPlayer = value;
 
@@ -175,10 +175,10 @@ else
     private Task OnDefenderSelectChange(string? value){
         if(value == null) return Task.CompletedTask;
 
-        attackerAmount = Utils.GetInitialUnitTypeAmounts();;
-        defenderAmount = Utils.GetInitialUnitTypeAmounts();;
-        lostAttacker = Utils.GetInitialUnitTypeAmounts();;
-        lostDefender = Utils.GetInitialUnitTypeAmounts();;
+        attackerAmount = Utils.GetInitialUnitTypeAmounts();
+        defenderAmount = Utils.GetInitialUnitTypeAmounts();
+        lostAttacker = Utils.GetInitialUnitTypeAmounts();
+        lostDefender = Utils.GetInitialUnitTypeAmounts();
         _selectedDefendingPlayer = value;
 
         PopulateUnits();
@@ -190,6 +190,11 @@ else
 
     private Task OnRoundSelectChange(string? value){
         if(value == null) return Task.CompletedTask;
+
+        attackerAmount = Utils.GetInitialUnitTypeAmounts();
+        defenderAmount = Utils.GetInitialUnitTypeAmounts();
+        lostAttacker = Utils.GetInitialUnitTypeAmounts();
+        lostDefender = Utils.GetInitialUnitTypeAmounts();
 
         _selectedRound = value;
 
