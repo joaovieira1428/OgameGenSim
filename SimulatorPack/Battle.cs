@@ -57,6 +57,7 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
                 if(globalAttacker == null) continue;
 
                 globalAttacker.UnitLostAmount = globalAttacker.UnitLostAmount.ToDictionary(x => x.Key, x => x.Value + attacker.UnitLostAmount[x.Key]);   
+                battleStatistics.GlobalAttackersLostAmount = battleStatistics.GlobalAttackersLostAmount.ToDictionary(x => x.Key, x => x.Value + attacker.UnitLostAmount[x.Key]);
             }
 
             foreach(var defender in round.DefendersRoundStatistics.Players)
@@ -66,6 +67,7 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
                 if(globalDefender == null) continue;
 
                 globalDefender.UnitLostAmount = globalDefender.UnitLostAmount.ToDictionary(x => x.Key, x => x.Value + defender.UnitLostAmount[x.Key]);   
+                battleStatistics.GlobalDefendersLostAmount = battleStatistics.GlobalDefendersLostAmount.ToDictionary(x => x.Key, x => x.Value + defender.UnitLostAmount[x.Key]); 
             }
         
             //battleStatistics.Attackers[0].UnitAmount;

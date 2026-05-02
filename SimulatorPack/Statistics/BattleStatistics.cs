@@ -12,6 +12,8 @@ public class BattleStatistics
     public List<PlayerStatistics> Defenders { get; set; }
     public Dictionary<UnitType, int> GlobalAttackersAmount { get; set; } = [];
     public Dictionary<UnitType, int> GlobalDefendersAmount { get; set; } = [];
+    public Dictionary<UnitType, int> GlobalAttackersLostAmount { get; set; } = Utils.GetInitialUnitTypeAmounts();
+    public Dictionary<UnitType, int> GlobalDefendersLostAmount { get; set; } = Utils.GetInitialUnitTypeAmounts();
     public int MetalDebri { get; set; }
     public int CrystalDebri { get; set; }
     public int DeuteriumDebri { get; set; }

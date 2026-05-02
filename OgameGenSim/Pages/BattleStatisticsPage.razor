@@ -28,7 +28,7 @@
                     
                             <BattleStatisticsItem 
                             GlobalPlayerAmount="attackerAmount"
-                            LostPlayerAmount="lostAttacker"></BattleStatisticsItem>
+                            LostPlayerAmount="attackerLostAmount"></BattleStatisticsItem>
                 
                     </Grid>
                 </Rows>
@@ -48,7 +48,7 @@
                     
                             <BattleStatisticsItem 
                             GlobalPlayerAmount="defenderAmount"
-                            LostPlayerAmount="lostDefender"></BattleStatisticsItem>
+                            LostPlayerAmount="defenderLostAmount"></BattleStatisticsItem>
                 
                     </Grid>
                 </Rows>
@@ -66,8 +66,8 @@ else
 @code {
     private Dictionary<UnitType, int> attackerAmount = Utils.GetInitialUnitTypeAmounts();
     private Dictionary<UnitType, int> defenderAmount = Utils.GetInitialUnitTypeAmounts();
-    private Dictionary<UnitType, int> lostAttacker = Utils.GetInitialUnitTypeAmounts();
-    private Dictionary<UnitType, int> lostDefender = Utils.GetInitialUnitTypeAmounts();
+    private Dictionary<UnitType, int> attackerLostAmount = Utils.GetInitialUnitTypeAmounts();
+    private Dictionary<UnitType, int> defenderLostAmount = Utils.GetInitialUnitTypeAmounts();
 
     private List<string> attackerOptions = [];
     private List<string> defenderOptions = [];
@@ -88,7 +88,7 @@ else
             defenderOptions.Add("All");
             defenderOptions.AddRange(BattleStatisticsService.BattleStatistics.Defenders.Select(x=> x.Coordinates));
             _selectedDefendingPlayer = "All";
-        
+
             roundOptions.Add("All");
             for(var i = 0; i < BattleStatisticsService.BattleStatistics.RoundStatistics.Count(); i++){
                 roundOptions.Add(i.ToString());
@@ -104,47 +104,59 @@ else
         if (BattleStatisticsService.BattleStatistics == null) return;
 
         if(_selectedRound == "All"){
-            PopulateRounds();
+            PopulateGlobal();
         }else{
             var round = BattleStatisticsService.BattleStatistics.RoundStatistics[int.Parse(_selectedRound)];
             PopulateRound(round);
         }
     }
 
-    private void PopulateRounds(){
-        foreach (var round in BattleStatisticsService.BattleStatistics.RoundStatistics)
-        {
-            PopulateRound(round);
+    private void PopulateGlobal(){
+        if(_selectedAttackingPlayer == "All"){
+            PopulatePlayer(attackerAmount, BattleStatisticsService.BattleStatistics.GlobalAttackersAmount);
+            PopulatePlayer(attackerLostAmount, BattleStatisticsService.BattleStatistics.GlobalAttackersLostAmount);
+        }else{
+            var attackingPlayer = BattleStatisticsService.BattleStatistics.Attackers.FirstOrDefault(x => x.Coordinates == _selectedAttackingPlayer);
+
+            PopulatePlayer(attackerAmount, attackingPlayer.UnitAmount);
+            PopulatePlayer(attackerLostAmount, attackingPlayer.UnitLostAmount);
+        }
+
+        if(_selectedDefendingPlayer == "All"){
+            PopulatePlayer(defenderAmount, BattleStatisticsService.BattleStatistics.GlobalDefendersAmount);
+            PopulatePlayer(defenderLostAmount, BattleStatisticsService.BattleStatistics.GlobalDefendersLostAmount);
+        }else{
+            var defendingPlayer = BattleStatisticsService.BattleStatistics.Defenders.FirstOrDefault(x => x.Coordinates == _selectedDefendingPlayer);
+            PopulatePlayer(defenderAmount, defendingPlayer.UnitAmount);
+            PopulatePlayer(defenderLostAmount, defendingPlayer.UnitLostAmount);
         }
     }
 
     private void PopulateRound(RoundStatistics round){   
         if(_selectedAttackingPlayer == "All"){
-            PopulatePlayerRound(attackerAmount, round.AttackersRoundStatistics.GlobalUnitAmount);
-            PopulatePlayerRound(lostAttacker, round.AttackersRoundStatistics.GlobalUnitLostAmount);
+            PopulatePlayer(attackerAmount, round.AttackersRoundStatistics.GlobalUnitAmount);
+            PopulatePlayer(attackerLostAmount, round.AttackersRoundStatistics.GlobalUnitLostAmount);
         }else{
             var attackingPlayer = round.AttackersRoundStatistics.Players.FirstOrDefault(x => x.Coordinates == _selectedAttackingPlayer);
             if(attackingPlayer != null){
-                PopulatePlayerRound(attackerAmount, attackingPlayer.UnitAmount);
-                PopulatePlayerRound(lostAttacker, attackingPlayer.UnitLostAmount);
+                PopulatePlayer(attackerAmount, attackingPlayer.UnitAmount);
+                PopulatePlayer(attackerLostAmount, attackingPlayer.UnitLostAmount);
             }
         }
 
         if(_selectedDefendingPlayer == "All"){
-            PopulatePlayerRound(defenderAmount, round.DefendersRoundStatistics.GlobalUnitAmount);
-            PopulatePlayerRound(lostDefender, round.DefendersRoundStatistics.GlobalUnitLostAmount);
+            PopulatePlayer(defenderAmount, round.DefendersRoundStatistics.GlobalUnitAmount);
+            PopulatePlayer(defenderLostAmount, round.DefendersRoundStatistics.GlobalUnitLostAmount);
         }else{
             var defendingPlayer = round.DefendersRoundStatistics.Players.FirstOrDefault(x => x.Coordinates == _selectedDefendingPlayer);
             if(defendingPlayer != null){
-                PopulatePlayerRound(defenderAmount, defendingPlayer.UnitAmount);
-                PopulatePlayerRound(lostDefender, defendingPlayer.UnitLostAmount);
+                PopulatePlayer(defenderAmount, defendingPlayer.UnitAmount);
+                PopulatePlayer(defenderLostAmount, defendingPlayer.UnitLostAmount);
             }
         }
     }
 
-    private void PopulatePlayerRound(Dictionary<UnitType, int>unitAmount, Dictionary<UnitType, int> unitAmountToSum){
-        Dictionary<UnitType, int> lostPlayerTemp = [];
-
+    private void PopulatePlayer(Dictionary<UnitType, int>unitAmount, Dictionary<UnitType, int> unitAmountToSum){
         foreach (var kvp in unitAmountToSum)
         {
             if (unitAmount.ContainsKey(kvp.Key))
@@ -160,8 +172,8 @@ else
 
         attackerAmount = Utils.GetInitialUnitTypeAmounts();
         defenderAmount = Utils.GetInitialUnitTypeAmounts();
-        lostAttacker = Utils.GetInitialUnitTypeAmounts();
-        lostDefender = Utils.GetInitialUnitTypeAmounts();
+        attackerLostAmount = Utils.GetInitialUnitTypeAmounts();
+        defenderLostAmount = Utils.GetInitialUnitTypeAmounts();
 
         _selectedAttackingPlayer = value;
 
@@ -177,8 +189,8 @@ else
 
         attackerAmount = Utils.GetInitialUnitTypeAmounts();
         defenderAmount = Utils.GetInitialUnitTypeAmounts();
-        lostAttacker = Utils.GetInitialUnitTypeAmounts();
-        lostDefender = Utils.GetInitialUnitTypeAmounts();
+        attackerLostAmount = Utils.GetInitialUnitTypeAmounts();
+        defenderLostAmount = Utils.GetInitialUnitTypeAmounts();
         _selectedDefendingPlayer = value;
 
         PopulateUnits();
@@ -193,8 +205,8 @@ else
 
         attackerAmount = Utils.GetInitialUnitTypeAmounts();
         defenderAmount = Utils.GetInitialUnitTypeAmounts();
-        lostAttacker = Utils.GetInitialUnitTypeAmounts();
-        lostDefender = Utils.GetInitialUnitTypeAmounts();
+        attackerLostAmount = Utils.GetInitialUnitTypeAmounts();
+        defenderLostAmount = Utils.GetInitialUnitTypeAmounts();
 
         _selectedRound = value;
 
