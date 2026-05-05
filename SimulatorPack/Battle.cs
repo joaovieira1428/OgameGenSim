@@ -18,23 +18,32 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
 
         var globalAttackersUnitAmount = simCombatInformation.GlobalAttackersUnitAmount;
         var globalDefendersUnitAmount = simCombatInformation.GlobalDefendersUnitAmount;
+        var globalAttackersUnitLostAmount = Utils.GetInitialUnitTypeAmounts();
+        var globalDefendersUnitLostAmount = Utils.GetInitialUnitTypeAmounts();
+        var attackers = simCombatInformation.Attackers.Select(x => new PlayerStatistics(x)).ToList();
+        var defenders = simCombatInformation.Defenders.Select(x => new PlayerStatistics(x)).ToList();
 
         var rounds = 0;
 
         var battleStatistics = new BattleStatistics(globalAttackersUnitAmount, globalDefendersUnitAmount, 
-                                                simCombatInformation.Attackers, simCombatInformation.Defenders);
+                                                attackers, defenders);
         
 
         while(rounds < 6 && attackersUnits.Count > 0 && defendersUnits.Count > 0)
         {            
             var roundStats = new RoundStatistics(globalAttackersUnitAmount, globalDefendersUnitAmount, 
-                                                simCombatInformation.Attackers, simCombatInformation.Defenders);
+                                                globalAttackersUnitLostAmount, globalDefendersUnitLostAmount,
+                                                attackers, defenders);
                                                 
             (attackersUnits, defendersUnits) = DoRound(attackersUnits, defendersUnits, roundStats);
             battleStatistics.RoundStatistics.Add(roundStats);
 
             globalAttackersUnitAmount = roundStats.AttackersRoundStatistics.GlobalUnitAmount;
             globalDefendersUnitAmount = roundStats.DefendersRoundStatistics.GlobalUnitAmount;
+            globalAttackersUnitLostAmount = roundStats.AttackersRoundStatistics.GlobalUnitLostAmount;
+            globalDefendersUnitLostAmount = roundStats.DefendersRoundStatistics.GlobalUnitLostAmount;
+            attackers = roundStats.AttackersRoundStatistics.Players;
+            defenders = roundStats.DefendersRoundStatistics.Players;
 
             rounds++;
         }
@@ -49,6 +58,7 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
             battleStatistics.CrystalDebri += round.DefendersRoundStatistics.CrystalDebri;
             battleStatistics.DeuteriumDebri += round.DefendersRoundStatistics.DeuteriumDebri;
         
+            if(battleStatistics.RoundStatistics.IndexOf(round) != rounds-1) continue;
         
             foreach(var attacker in round.AttackersRoundStatistics.Players)
             {

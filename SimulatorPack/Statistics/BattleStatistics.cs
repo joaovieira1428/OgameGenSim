@@ -19,7 +19,29 @@ public class BattleStatistics
     public int DeuteriumDebri { get; set; }
     public bool AttackerWon { get; set; }
 
-    public BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, Dictionary<UnitType, int> defendersGlobalUnitAmount, List<Player> attackers, List<Player> defenders)
+    public BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, 
+                            Dictionary<UnitType, int> defendersGlobalUnitAmount, 
+                            List<Player> attackers, 
+                            List<Player> defenders)
+    {
+        Attackers = [.. attackers.Select(x => new PlayerStatistics(x))];
+        Defenders = [.. defenders.Select(x => new PlayerStatistics(x))];
+
+        foreach (var item in attackersGlobalUnitAmount)
+        {
+            GlobalAttackersAmount.Add(item.Key, item.Value);
+        }
+
+        foreach (var item in defendersGlobalUnitAmount)
+        {
+            GlobalDefendersAmount.Add(item.Key, item.Value);
+        }
+    }
+
+    public BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, 
+                            Dictionary<UnitType, int> defendersGlobalUnitAmount, 
+                            List<PlayerStatistics> attackers, 
+                            List<PlayerStatistics> defenders)
     {
         Attackers = [.. attackers.Select(x => new PlayerStatistics(x))];
         Defenders = [.. defenders.Select(x => new PlayerStatistics(x))];
@@ -197,7 +219,7 @@ public class PlayerStatistics
     //Deprecated - Take out from class
     public List<CombatUnit> Units { get; set; }
     public Dictionary<UnitType, int> UnitAmount { get; set; } = [];
-    public Dictionary<UnitType, int> UnitLostAmount { get; set; }
+    public Dictionary<UnitType, int> UnitLostAmount { get; set; } = [];
 
 
     public PlayerStatistics(Player attacker)
@@ -211,16 +233,57 @@ public class PlayerStatistics
             UnitAmount.Add(item.Key, item.Value);
         }
 
-
         UnitLostAmount = Utils.GetInitialUnitTypeAmounts();
+    }
+
+    public PlayerStatistics(PlayerStatistics attacker)
+    {
+        Id = attacker.Id;
+        Coordinates = attacker.Coordinates;
+        Units = attacker.Units;
+
+        foreach (var item in attacker.UnitAmount)
+        {
+            UnitAmount.Add(item.Key, item.Value);
+        }
+
+        foreach (var item in attacker.UnitLostAmount)
+        {
+            UnitLostAmount.Add(item.Key, item.Value);
+        }
     }
 }
 
-public class RoundStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, Dictionary<UnitType, int> defendersGlobalUnitAmount, List<Player> attackers, List<Player> defenders)
+public class RoundStatistics
 {
-    public PlayersRoundStatistics AttackersRoundStatistics { get; set; } = new PlayersRoundStatistics(attackersGlobalUnitAmount,attackers);
-    public PlayersRoundStatistics DefendersRoundStatistics { get; set; } = new PlayersRoundStatistics(defendersGlobalUnitAmount, defenders);
+    public PlayersRoundStatistics AttackersRoundStatistics { get; set; }
+    public PlayersRoundStatistics DefendersRoundStatistics { get; set; }
+
+    public RoundStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, 
+                                Dictionary<UnitType, int> defendersGlobalUnitAmount, 
+                                Dictionary<UnitType, int> attackersGlobalUnitLostAmount,
+                                Dictionary<UnitType, int> defendersGlobalUnitLostAmount,
+                                List<Player> attackers, 
+                                List<Player> defenders)
+    {
+        AttackersRoundStatistics = new PlayersRoundStatistics(attackersGlobalUnitAmount, attackersGlobalUnitLostAmount, attackers);
+        DefendersRoundStatistics = new PlayersRoundStatistics(defendersGlobalUnitAmount, defendersGlobalUnitLostAmount, defenders);
+    }
+
+    public RoundStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, 
+                                Dictionary<UnitType, int> defendersGlobalUnitAmount, 
+                                Dictionary<UnitType, int> attackersGlobalUnitLostAmount,
+                                Dictionary<UnitType, int> defendersGlobalUnitLostAmount,
+                                List<PlayerStatistics> attackers, 
+                                List<PlayerStatistics> defenders)
+    {
+        AttackersRoundStatistics = new PlayersRoundStatistics(attackersGlobalUnitAmount, attackersGlobalUnitLostAmount, attackers);
+        DefendersRoundStatistics = new PlayersRoundStatistics(defendersGlobalUnitAmount, defendersGlobalUnitLostAmount, defenders);
+    }
+    
 }
+
+
 
 public class PlayersRoundStatistics
 {
@@ -232,17 +295,40 @@ public class PlayersRoundStatistics
     public int CrystalDebri { get; set; }
     public int DeuteriumDebri { get; set; }
     public Dictionary<UnitType, int> GlobalUnitAmount { get; set; } = [];
-    public Dictionary<UnitType, int> GlobalUnitLostAmount { get; set; } = Utils.GetInitialUnitTypeAmounts();
+    public Dictionary<UnitType, int> GlobalUnitLostAmount { get; set; } = [];
     public List<PlayerStatistics> Players { get; set; }
 
-    public PlayersRoundStatistics(Dictionary<UnitType, int> globalUnitAmount, List<Player> players)
+    public PlayersRoundStatistics(Dictionary<UnitType, int> globalUnitAmount, 
+                                    Dictionary<UnitType, int> globalUnitLostAmount,
+                                    List<Player> players)
     {
         foreach (var item in globalUnitAmount)
         {
             GlobalUnitAmount.Add(item.Key, item.Value);
         }
 
-        GlobalUnitAmount = globalUnitAmount;
+        foreach (var item in globalUnitLostAmount)
+        {
+            GlobalUnitLostAmount.Add(item.Key, item.Value);
+        }
+
+        Players = [.. players.Select(x => new PlayerStatistics(x))];
+    }
+
+    public PlayersRoundStatistics(Dictionary<UnitType, int> globalUnitAmount, 
+                                    Dictionary<UnitType, int> globalUnitLostAmount,
+                                    List<PlayerStatistics> players)
+    {
+        foreach (var item in globalUnitAmount)
+        {
+            GlobalUnitAmount.Add(item.Key, item.Value);
+        }
+
+        foreach (var item in globalUnitLostAmount)
+        {
+            GlobalUnitLostAmount.Add(item.Key, item.Value);
+        }
+
         Players = [.. players.Select(x => new PlayerStatistics(x))];
     }
 }
