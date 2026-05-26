@@ -14,5 +14,3 @@ public class Player
     public Dictionary<UnitType, int> UnitTypeAmounts { get; set; } = [];
     public List<CombatUnit> Units { get; set; } = [];
 }
-
-//TODO: Save Plunder somewhere else

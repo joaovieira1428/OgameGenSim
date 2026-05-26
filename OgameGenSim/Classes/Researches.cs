@@ -2,6 +2,11 @@ using System.Text.Json.Serialization;
 
 namespace OgameGenSim.Classes;
 
+/// <summary>
+/// Research levels
+/// Names of properties are selfexplanatory
+/// JsonPropertyName are the research codes that come from the json
+/// </summary>
 public class Researches
 {
     [JsonPropertyName("109")]
