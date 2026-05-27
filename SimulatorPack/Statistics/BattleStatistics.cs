@@ -57,6 +57,31 @@ public class BattleStatistics
     /// </summary>
     public Dictionary<UnitType, int> GlobalDefendersLostAmount { get; set; } = Utils.GetInitialUnitTypeAmounts();
     /// <summary>
+    /// Shots fired by the attacking units in the battle
+    /// </summary>
+    public int ShotsFiredByAttackers { get; set; }
+    /// <summary>
+    /// Shots fired by the defending units in the battle
+    /// </summary>
+    public int ShotsFiredByDefenders { get; set; }
+    /// <summary>
+    /// Total demage dealt by the attacking units in the battle
+    /// </summary>
+    public double TotalDemageDealtByAttackers { get; set; }
+    /// <summary>
+    /// Total demage dealt by the defending units in the battle
+    /// </summary>
+    public double TotalDemageDealtByDefenders { get; set; }
+    /// <summary>
+    /// Total demage absorbed by the attacker's shields in the battle
+    /// </summary>
+    public double DemageAbsorbedByAttackers { get; set; }
+    /// <summary>
+    /// Total demage absorbed by the defender's shields in the battle
+    /// </summary>
+    public double DemageAbsorbedByDefenders { get; set; }
+
+    /// <summary>
     /// Metal debri created in the fight
     /// </summary>
     public int MetalDebri { get; set; }

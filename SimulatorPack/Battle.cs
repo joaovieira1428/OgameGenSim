@@ -81,7 +81,15 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
             battleStatistics.MetalDebri += round.DefendersRoundStatistics.MetalDebri;
             battleStatistics.CrystalDebri += round.DefendersRoundStatistics.CrystalDebri;
             battleStatistics.DeuteriumDebri += round.DefendersRoundStatistics.DeuteriumDebri;
-        
+
+            //battleStatistics (shots fired etc.)
+            battleStatistics.ShotsFiredByAttackers += round.AttackersRoundStatistics.ShotsFired;
+            battleStatistics.ShotsFiredByDefenders += round.DefendersRoundStatistics.ShotsFired;
+            battleStatistics.TotalDemageDealtByAttackers += round.AttackersRoundStatistics.DamageDealt;
+            battleStatistics.TotalDemageDealtByDefenders += round.DefendersRoundStatistics.DamageDealt;
+            battleStatistics.DemageAbsorbedByAttackers += round.AttackersRoundStatistics.DamageAbsorbedByDefendingPlayer;
+            battleStatistics.DemageAbsorbedByDefenders += round.DefendersRoundStatistics.DamageAbsorbedByDefendingPlayer;
+
             if(battleStatistics.RoundStatistics.IndexOf(round) != rounds-1) continue;
 
             //Loops attacking players per round
