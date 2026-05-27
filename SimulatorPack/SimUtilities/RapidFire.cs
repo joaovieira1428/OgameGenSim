@@ -2,6 +2,9 @@ using System;
 
 namespace OgameSimulatorPack.SimUtilities;
 
+/// <summary>
+/// Class that handles combat rapid fire
+/// </summary>
 public static class RapidFire
 {
 
@@ -12,6 +15,9 @@ public static class RapidFire
             => new(tuple.Attacker, tuple.Defender);
     }
 
+    /// <summary>
+    /// All the mapping between unit types and it's rapid fire percentage 
+    /// </summary>
     public static Dictionary<Key, double> rapidFireMapping = new()
     {
         { (UnitType.LIGHT_FIGHTER, UnitType.ESPIONAGE_PROBE),  0.8},
@@ -97,6 +103,12 @@ public static class RapidFire
         { (UnitType.ION_CANNON, UnitType.REAPER),  0.5},
     };
 
+    /// <summary>
+    /// Roll dice to see if it's a successfull launch of rapid fire or not
+    /// </summary>
+    /// <param name="attackerUnit">Attacking unit unitType</param>
+    /// <param name="defenderUnit">defending unit unitType</param>
+    /// <returns></returns>
     public static bool IsRapidFire(UnitType attackerUnit, UnitType defenderUnit)
     {
         if(rapidFireMapping.TryGetValue(new Key(attackerUnit, defenderUnit), out double rapidFireValue))
