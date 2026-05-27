@@ -1,14 +1,56 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using OgameGenSim;
+using Microsoft.Extensions.Hosting;
+using RazorConsole.Core;
+using OgameGenSim.Components;
+using OgameGenSim.Pages;
+using Microsoft.Extensions.DependencyInjection;
+using System.Text;
+using OgameGenSim.Services;
+using OgameGenSim.StateMachine;
+
 
 //sr-en-271-c5a37ce8be7144f68f295f5acea2c7b834708113
-//sr-en-273-8d3743a9170236490cc30f42a19d07aa708f0cd4
+//sr-en-273-15332eba4207ef4bbce946173dcc5ecb7cb0b7ea
 
+HttpClient httpClient = new();
+
+// Set console encoding to UTF-8 for Unicode characters (spinners, emojis, etc.)
+Console.OutputEncoding = Encoding.UTF8;
+Console.InputEncoding = Encoding.UTF8;
+
+ var hostBuilder = Host.CreateDefaultBuilder(args)
+            .UseRazorConsole<App>();
+
+hostBuilder.ConfigureServices(services =>
+{
+    services.AddSingleton<BattleStatisticsService>();
+    services.AddSingleton(new Loader(httpClient));
+    services.AddSingleton(new StateMachine<BSimState, BSimTrigger>(BSimState.FleetNumber)
+        .ConfigureState((BSimState.FleetNumber, BSimTrigger.Next), BSimState.PlayerAPIs)
+        .ConfigureState((BSimState.PlayerAPIs, BSimTrigger.Next), BSimState.FleetComposition)
+        .ConfigureState((BSimState.PlayerAPIs, BSimTrigger.Previous), BSimState.FleetNumber)
+        .ConfigureState((BSimState.FleetComposition, BSimTrigger.Previous), BSimState.PlayerAPIs));
+
+    // Configure console options
+    services.Configure<ConsoleAppOptions>(options =>
+    {
+        options.AutoClearConsole = false;
+        options.EnableTerminalResizing = true;
+    });
+
+});
+
+ var host = hostBuilder.Build();
+await host.RunAsync();
+
+
+/*
 HttpClient client = new();
 var loader = new Loader(client);
-
+*/
 ///TODO: maybe put this in a try catch block to handle potential deserialization errors
-var cleanData = await loader.LoadCombatInformation();
+//var cleanData = await loader.LoadCombatInformation();
 
 /*var cleanData2 = new OgameSimulatorPack.Classes.SimCombatInformation
 {
@@ -76,10 +118,11 @@ var cleanData = await loader.LoadCombatInformation();
 };
 */
 
-var simlator = new OgameSimulatorPack.Battle(cleanData.Universe.Debrifactor, cleanData.Universe.DefenseDebrisFactor, cleanData.Universe.DeuteriumOnDebris);
+//var simlator = new OgameSimulatorPack.Battle(cleanData.Universe.Debrifactor, cleanData.Universe.DefenseDebrisFactor, cleanData.Universe.DeuteriumOnDebris);
 
-var result = simlator.DoBattle(cleanData);
+//var result = simlator.DoBattle(cleanData);
 
+/*
 if(result.AttackerWon)
 {
     Console.WriteLine("Attacker won the battle!");
@@ -90,13 +133,22 @@ else
 }
 
 Console.WriteLine();
-
-Console.WriteLine($"Metal Debri: {result.MetalDebri}");
-Console.WriteLine($"Crystal Debri: {result.CrystalDebri}");
-Console.WriteLine($"Deuterium Debri: {result.DeuteriumDebri}");
-
+Console.WriteLine($"Metal Debri: \t{result.MetalDebri}");
+Console.WriteLine($"Crystal Debri: \t{result.CrystalDebri}");
+Console.WriteLine($"Deuterium Debri: \t{result.DeuteriumDebri}");
 Console.WriteLine();
+*/
+/*
+//---
+IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args)
+    .UseRazorConsole<BattleStatistics>();
 
+IHost host = hostBuilder.Build();
+
+await host.RunAsync();
+//---
+*/
+/*
 result.WriteBattleStatistics();
 
 Console.WriteLine();
@@ -121,3 +173,4 @@ switch(choice)
         Console.WriteLine("Invalid choice.");
         break;
 }
+*/

@@ -1,0 +1,159 @@
+﻿@page "/battleSimulator"
+
+@namespace OgameGenSim.Pages
+
+@using Microsoft.Extensions.Hosting
+@using OgameGenSim.Components
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using OgameGenSim.StateMachine
+@using OgameSimulatorPack
+@using OgameSimulatorPack.Classes
+@using OgameSimulatorPack.Statistics
+@using RazorConsole.Components
+
+@inject NavigationManager Nav
+@inject Loader LoaderService 
+@inject StateMachine<BSimState, BSimTrigger> BattleSimStateMachine
+@inject OgameGenSim.Services.BattleStatisticsService BattleStatisticsService
+
+<h3>BattleSimulatorPage</h3>
+
+@if(BattleSimStateMachine.CurrentState == BSimState.FleetNumber){
+    <Align>
+        <TextInput Value="@_attackersNumber" ValueChanged="OnAttackersChanged" Label="Number of attackers"></TextInput>
+        <TextInput Value="@_defendersNumber" ValueChanged="OnDefendersChanged" Label="Number of defenders"></TextInput>
+        <FlexBox>
+            <TextButton Content="Back" OnClick="@(() => Nav.NavigateTo("/"))"></TextButton>
+            <TextButton Content="Next" OnClick="NextSimPage"></TextButton>
+        </FlexBox>
+    </Align>
+}
+
+@if(BattleSimStateMachine.CurrentState == BSimState.PlayerAPIs){
+    <Align>
+        @for(var i = 0; i < _attackersAPI.Count ; i++){
+            var index = i;
+            <TextInput Value="@_attackersAPI[i]" ValueChanged="@(value => OnAttackersAPIChanged(value, index))" Label="@("Attacker " + (i+1))"></TextInput>
+        }
+
+        @for(var i = 0; i < _defendersAPI.Count; i++){
+            var index = i;
+            <TextInput Value="@_defendersAPI[i]" ValueChanged="@(value => OnDefendersAPIChanged(value, index))" Label="@("Defender " + (i+1))"></TextInput>
+        }
+
+        <FlexBox>
+            <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
+            <TextButton Content="Next" OnClick="NextSimPage"></TextButton>
+        </FlexBox>
+    </Align>
+}
+
+@if(BattleSimStateMachine.CurrentState == BSimState.FleetComposition){
+    <Align>
+        <MultiSelect @bind-Value="_selectedFleetComposition" Options="@fleetCompositionOptions"></MultiSelect>
+
+        <p>Note* - Takes priority over Cargos (just enough for steal)</p>
+
+        <FlexBox>
+            <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
+            <TextButton Content="Next" OnClick="LoadPlayers"></TextButton>
+        </FlexBox>
+
+    </Align>
+}
+
+@code {
+    private string _attackersNumber = string.Empty;
+    private int attackersNumber = 0;
+    private string _defendersNumber = string.Empty;
+    private int defendersNumber = 0;
+    private List<string> _attackersAPI = new List<string>();
+    private List<string> _defendersAPI = new List<string>();
+
+    private List<string> fleetCompositionOptions = new (){
+        "RIPS", 
+        "Slow Fleet", 
+        "Fast Fleet", 
+        "Cargos (just enough for steal)", 
+        "Cargos (all cargos*)", 
+        "Fodder (fighters)", 
+        "Pathfiders", 
+        "Do All combinations"
+    };
+
+    public List<string> _selectedFleetComposition = new();
+    
+    private void OnSelectCompositionChanged(List<string> value){
+        _selectedFleetComposition = value;
+    }
+
+    private async Task OnAttackersAPIChanged(string? value, int index){
+        await Task.Delay(500);
+        _attackersAPI[index] = value ?? string.Empty;
+    } 
+
+    private async Task OnDefendersAPIChanged(string? value, int index){
+        await Task.Delay(500);
+        _defendersAPI[index] = value ?? string.Empty;
+    }
+
+    private List<string> RecreateFleetApiList(int size){
+        var newList = new List<string>();
+        
+        for(int i = 0; i < size; i++){
+            newList.Add(string.Empty);
+        }
+        
+        return newList;    
+    }
+
+    private Task OnAttackersChanged(string? value)
+    {
+        _attackersNumber = value ?? string.Empty;
+        int.TryParse(_attackersNumber, out attackersNumber);
+
+        _attackersAPI = RecreateFleetApiList(attackersNumber);
+
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private Task OnDefendersChanged(string? value)
+    {
+        _defendersNumber = value ?? string.Empty;   
+        int.TryParse(_defendersNumber, out defendersNumber);  
+
+        _defendersAPI = RecreateFleetApiList(defendersNumber);
+
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private async void LoadPlayers()
+    {
+        if(attackersNumber > 0 && defendersNumber > 0){
+            SimCombatInformation cleanData = await LoaderService.LoadCombatInformation(_attackersAPI, _defendersAPI);
+
+            Battle simlator = new OgameSimulatorPack.Battle(cleanData.Universe.Debrifactor, cleanData.Universe.DefenseDebrisFactor, cleanData.Universe.DeuteriumOnDebris);
+
+            BattleStatistics result = simlator.DoBattle(cleanData);
+
+            BattleStatisticsService.BattleStatistics = result;
+
+            Nav.NavigateTo("/battleStatistics");
+        } 
+    }
+
+    private void NextSimPage(){
+        var state = BattleSimStateMachine.ChangeState(BSimTrigger.Next);
+        Console.Clear();
+        Console.WriteLine(state);
+    }
+
+    private void PreviousSimPage(){
+        var state = BattleSimStateMachine.ChangeState(BSimTrigger.Previous);
+        Console.Clear();
+        Console.WriteLine(state);
+    }
+}

@@ -9,22 +9,21 @@ using OgameSimulatorPack.SimUtilities;
 
 namespace OgameGenSim;
 
+/// <summary>
+/// Main Class of the client side of the simulator -
+/// - Used to load all information from Ogame spionage report json
+/// - Used to load all information from attacker fleet json 
+/// </summary>
+/// <param name="client"></param>
 public class Loader(HttpClient client)
 {
     private GenSimClient GenSimClient { get; set; } = new GenSimClient(client);
     private string reportIdForUniverseData = string.Empty;
 
-    public async Task<SimCombatInformation> LoadCombatInformation()
+    public async Task<SimCombatInformation> LoadCombatInformation(List<string> attackersAPI, List<string> defendersAPI)
     {
-        //TODO: Protect this shit or it will break
-        Console.WriteLine("How many attackers? ");
-        var attackersCount = int.Parse(Console.ReadLine() ?? "0");
-
-        Console.WriteLine("How many defenders? ");
-        var defendersCount = int.Parse(Console.ReadLine() ?? "0");
-
-        var attackers = LoadAttackers(attackersCount);
-        var defenders = await LoadDefenders(defendersCount);
+        var attackers = LoadAttackers(attackersAPI);
+        var defenders = await LoadDefenders(defendersAPI);
 
         string[] splitReportId = reportIdForUniverseData.Split("-");
         var universeLanguage = splitReportId[1];        
@@ -46,51 +45,67 @@ public class Loader(HttpClient client)
 
     }
 
-    private async Task<List<PlayerInformation>> LoadDefenders(int defendersCount)
+    private async Task<List<PlayerInformation>> LoadDefenders(List<string> defendersAPI)
     {
         List<PlayerInformation> defenders = [];
 
-        var isSuccessStatus = false;
-
-        while(defendersCount > 0 && !isSuccessStatus)
+        for(var i = 0; i < defendersAPI.Count; i++)
         {
-            Console.WriteLine("Insert an espionage report API: ");
-            reportIdForUniverseData = Console.ReadLine();
-
-            var report = await GenSimClient.GetReportDataAsync(reportIdForUniverseData);
-
-            if (report.IsSuccessStatusCode)
-            {
-                defenders.Add(report.Result);
-                defendersCount--;
-            }
-            else
-            {
-                Console.WriteLine($"Failed to get report data: {report.ErrorMessage}");
-            }
-
-            isSuccessStatus = report.IsSuccessStatusCode;
+            defenders.Add(await LoaderDefender(defendersAPI[i], i+1));
         }
 
         return defenders;
     }
 
-    private List<PlayerInformation> LoadAttackers(int attackersCount)
+    private async Task<PlayerInformation> LoaderDefender(string defendersAPI, int index)
+    {
+        string? defenderAPI = defendersAPI;
+
+        while (defenderAPI == null || defenderAPI.Trim() == "")
+        {
+            Console.WriteLine($"Insert defender API for defender {index}: ");
+            defenderAPI = Console.ReadLine();
+        }
+
+        var report = await GenSimClient.GetReportDataAsync(defenderAPI);
+
+        if (report.IsSuccessStatusCode)
+        {
+            reportIdForUniverseData = defendersAPI;
+            return report.Result;
+        }
+        else
+        {
+            Console.WriteLine($"Failed to get report data: {report.ErrorMessage} for defender {index}");
+
+            Console.WriteLine($"Insert defender API for defender {index}: ");
+            defenderAPI = Console.ReadLine();
+
+            return await LoaderDefender(defenderAPI, index);
+        }
+    }
+
+    private List<PlayerInformation> LoadAttackers(List<string> attackersAPI)
     {
         List<PlayerInformation> attackers = [];
 
-        for(var i = 0; i < attackersCount; i++)
+        for(var i = 0; i < attackersAPI.Count; i++)
         {
-            attackers.Add(ParseAttackerData());
+            attackers.Add(ParseAttackerData(attackersAPI[i], i+1));
         }
 
         return attackers;
     }
 
+    /// <summary>
+    /// Transform all combat information from attackers and defenders into workable/clean data for the simulator
+    /// </summary>
+    /// <param name="attakcers"></param>
+    /// <param name="defenders"></param>
+    /// <param name="universeInformation"></param>
+    /// <returns></returns>
     private SimCombatInformation GetCleanData(List<PlayerInformation> attakcers, List<PlayerInformation> defenders, UniverseInformation universeInformation)
-    {
-        //TOOD: GetUniverseData()
-        
+    {        
         SimCombatInformation combatInfo = new();
 
         var counterForId = 0;
@@ -102,6 +117,7 @@ public class Loader(HttpClient client)
             combatInfo.GlobalAttackersUnitAmount = combatInfo.GlobalAttackersUnitAmount.Keys.Union(attackerData.UnitTypeAmounts.Keys)
             .ToDictionary(x => x, x => combatInfo.GlobalAttackersUnitAmount.GetValueOrDefault(x) 
                             + attackerData.UnitTypeAmounts.GetValueOrDefault(x));
+        counterForId++;
         }
         
         counterForId = 0;
@@ -113,6 +129,7 @@ public class Loader(HttpClient client)
             combatInfo.GlobalDefendersUnitAmount = combatInfo.GlobalDefendersUnitAmount.Keys.Union(defenderData.UnitTypeAmounts.Keys)
             .ToDictionary(x => x, x => combatInfo.GlobalDefendersUnitAmount.GetValueOrDefault(x) 
                             + defenderData.UnitTypeAmounts.GetValueOrDefault(x));
+        counterForId++;
         }
 
         combatInfo.Universe = new Universe()
@@ -163,6 +180,8 @@ public class Loader(HttpClient client)
 
     private Player GetCleanAttackerData(PlayerInformation playerInformation, int id)
     {   
+        //Solar statllites are a ship so we have to whipe the out from the attacker unit list
+        var shipsToAdd = playerInformation.Ships.Where(x => x.Key != UnitType.SOLAR_SATELLITE).ToDictionary();
         return new Player()
         {
             Id = id,
@@ -172,11 +191,21 @@ public class Loader(HttpClient client)
             Armor = playerInformation.Researches.ArmourTechnology,
             Shield = playerInformation.Researches.ShieldingTechnology,
             Weapon = playerInformation.Researches.WeaponsTechnology,
-            UnitTypeAmounts = playerInformation.Ships.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value.Amount)).ToDictionary(),
-            Units = GetCleanUnitData(playerInformation.Researches, playerInformation.Ships, id, playerInformation.CharacterClassId, playerInformation.AllianceClassId)
+            UnitTypeAmounts = shipsToAdd.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value.Amount)).ToDictionary(),
+            Units = GetCleanUnitData(playerInformation.Researches, shipsToAdd, id, playerInformation.CharacterClassId, playerInformation.AllianceClassId)
         };
     }
 
+    /// <summary>
+    /// Cleans the unit data and adds all bonuses to base values of shild, hull and weapon
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="researches"></param>
+    /// <param name="units"></param>
+    /// <param name="id"></param>
+    /// <param name="charatcterClassId"></param>
+    /// <param name="allianceClassId"></param>
+    /// <returns></returns>
     private static List<CombatUnit> GetCleanUnitData<T>(Researches researches, Dictionary<UnitType, T> units, int id, int charatcterClassId, int allianceClassId) where T : UnitStats
     {
         var cleanUnits = new List<CombatUnit>();
@@ -236,13 +265,13 @@ public class Loader(HttpClient client)
         return (float)(defaultValue + (defaultValue * (LFBonus + techBonus)));
     }
 
-    private PlayerInformation ParseAttackerData()
+    private PlayerInformation ParseAttackerData(string attackerApi, int index)
     {
-        string? attackerJson = null;
+        string? attackerJson = attackerApi;
 
         while(attackerJson == null || attackerJson.Trim() == "")
         {
-            Console.WriteLine("Insert attacker API: ");
+            Console.WriteLine($"Attakcer {index} is empty. Insert attacker API for attacker {index}: ");
             attackerJson = Console.ReadLine();
         }
 
@@ -252,8 +281,12 @@ public class Loader(HttpClient client)
         }
         catch (JsonException)
         {
-            Console.WriteLine("Invalid JSON format. Please try again.");
-            return ParseAttackerData();
+            Console.WriteLine($"Invalid JSON format for attacker {index}. Please try again.");
+
+            Console.WriteLine($"Insert attacker API for attacker {index}: ");
+            attackerJson = Console.ReadLine();
+
+            return ParseAttackerData(attackerJson, index);
         }
         var jsonObject = JsonNode.Parse(attackerJson);
 
@@ -264,8 +297,11 @@ public class Loader(HttpClient client)
         
         if(combatInformation == null)
         {
-            Console.WriteLine($"Warning: Failed to deserialize attacker data. Please check the input format.");
-            return ParseAttackerData();
+            Console.WriteLine($"Warning: Failed to deserialize attacker data for attacker {index}. Please check the input format.");
+
+            attackerJson = Console.ReadLine();
+
+            return ParseAttackerData(attackerJson, index);
         }
      
         return combatInformation;

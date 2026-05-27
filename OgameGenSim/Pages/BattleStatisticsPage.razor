@@ -1,0 +1,254 @@
+﻿@page "/battleStatistics"
+@namespace OgameGenSim.Pages
+
+@using OgameGenSim.Components
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using OgameSimulatorPack.SimUtilities
+@using OgameSimulatorPack.Statistics
+@using RazorConsole.Components
+
+@inject NavigationManager Nav
+@inject OgameGenSim.Services.BattleStatisticsService BattleStatisticsService
+
+<h3>BattleStatistics</h3>
+
+
+@if (BattleStatisticsService.BattleStatistics != null)
+{
+    <FlexBox>
+        <Padder Padding=(new(0,0,2,0))>
+            <Border>
+                <Rows>
+                    <Select Options="attackerOptions.ToArray()" 
+                    Value="_selectedAttackingPlayer" 
+                    ValueChanged="@((string? value) => OnAttackerSelectChange(value))"></Select>
+
+                    <Grid Expand="true" Columns="3">
+                    
+                            <BattleStatisticsItem 
+                            GlobalPlayerAmount="attackerAmount"
+                            LostPlayerAmount="attackerLostAmount"></BattleStatisticsItem>
+                
+                    </Grid>
+                </Rows>
+            </Border>
+        </Padder>
+         <Select Options="roundOptions.ToArray()" 
+                    Value="_selectedRound" 
+                    ValueChanged="@((string? value) => OnRoundSelectChange(value))"></Select>
+        <Padder Padding=(new(2,0,0,0))>
+            <Border>
+                <Rows>
+                    <Select Options="defenderOptions.ToArray()" 
+                    Value="_selectedDefendingPlayer" 
+                    ValueChanged="@((string? value) => OnDefenderSelectChange(value))"></Select>
+
+                    <Grid Expand="true" Columns="3">
+                    
+                            <BattleStatisticsItem 
+                            GlobalPlayerAmount="defenderAmount"
+                            LostPlayerAmount="defenderLostAmount"></BattleStatisticsItem>
+                
+                    </Grid>
+                </Rows>
+            </Border>
+        </Padder>
+    </FlexBox>
+    <Align>
+        <p>The Attacker fires a total of @shotsFiredByAttackers shots at the Defender with a total strength of @totalAttackersDemage.</p>
+        <p>The defender's shields absorb @totalDefendersShieldAbsorption damage points of demage.</p>
+        <p>The Defender fires a total of @shotsFiredByDefenders shots at the Attacker with a total strength of @totalDefendersDemage.</p>
+        <p>The attacker's shields absorb @totalAttackersShieldAbsorption damage points of demage.</p>
+    </Align>
+}
+else
+{
+    <p>No battle statistics available.</p>
+}
+
+
+
+@code {
+    private Dictionary<UnitType, int> attackerAmount = Utils.GetInitialUnitTypeAmounts();
+    private Dictionary<UnitType, int> defenderAmount = Utils.GetInitialUnitTypeAmounts();
+    private Dictionary<UnitType, int> attackerLostAmount = Utils.GetInitialUnitTypeAmounts();
+    private Dictionary<UnitType, int> defenderLostAmount = Utils.GetInitialUnitTypeAmounts();
+
+    private int shotsFiredByAttackers = 0;
+    private int shotsFiredByDefenders = 0;
+    private double totalAttackersDemage = 0;
+    private double totalDefendersDemage = 0;
+    private double totalAttackersShieldAbsorption = 0;
+    private double totalDefendersShieldAbsorption = 0;
+
+    private List<string> attackerOptions = [];
+    private List<string> defenderOptions = [];
+    private List<string> roundOptions = [];
+
+    private string _selectedAttackingPlayer = string.Empty;
+    private string _selectedDefendingPlayer = string.Empty;
+    private string _selectedRound = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        if (BattleStatisticsService.BattleStatistics != null)
+        {
+            attackerOptions.Add("All");
+            attackerOptions.AddRange(BattleStatisticsService.BattleStatistics.Attackers.Select(x=> x.Coordinates));
+            _selectedAttackingPlayer = "All";
+
+            defenderOptions.Add("All");
+            defenderOptions.AddRange(BattleStatisticsService.BattleStatistics.Defenders.Select(x=> x.Coordinates));
+            _selectedDefendingPlayer = "All";
+
+            roundOptions.Add("All");
+            for(var i = 0; i < BattleStatisticsService.BattleStatistics.RoundStatistics.Count(); i++){
+                roundOptions.Add(i.ToString());
+            }
+            _selectedRound = "All";
+
+            PopulateUnits();
+        }
+    }
+
+    private void PopulateUnits()
+    {
+        if (BattleStatisticsService.BattleStatistics == null) return;
+
+        if(_selectedRound == "All"){
+            PopulateGlobal();
+        }else{
+            var round = BattleStatisticsService.BattleStatistics.RoundStatistics[int.Parse(_selectedRound)];
+            PopulateRound(round);
+        }
+    }
+
+    private void PopulateGlobal(){
+        if(_selectedAttackingPlayer == "All"){
+            PopulatePlayer(attackerAmount, BattleStatisticsService.BattleStatistics.GlobalAttackersAmount);
+            PopulatePlayer(attackerLostAmount, BattleStatisticsService.BattleStatistics.GlobalAttackersLostAmount);
+        }else{
+            var attackingPlayer = BattleStatisticsService.BattleStatistics.Attackers.FirstOrDefault(x => x.Coordinates == _selectedAttackingPlayer);
+
+            PopulatePlayer(attackerAmount, attackingPlayer.UnitAmount);
+            PopulatePlayer(attackerLostAmount, attackingPlayer.UnitLostAmount);
+        }
+
+        if(_selectedDefendingPlayer == "All"){
+            PopulatePlayer(defenderAmount, BattleStatisticsService.BattleStatistics.GlobalDefendersAmount);
+            PopulatePlayer(defenderLostAmount, BattleStatisticsService.BattleStatistics.GlobalDefendersLostAmount);
+        }else{
+            var defendingPlayer = BattleStatisticsService.BattleStatistics.Defenders.FirstOrDefault(x => x.Coordinates == _selectedDefendingPlayer);
+            PopulatePlayer(defenderAmount, defendingPlayer.UnitAmount);
+            PopulatePlayer(defenderLostAmount, defendingPlayer.UnitLostAmount);
+        }
+
+        PopulateGlobalStats();
+    }
+
+    private void PopulateRound(RoundStatistics round){   
+        if(_selectedAttackingPlayer == "All"){
+            PopulatePlayer(attackerAmount, round.AttackersRoundStatistics.GlobalUnitAmount);
+            PopulatePlayer(attackerLostAmount, round.AttackersRoundStatistics.GlobalUnitLostAmount);
+        }else{
+            var attackingPlayer = round.AttackersRoundStatistics.Players.FirstOrDefault(x => x.Coordinates == _selectedAttackingPlayer);
+            if(attackingPlayer != null){
+                PopulatePlayer(attackerAmount, attackingPlayer.UnitAmount);
+                PopulatePlayer(attackerLostAmount, attackingPlayer.UnitLostAmount);
+            }
+        }
+
+        if(_selectedDefendingPlayer == "All"){
+            PopulatePlayer(defenderAmount, round.DefendersRoundStatistics.GlobalUnitAmount);
+            PopulatePlayer(defenderLostAmount, round.DefendersRoundStatistics.GlobalUnitLostAmount);
+        }else{
+            var defendingPlayer = round.DefendersRoundStatistics.Players.FirstOrDefault(x => x.Coordinates == _selectedDefendingPlayer);
+            if(defendingPlayer != null){
+                PopulatePlayer(defenderAmount, defendingPlayer.UnitAmount);
+                PopulatePlayer(defenderLostAmount, defendingPlayer.UnitLostAmount);
+            }
+        }
+
+        PopulateGlobalStatsByRound(round);
+    }
+
+    private void PopulatePlayer(Dictionary<UnitType, int>unitAmount, Dictionary<UnitType, int> unitAmountToSum){
+        foreach (var kvp in unitAmountToSum)
+        {
+            if (unitAmount.ContainsKey(kvp.Key))
+                unitAmount[kvp.Key] += kvp.Value;
+            else
+                unitAmount[kvp.Key] = kvp.Value;
+        }
+    }
+
+    private void PopulateGlobalStats(){
+        shotsFiredByAttackers = BattleStatisticsService.BattleStatistics.ShotsFiredByAttackers;
+        shotsFiredByDefenders = BattleStatisticsService.BattleStatistics.ShotsFiredByDefenders;
+        totalAttackersDemage = BattleStatisticsService.BattleStatistics.TotalDemageDealtByAttackers;
+        totalDefendersDemage = BattleStatisticsService.BattleStatistics.TotalDemageDealtByDefenders;
+        totalAttackersShieldAbsorption = BattleStatisticsService.BattleStatistics.DemageAbsorbedByAttackers;
+        totalDefendersShieldAbsorption = BattleStatisticsService.BattleStatistics.DemageAbsorbedByDefenders;
+    }
+    
+    private void PopulateGlobalStatsByRound(RoundStatistics round){
+        shotsFiredByAttackers = round.AttackersRoundStatistics.ShotsFired;
+        shotsFiredByDefenders = round.DefendersRoundStatistics.ShotsFired;
+        totalAttackersDemage = round.AttackersRoundStatistics.DamageDealt;
+        totalDefendersDemage = round.DefendersRoundStatistics.DamageDealt;
+        totalAttackersShieldAbsorption = round.AttackersRoundStatistics.DamageAbsorbedByDefendingPlayer;
+        totalDefendersShieldAbsorption = round.DefendersRoundStatistics.DamageAbsorbedByDefendingPlayer;
+    }
+
+
+    private Task OnAttackerSelectChange(string? value){
+        if(value == null) return Task.CompletedTask;
+
+        attackerAmount = Utils.GetInitialUnitTypeAmounts();
+        defenderAmount = Utils.GetInitialUnitTypeAmounts();
+        attackerLostAmount = Utils.GetInitialUnitTypeAmounts();
+        defenderLostAmount = Utils.GetInitialUnitTypeAmounts();
+
+        _selectedAttackingPlayer = value;
+
+        PopulateUnits();
+
+        StateHasChanged();
+
+        return Task.CompletedTask;
+    }
+
+    private Task OnDefenderSelectChange(string? value){
+        if(value == null) return Task.CompletedTask;
+
+        attackerAmount = Utils.GetInitialUnitTypeAmounts();
+        defenderAmount = Utils.GetInitialUnitTypeAmounts();
+        attackerLostAmount = Utils.GetInitialUnitTypeAmounts();
+        defenderLostAmount = Utils.GetInitialUnitTypeAmounts();
+        _selectedDefendingPlayer = value;
+
+        PopulateUnits();
+
+        StateHasChanged();
+
+        return Task.CompletedTask;
+    }
+
+    private Task OnRoundSelectChange(string? value){
+        if(value == null) return Task.CompletedTask;
+
+        attackerAmount = Utils.GetInitialUnitTypeAmounts();
+        defenderAmount = Utils.GetInitialUnitTypeAmounts();
+        attackerLostAmount = Utils.GetInitialUnitTypeAmounts();
+        defenderLostAmount = Utils.GetInitialUnitTypeAmounts();
+
+        _selectedRound = value;
+
+        PopulateUnits();
+
+        StateHasChanged();
+        
+        return Task.CompletedTask;
+    } 
+}
