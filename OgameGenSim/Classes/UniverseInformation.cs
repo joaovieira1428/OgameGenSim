@@ -3,6 +3,10 @@ using System.Xml.Serialization;
 
 namespace OgameGenSim.Classes;
 
+/// <summary>
+/// Universe data to do debri calculations, flight calculations, etc
+/// Has a bunch of properties that are not used and will not be used, nevertheless it's not yet cleaned
+/// </summary>
 [XmlRoot("serverData")]
 public class UniverseInformation
 {

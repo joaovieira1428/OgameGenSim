@@ -5,38 +5,98 @@ using OgameSimulatorPack.SimUtilities;
 
 namespace OgameSimulatorPack.Statistics;
 
+/// <summary>
+/// One of the two main classes of the simulator, used in the response and gathers all information and statistics needed to show a close approximation of the Ogame simulator
+/// Handles all units lost in a batle per player or all players
+/// Handles all units lost in a specific round per player or all players
+/// The values are gathered in the same way the Ogame simulator does
+/// </summary>
 public class BattleStatistics
 {
+    /// <summary>
+    /// Gathers all statistics of a round
+    /// Used for:
+    ///     - all players per round
+    ///     - one specific player per round
+    /// </summary>
     public List<RoundStatistics> RoundStatistics { get; set; } = [];
+    /// <summary>
+    /// Gathers all statistics of the specific attackers
+    /// Used for:
+    ///     - specific attacking player statistics of entire battle
+    /// </summary>
     public List<PlayerStatistics> Attackers { get; set; }
+    /// <summary>
+    /// Gathers all statistics of the specific defenders
+    /// Used for:
+    ///     - specific defending player statistics of entire battle
+    /// </summary>
     public List<PlayerStatistics> Defenders { get; set; }
+    /// <summary>
+    /// Gathers all statistics of combined attacking units before the battle
+    /// Used for:
+    ///     - show the summarized battle conclusion with the total values of all attcking players
+    /// </summary>
     public Dictionary<UnitType, int> GlobalAttackersAmount { get; set; } = [];
+    /// <summary>
+    /// Gathers all statistics of combined defending units before the battle
+    /// Used for:
+    ///     - show the summarized battle conclusion with the total values of all defending players
+    /// </summary>
     public Dictionary<UnitType, int> GlobalDefendersAmount { get; set; } = [];
+    /// <summary>
+    /// Gathers all statistics of combined attacking units lost in the battle
+    /// Used for:
+    ///     - show the summarized battle conclusion with the total values of all attacking players
+    /// </summary>
     public Dictionary<UnitType, int> GlobalAttackersLostAmount { get; set; } = Utils.GetInitialUnitTypeAmounts();
+    /// <summary>
+    /// Gathers all statistics of combined defending units lost in the battle
+    /// Used for:
+    ///     - show the summarized battle conclusion with the total values of all defending players
+    /// </summary>
     public Dictionary<UnitType, int> GlobalDefendersLostAmount { get; set; } = Utils.GetInitialUnitTypeAmounts();
+    /// <summary>
+    /// Shots fired by the attacking units in the battle
+    /// </summary>
+    public int ShotsFiredByAttackers { get; set; }
+    /// <summary>
+    /// Shots fired by the defending units in the battle
+    /// </summary>
+    public int ShotsFiredByDefenders { get; set; }
+    /// <summary>
+    /// Total demage dealt by the attacking units in the battle
+    /// </summary>
+    public double TotalDemageDealtByAttackers { get; set; }
+    /// <summary>
+    /// Total demage dealt by the defending units in the battle
+    /// </summary>
+    public double TotalDemageDealtByDefenders { get; set; }
+    /// <summary>
+    /// Total demage absorbed by the attacker's shields in the battle
+    /// </summary>
+    public double DemageAbsorbedByAttackers { get; set; }
+    /// <summary>
+    /// Total demage absorbed by the defender's shields in the battle
+    /// </summary>
+    public double DemageAbsorbedByDefenders { get; set; }
+
+    /// <summary>
+    /// Metal debri created in the fight
+    /// </summary>
     public int MetalDebri { get; set; }
+    /// <summary>
+    /// Crystal debri created in the fight
+    /// </summary>
     public int CrystalDebri { get; set; }
+    /// <summary>
+    /// deuterium debri created in the fight
+    /// </summary>
     public int DeuteriumDebri { get; set; }
+    /// <summary>
+    /// wether the attacker won or not
+    /// </summary>
     public bool AttackerWon { get; set; }
-
-    public BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, 
-                            Dictionary<UnitType, int> defendersGlobalUnitAmount, 
-                            List<Player> attackers, 
-                            List<Player> defenders)
-    {
-        Attackers = [.. attackers.Select(x => new PlayerStatistics(x))];
-        Defenders = [.. defenders.Select(x => new PlayerStatistics(x))];
-
-        foreach (var item in attackersGlobalUnitAmount)
-        {
-            GlobalAttackersAmount.Add(item.Key, item.Value);
-        }
-
-        foreach (var item in defendersGlobalUnitAmount)
-        {
-            GlobalDefendersAmount.Add(item.Key, item.Value);
-        }
-    }
 
     public BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, 
                             Dictionary<UnitType, int> defendersGlobalUnitAmount, 
@@ -56,169 +116,29 @@ public class BattleStatistics
             GlobalDefendersAmount.Add(item.Key, item.Value);
         }
     }
-
-    //public bool DefenderWon { get; set; }
-
-
-    public void WriteRoundsStatistics()
-    {
-        foreach(var round in RoundStatistics)
-        {
-            WriteRoundStatistics(round);
-        }
-    }
-
-    public void WriteRoundStatistics(RoundStatistics round)
-    {
-        var attacker = round.AttackersRoundStatistics;
-        var defender = round.DefendersRoundStatistics;
-
-        StringBuilder attackerStatsString = new();
-        StringBuilder defenderStatsString = new();
-
-        foreach(var unitType in round.AttackersRoundStatistics.GlobalUnitAmount)
-        {
-            var unitTypeCount = unitType.Value;
-            var lostUnitTypeCount = round.AttackersRoundStatistics.GlobalUnitLostAmount[unitType.Key];
-
-            attackerStatsString.AppendLine($"{unitType.Key.ToString()}: -{lostUnitTypeCount} : {unitTypeCount} ");
-        }
-
-        foreach(var unitType in round.DefendersRoundStatistics.GlobalUnitAmount)
-        {
-            var unitTypeCount = unitType.Value;
-            var lostUnitTypeCount = round.DefendersRoundStatistics.GlobalUnitLostAmount[unitType.Key];
-
-            defenderStatsString.AppendLine($"{unitType.Key.ToString()}: -{lostUnitTypeCount} : {unitTypeCount} ");
-        }
-
-
-        attackerStatsString.AppendLine($"Atacante dispara um total de {attacker.ShotsFired} tiros contra o defensor ");
-        attackerStatsString.Append($"com uma força total de {attacker.DamageDealt}.");
-        attackerStatsString.AppendLine($"Os escudos do defensor absorvem {attacker.DamageAbsorbedByDefendingPlayer} pontos de dano.");
-        //attackerStatsString.AppendLine($"O dano concreto foi {attacker.DemageTakenByDefendingPlayer} pontos de dano.");
-
-        defenderStatsString.AppendLine($"Defensor dispara um total de {defender.ShotsFired} tiros contra o atacante ");
-        defenderStatsString.Append($"com uma força total de {defender.DamageDealt}.");
-        defenderStatsString.AppendLine($"Os escudos do atacante absorvem {defender.DamageAbsorbedByDefendingPlayer} pontos de dano.");
-        //defenderStatsString.AppendLine($"O dano concreto foi {defender.DemageTakenByDefendingPlayer} pontos de dano.");
-
-        Console.WriteLine(attackerStatsString.ToString());
-        Console.WriteLine(defenderStatsString.ToString());
-    }
-
-    public void WriteUnitStatistics()
-    {
-        StringBuilder attackerStatsString = new();
-        StringBuilder defenderStatsString = new();
-
-        var attackers = RoundStatistics.First().AttackersRoundStatistics.Players;
-
-        foreach(var attacker in attackers)
-        {
-            attackerStatsString.AppendLine($"Attacker: {attacker.Coordinates}: ");
-            
-            var units = attacker.Units.DistinctBy(x => x.ShipType);
-
-            foreach(var unit in units)
-            {
-                attackerStatsString.AppendLine($"{unit.ShipType.ToString()}:");
-                attackerStatsString.AppendLine($"{unit.Weapon}");
-                attackerStatsString.AppendLine($"{unit.Shield}");
-                attackerStatsString.AppendLine($"{unit.Hull}");
-                attackerStatsString.AppendLine();
-            }
-        }
-        
-        var defenders = RoundStatistics.First().DefendersRoundStatistics.Players;
-
-        foreach(var defender in defenders)
-        {
-            defenderStatsString.AppendLine($"Defender: {defender.Coordinates}: ");
-
-            var units = defender.Units.DistinctBy(x => x.ShipType);
-
-            foreach(var unit in units)
-            {
-                defenderStatsString.AppendLine($"{unit.ShipType.ToString()}:");
-                defenderStatsString.AppendLine($"{unit.Weapon}");
-                defenderStatsString.AppendLine($"{unit.Shield}");
-                defenderStatsString.AppendLine($"{unit.Hull}");
-                defenderStatsString.AppendLine();
-            }
-        }
-
-        Console.WriteLine(attackerStatsString.ToString());
-        Console.WriteLine(defenderStatsString.ToString());  
-    }
-
-    public void WriteBattleStatistics()
-    {
-        var lostAttackers = Utils.GetInitialUnitTypeAmounts();
-        var lostDeffenders = Utils.GetInitialUnitTypeAmounts();
-
-        foreach(var round in RoundStatistics)
-        {
-            lostAttackers.ToDictionary(x => x.Key, x=> x.Value + round.AttackersRoundStatistics.GlobalUnitLostAmount[x.Key]);
-            lostDeffenders.ToDictionary(x => x.Key,  x => x.Value + round.DefendersRoundStatistics.GlobalUnitLostAmount[x.Key]);
-        }
-
-        foreach(var unitType in GlobalAttackersAmount)
-        {
-            var unitTypeCount = unitType.Value;
-            var lostUnitTypeCount = lostAttackers[unitType.Key];
-
-            Console.WriteLine($"{unitType.Key}: -{lostUnitTypeCount} : {unitTypeCount} ");
-        }
-
-        foreach(var unitType in GlobalDefendersAmount)
-        {
-            var unitTypeCount = unitType.Value;
-            var lostUnitTypeCount = lostDeffenders[unitType.Key];
-
-            Console.WriteLine($"{unitType.Key}: -{lostUnitTypeCount} : {unitTypeCount} ");
-        }
-    }
-
-    public void WriteBattleStatisticsPerPlayer(string playerCoordinates)
-    {
-        var player = Attackers.FirstOrDefault(x => x.Coordinates == playerCoordinates) 
-        ?? Defenders.FirstOrDefault(x => x.Coordinates == playerCoordinates);
-
-        if(player == null)
-        {
-            Console.WriteLine($"Player with coordinates {playerCoordinates} not found.");
-            return;
-        }
-
-        foreach(var round in RoundStatistics)
-        {
-            var playerRoundStats = round.AttackersRoundStatistics.Players.FirstOrDefault(x => x.Coordinates == playerCoordinates) 
-            ?? round.DefendersRoundStatistics.Players.FirstOrDefault(x => x.Coordinates == playerCoordinates);
-
-            if(playerRoundStats != null)
-            {
-                player.UnitLostAmount.ToDictionary(x => x.Key, x => x.Value + playerRoundStats.UnitLostAmount[x.Key]);
-            }
-        }
-
-        foreach(var unitType in player.UnitAmount)
-        {
-            var unitTypeCount = unitType.Value;
-            var lostUnitTypeCount = player.UnitLostAmount[unitType.Key];
-
-            Console.WriteLine($"{unitType.Key}: -{lostUnitTypeCount} : {unitTypeCount} ");
-        }
-    }
 }
 
+/// <summary>
+/// Player statistics
+/// Used in both global statistics and round statistics
+/// </summary>
 public class PlayerStatistics
 {
+    /// <summary>
+    /// Player coordinates
+    /// </summary>
     public string Coordinates { get; set; }
+    /// <summary>
+    /// ID to link the player to the units
+    /// </summary>
     public int Id { get; set; }
-    //Deprecated - Take out from class
-    public List<CombatUnit> Units { get; set; }
+    /// <summary>
+    /// Unit amount per type before the battle
+    /// </summary>
     public Dictionary<UnitType, int> UnitAmount { get; set; } = [];
+    /// <summary>
+    /// Unit amount per type lost in the battle
+    /// </summary>
     public Dictionary<UnitType, int> UnitLostAmount { get; set; } = [];
 
 
@@ -226,7 +146,6 @@ public class PlayerStatistics
     {
         Id = attacker.Id;
         Coordinates = attacker.Coordinates;
-        Units = attacker.Units;
 
         foreach (var item in attacker.UnitTypeAmounts)
         {
@@ -240,7 +159,6 @@ public class PlayerStatistics
     {
         Id = attacker.Id;
         Coordinates = attacker.Coordinates;
-        Units = attacker.Units;
 
         foreach (var item in attacker.UnitAmount)
         {
@@ -254,9 +172,19 @@ public class PlayerStatistics
     }
 }
 
+/// <summary>
+/// Round statiscs
+/// Gathers information per player and of all players
+/// </summary>
 public class RoundStatistics
 {
+    /// <summary>
+    /// Gathers all information of attacking players
+    /// </summary>
     public PlayersRoundStatistics AttackersRoundStatistics { get; set; }
+    /// <summary>
+    /// Gathers all information of defending players
+    /// </summary>
     public PlayersRoundStatistics DefendersRoundStatistics { get; set; }
 
     public RoundStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, 
@@ -283,19 +211,55 @@ public class RoundStatistics
     
 }
 
-
-
+/// <summary>
+/// Gathers all the info of a group of players (attackers or defenders)
+/// It has the global amounts of all players and the amounts per player
+/// </summary>
 public class PlayersRoundStatistics
 {
+    /// <summary>
+    /// Shots fired in the round
+    /// </summary>
     public int ShotsFired { get; set; } = 0;
+    /// <summary>
+    /// Demage dealt in the round
+    /// Note: for some reason it does not give the same value as the Ogame simulator, might be the way it's being summed
+    /// </summary>
     public double DamageDealt { get; set; } = 0;
+    /// <summary>
+    /// Demage absorbed by the defending units shield without destroyng any hull values
+    /// </summary>
     public double DamageAbsorbedByDefendingPlayer { get; set; } = 0;
+    /// <summary>
+    /// Demage taken to the defending units hull values
+    /// </summary>
     public double DamageTakenByDefendingPlayer { get; set; } = 0;
+    /// <summary>
+    /// Metal debri gathered in the round
+    /// Used to sum all rounds in the end of the battle
+    /// </summary>
     public int MetalDebri { get; set; }
+    /// <summary>
+    /// Crystal debri gathered in the round
+    /// Used to sum all rounds in the end of the battle
+    /// </summary>
     public int CrystalDebri { get; set; }
+    /// <summary>
+    /// Deuterium debri gathered in the round
+    /// Used to sum all rounds in the end of the battle
+    /// </summary>
     public int DeuteriumDebri { get; set; }
+    /// <summary>
+    /// Global unit amount per type before the round
+    /// </summary>
     public Dictionary<UnitType, int> GlobalUnitAmount { get; set; } = [];
+    /// <summary>
+    /// Global unit lost amount per type after the round
+    /// </summary>
     public Dictionary<UnitType, int> GlobalUnitLostAmount { get; set; } = [];
+    /// <summary>
+    /// All information per player per round
+    /// </summary>
     public List<PlayerStatistics> Players { get; set; }
 
     public PlayersRoundStatistics(Dictionary<UnitType, int> globalUnitAmount, 

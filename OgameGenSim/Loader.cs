@@ -9,6 +9,12 @@ using OgameSimulatorPack.SimUtilities;
 
 namespace OgameGenSim;
 
+/// <summary>
+/// Main Class of the client side of the simulator -
+/// - Used to load all information from Ogame spionage report json
+/// - Used to load all information from attacker fleet json 
+/// </summary>
+/// <param name="client"></param>
 public class Loader(HttpClient client)
 {
     private GenSimClient GenSimClient { get; set; } = new GenSimClient(client);
@@ -91,10 +97,15 @@ public class Loader(HttpClient client)
         return attackers;
     }
 
+    /// <summary>
+    /// Transform all combat information from attackers and defenders into workable/clean data for the simulator
+    /// </summary>
+    /// <param name="attakcers"></param>
+    /// <param name="defenders"></param>
+    /// <param name="universeInformation"></param>
+    /// <returns></returns>
     private SimCombatInformation GetCleanData(List<PlayerInformation> attakcers, List<PlayerInformation> defenders, UniverseInformation universeInformation)
-    {
-        //TOOD: GetUniverseData()
-        
+    {        
         SimCombatInformation combatInfo = new();
 
         var counterForId = 0;
@@ -169,6 +180,7 @@ public class Loader(HttpClient client)
 
     private Player GetCleanAttackerData(PlayerInformation playerInformation, int id)
     {   
+        //Solar statllites are a ship so we have to whipe the out from the attacker unit list
         var shipsToAdd = playerInformation.Ships.Where(x => x.Key != UnitType.SOLAR_SATELLITE).ToDictionary();
         return new Player()
         {
@@ -184,6 +196,16 @@ public class Loader(HttpClient client)
         };
     }
 
+    /// <summary>
+    /// Cleans the unit data and adds all bonuses to base values of shild, hull and weapon
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="researches"></param>
+    /// <param name="units"></param>
+    /// <param name="id"></param>
+    /// <param name="charatcterClassId"></param>
+    /// <param name="allianceClassId"></param>
+    /// <returns></returns>
     private static List<CombatUnit> GetCleanUnitData<T>(Researches researches, Dictionary<UnitType, T> units, int id, int charatcterClassId, int allianceClassId) where T : UnitStats
     {
         var cleanUnits = new List<CombatUnit>();

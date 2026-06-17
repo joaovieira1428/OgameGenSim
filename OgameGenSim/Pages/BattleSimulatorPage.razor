@@ -88,11 +88,13 @@
         _selectedFleetComposition = value;
     }
 
-    private void OnAttackersAPIChanged(string? value, int index){
+    private async Task OnAttackersAPIChanged(string? value, int index){
+        await Task.Delay(500);
         _attackersAPI[index] = value ?? string.Empty;
     } 
 
-    private void OnDefendersAPIChanged(string? value, int index){
+    private async Task OnDefendersAPIChanged(string? value, int index){
+        await Task.Delay(500);
         _defendersAPI[index] = value ?? string.Empty;
     }
 
