@@ -9,6 +9,7 @@
 @using OgameGenSim.StateMachine
 @using OgameSimulatorPack
 @using OgameSimulatorPack.Classes
+@using OgameGenSim.Classes
 @using OgameSimulatorPack.Statistics
 @using RazorConsole.Components
 
@@ -133,13 +134,15 @@
     private async void LoadPlayers()
     {
         if(attackersNumber > 0 && defendersNumber > 0){
-            SimCombatInformation cleanData = await LoaderService.LoadCombatInformation(_attackersAPI, _defendersAPI);
+            DirtyCombatInformation dirtyData = await LoaderService.LoadCombatInformation(_attackersAPI, _defendersAPI);
+            
+            //SimCombatInformation cleanData = await LoaderService.LoadCombatInformation(_attackersAPI, _defendersAPI);
 
-            Battle simlator = new OgameSimulatorPack.Battle(cleanData.Universe.Debrifactor, cleanData.Universe.DefenseDebrisFactor, cleanData.Universe.DeuteriumOnDebris);
+            //Battle simlator = new OgameSimulatorPack.Battle(cleanData.Universe.Debrifactor, cleanData.Universe.DefenseDebrisFactor, cleanData.Universe.DeuteriumOnDebris);
 
-            BattleStatistics result = simlator.DoBattle(cleanData);
+            //BattleStatistics result = simlator.DoBattle(cleanData);
 
-            BattleStatisticsService.BattleStatistics = result;
+            //BattleStatisticsService.BattleStatistics = result;
 
             Nav.NavigateTo("/battleStatistics");
         } 
