@@ -2,9 +2,6 @@ using System;
 
 namespace OgameSimulatorPack.SimUtilities;
 
-/// <summary>
-/// Research Ids mapping
-/// </summary>
 public static class ResearchesIds
 {
     public static int WEAPONS_TECH = 109;

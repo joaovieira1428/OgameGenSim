@@ -55,12 +55,6 @@
             </Border>
         </Padder>
     </FlexBox>
-    <Align>
-        <p>The Attacker fires a total of @shotsFiredByAttackers shots at the Defender with a total strength of @totalAttackersDemage.</p>
-        <p>The defender's shields absorb @totalDefendersShieldAbsorption damage points of demage.</p>
-        <p>The Defender fires a total of @shotsFiredByDefenders shots at the Attacker with a total strength of @totalDefendersDemage.</p>
-        <p>The attacker's shields absorb @totalAttackersShieldAbsorption damage points of demage.</p>
-    </Align>
 }
 else
 {
@@ -74,13 +68,6 @@ else
     private Dictionary<UnitType, int> defenderAmount = Utils.GetInitialUnitTypeAmounts();
     private Dictionary<UnitType, int> attackerLostAmount = Utils.GetInitialUnitTypeAmounts();
     private Dictionary<UnitType, int> defenderLostAmount = Utils.GetInitialUnitTypeAmounts();
-
-    private int shotsFiredByAttackers = 0;
-    private int shotsFiredByDefenders = 0;
-    private double totalAttackersDemage = 0;
-    private double totalDefendersDemage = 0;
-    private double totalAttackersShieldAbsorption = 0;
-    private double totalDefendersShieldAbsorption = 0;
 
     private List<string> attackerOptions = [];
     private List<string> defenderOptions = [];
@@ -143,8 +130,6 @@ else
             PopulatePlayer(defenderAmount, defendingPlayer.UnitAmount);
             PopulatePlayer(defenderLostAmount, defendingPlayer.UnitLostAmount);
         }
-
-        PopulateGlobalStats();
     }
 
     private void PopulateRound(RoundStatistics round){   
@@ -169,8 +154,6 @@ else
                 PopulatePlayer(defenderLostAmount, defendingPlayer.UnitLostAmount);
             }
         }
-
-        PopulateGlobalStatsByRound(round);
     }
 
     private void PopulatePlayer(Dictionary<UnitType, int>unitAmount, Dictionary<UnitType, int> unitAmountToSum){
@@ -181,24 +164,6 @@ else
             else
                 unitAmount[kvp.Key] = kvp.Value;
         }
-    }
-
-    private void PopulateGlobalStats(){
-        shotsFiredByAttackers = BattleStatisticsService.BattleStatistics.ShotsFiredByAttackers;
-        shotsFiredByDefenders = BattleStatisticsService.BattleStatistics.ShotsFiredByDefenders;
-        totalAttackersDemage = BattleStatisticsService.BattleStatistics.TotalDemageDealtByAttackers;
-        totalDefendersDemage = BattleStatisticsService.BattleStatistics.TotalDemageDealtByDefenders;
-        totalAttackersShieldAbsorption = BattleStatisticsService.BattleStatistics.DemageAbsorbedByAttackers;
-        totalDefendersShieldAbsorption = BattleStatisticsService.BattleStatistics.DemageAbsorbedByDefenders;
-    }
-    
-    private void PopulateGlobalStatsByRound(RoundStatistics round){
-        shotsFiredByAttackers = round.AttackersRoundStatistics.ShotsFired;
-        shotsFiredByDefenders = round.DefendersRoundStatistics.ShotsFired;
-        totalAttackersDemage = round.AttackersRoundStatistics.DamageDealt;
-        totalDefendersDemage = round.DefendersRoundStatistics.DamageDealt;
-        totalAttackersShieldAbsorption = round.AttackersRoundStatistics.DamageAbsorbedByDefendingPlayer;
-        totalDefendersShieldAbsorption = round.DefendersRoundStatistics.DamageAbsorbedByDefendingPlayer;
     }
 
 

@@ -1,6 +1,5 @@
 namespace OgameGenSim.Classes;
 
-// Not used
 public class Bonuses
 {
     public int RecycleAttackerFleet { get; set; }

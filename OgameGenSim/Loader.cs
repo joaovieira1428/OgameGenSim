@@ -9,12 +9,6 @@ using OgameSimulatorPack.SimUtilities;
 
 namespace OgameGenSim;
 
-/// <summary>
-/// Main Class of the client side of the simulator -
-/// - Used to load all information from Ogame spionage report json
-/// - Used to load all information from attacker fleet json 
-/// </summary>
-/// <param name="client"></param>
 public class Loader(HttpClient client)
 {
     private GenSimClient GenSimClient { get; set; } = new GenSimClient(client);
