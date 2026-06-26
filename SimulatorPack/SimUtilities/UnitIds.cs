@@ -49,12 +49,18 @@ public class UnitIds
     // Missiles
     public static readonly int ANTI_BALLISTIC_MISSILES = 502;
     public static readonly int INTERPLANETARY_MISSILES = 503;
+
+    //Groups
+    public static readonly int[] TRANSPORTUNITS = [202, 203];
+    public static readonly int[] CombatShips = [204, 205, 206, 207, 215, 211, 213, 214, 218, 219];
+    public static readonly int[] GeneralCargoBonusUnits = [219, 209];
+    public static readonly int[] Ships = [202, 203, 204, 205, 206, 207, 215, 211, 213, 214, 218, 219, 209, 210, 212, 208, 217];
 }
 
 public enum UnitType
 {
     // ========== SHIPS ==========
-    // Cargo Ships
+    // Transport Ships
     SMALL_CARGO = 202,
     LARGE_CARGO = 203,
 

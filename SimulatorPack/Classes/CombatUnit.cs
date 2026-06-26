@@ -11,6 +11,9 @@ public class CombatUnit
     public double FullShieldValue { get; set; }
     public double Hull { get; set; }
     public double FullHullValue { get; set; }
+    public double Speed { get; set; }
+    public double Cargo { get; set; }
+    public double FuelConsumption { get; set; }
     public bool IsDestroyed { get; set; }
     public int MetalCost { get; set; }
     public int CrystalCost { get; set; }
@@ -20,11 +23,4 @@ public class CombatUnit
     {
         return (int)ShipType < 400;
     }
-}
-
-public class Ships : CombatUnit
-{
-    public int Cargo { get; set; }
-    public int Speed { get; set; }
-    public int Fuel { get; set; }
 }

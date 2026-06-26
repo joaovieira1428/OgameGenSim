@@ -91,7 +91,7 @@ public static class DataCleaner
     {   
         //Solar statllites are a ship so we have to whipe the out from the attacker unit list
         var shipsToAdd = playerInformation.Ships.Where(x => x.Key != UnitType.SOLAR_SATELLITE)
-        .Select(x => new KeyValuePair<UnitType, ShipStats>(x.Key, new ShipStats()
+        .Select(x => new KeyValuePair<UnitType, UnitStats>(x.Key, new UnitStats()
             {
                 Amount = x.Value.Amount / divisor,
                 Armor = x.Value.Armor,
@@ -137,7 +137,16 @@ public static class DataCleaner
                 var shieldValue = CalculateCombatValueWithBonuses(defaultValue.Shield, ship.Value.Shield, ResearchesIds.SHIELDING_TECH, researches.ShieldingTechnology, charatcterClassId, allianceClassId);
                 var hullValue = CalculateCombatValueWithBonuses(defaultValue.Hull, ship.Value.Armor, ResearchesIds.ARMOUR_TECH, researches.ArmourTechnology, charatcterClassId, allianceClassId);
                 var weaponValue = CalculateCombatValueWithBonuses(defaultValue.Weapon, ship.Value.Weapon, ResearchesIds.WEAPONS_TECH, researches.WeaponsTechnology, charatcterClassId, allianceClassId);
-                
+                var speed = 0;
+                var cargo = 0;
+                var fuelConsumption = 0;
+
+                if (UnitIds.Ships.Contains((int)ship.Key))
+                {
+                    speed = (int)CalculateSpeedValueWithBonuses(ship.Key, defaultValue.Speed, ship.Value.Speed, researches.CombustionDrive, researches.ImpulseDrive, researches.HyperspaceDrive, charatcterClassId, allianceClassId);
+                    cargo = (int)CalculateCargoValueWithBonuses(ship.Key, defaultValue.Cargo, ship.Value.Cargo, researches.HyperspaceTechnology, charatcterClassId);
+                    fuelConsumption = (int)CalculateFuelConsumptionWithBonuses(defaultValue.FuelConsumption, ship.Value.Fuel, charatcterClassId, 1);
+                }
                 for(var i = 0; i < ship.Value.Amount; i++)
                 {
                     var unit = new CombatUnit
@@ -149,6 +158,9 @@ public static class DataCleaner
                         FullShieldValue = shieldValue,
                         Hull = hullValue,
                         FullHullValue = hullValue,
+                        Speed = speed,
+                        Cargo = cargo,
+                        FuelConsumption = fuelConsumption,
                         MetalCost = defaultValue.MetalCost,
                         CrystalCost = defaultValue.CrystalCost,
                         DeuteriumCost = defaultValue.DeuteriumCost,
@@ -184,4 +196,127 @@ public static class DataCleaner
 
         return (float)(defaultValue + (defaultValue * (LFBonus + techBonus)));
     }
+
+    private static float CalculateSpeedValueWithBonuses(UnitType unitType, double defaultValue, double LFBonus,                                                  
+                                                        int combustionDriveLevel, int impulseDriveLevel, int hyperspaceDriveLevel, 
+                                                        int charatcterClassId, int allianceClassId)
+    {
+        double modifier = 1;
+
+        if(charatcterClassId == (int)PlayerClass.Collector && UnitIds.TRANSPORTUNITS.Contains((int)unitType))
+        {
+            modifier += 1; //Colector 100% speed bonus for transporters
+
+            if(allianceClassId == (int)AllianceClass.Trader) modifier += 0.1; //Trader 10% speed bonus for transporters
+        }
+
+        if(charatcterClassId == (int)PlayerClass.General && (UnitIds.CombatShips.Contains((int)unitType) || unitType == UnitType.RECYCLER))
+        {
+            modifier += 1; //General 100% speed bonus for combat ships and recyclers
+        }
+
+        double techBonus = 0;
+
+        switch (unitType)
+        {
+            case UnitType.LIGHT_FIGHTER:
+                techBonus = ResearchesIds.ResearchLevelMapping.GetValueOrDefault(ResearchesIds.COMBUSTION_DRIVE) * combustionDriveLevel;    
+                break;
+            case UnitType.LARGE_CARGO:
+            case UnitType.HEAVY_FIGHTER:
+            case UnitType.CRUISER:
+            case UnitType.COLONY_SHIP:
+            case UnitType.ESPIONAGE_PROBE:
+                techBonus = ResearchesIds.ResearchLevelMapping.GetValueOrDefault(ResearchesIds.IMPULSE_DRIVE) * impulseDriveLevel;
+                break;
+            case UnitType.BATTLESHIP:
+            case UnitType.BATTLECRUISER:
+            case UnitType.DESTROYER:
+            case UnitType.DEATHSTAR:
+            case UnitType.REAPER:
+            case UnitType.PATHFINDER:
+                techBonus = ResearchesIds.ResearchLevelMapping.GetValueOrDefault(ResearchesIds.HYPERSPACE_DRIVE) * hyperspaceDriveLevel;
+                break;
+            case UnitType.SMALL_CARGO:
+                if(impulseDriveLevel < 5){
+                    techBonus = ResearchesIds.ResearchLevelMapping.GetValueOrDefault(ResearchesIds.COMBUSTION_DRIVE) * combustionDriveLevel;    
+                }
+                else
+                {
+                    defaultValue *= 2;
+                    techBonus = ResearchesIds.ResearchLevelMapping.GetValueOrDefault(ResearchesIds.IMPULSE_DRIVE) * impulseDriveLevel;
+                }
+                break;
+            case UnitType.BOMBER:  
+                if(hyperspaceDriveLevel < 8)
+                {
+                    techBonus = ResearchesIds.ResearchLevelMapping.GetValueOrDefault(ResearchesIds.IMPULSE_DRIVE) * impulseDriveLevel;
+                }
+                else
+                {
+                    defaultValue = 5000;
+                    techBonus = ResearchesIds.ResearchLevelMapping.GetValueOrDefault(ResearchesIds.HYPERSPACE_DRIVE) * hyperspaceDriveLevel;
+                }
+                break;
+            case UnitType.RECYCLER:
+                if(impulseDriveLevel < 17 && hyperspaceDriveLevel < 15)
+                {
+                    techBonus = ResearchesIds.ResearchLevelMapping.GetValueOrDefault(ResearchesIds.COMBUSTION_DRIVE) * combustionDriveLevel;
+                }
+
+                if(impulseDriveLevel >= 17 && hyperspaceDriveLevel < 15)
+                {
+                    defaultValue *= 2;
+                    techBonus = ResearchesIds.ResearchLevelMapping.GetValueOrDefault(ResearchesIds.IMPULSE_DRIVE) * impulseDriveLevel;
+                }
+
+                if(hyperspaceDriveLevel >= 15)
+                {
+                    defaultValue *= 3;
+                    techBonus = ResearchesIds.ResearchLevelMapping.GetValueOrDefault(ResearchesIds.HYPERSPACE_DRIVE) * hyperspaceDriveLevel;
+                }
+                break;
+        }
+
+        defaultValue *= modifier;
+
+        return (float)(defaultValue + (defaultValue * (LFBonus + techBonus)));
+    }
+
+    private static float CalculateCargoValueWithBonuses(UnitType unitType, double defaultValue, double LFBonus, int techLevel, int charatcterClassId)
+    {
+        double modifier = 1;
+
+        if(charatcterClassId == (int)PlayerClass.Collector && UnitIds.TRANSPORTUNITS.Contains((int)unitType))
+        {
+            modifier += 0.25; //Collector 25% cargo capacity for transporters
+        }
+
+        if(charatcterClassId == (int)PlayerClass.General && (unitType == UnitType.RECYCLER || unitType == UnitType.PATHFINDER))
+        {
+            modifier += 0.2; //General 20% cargo capacity for recyclers and pathfinders
+        }
+
+        defaultValue *= modifier;
+        var techBonus = ResearchesIds.ResearchLevelMapping.GetValueOrDefault(ResearchesIds.HYPERSPACE_TECH) * techLevel;
+
+        return (float)(defaultValue + (defaultValue * (LFBonus + techBonus)));
+    }
+
+    private static float CalculateFuelConsumptionWithBonuses(double defaultValue, double LFBonus, int charatcterClassId, double universeModifier)
+    {
+        defaultValue *= universeModifier;
+
+        double modifier = 1;
+
+        if(charatcterClassId == (int)PlayerClass.General)
+        {
+            modifier -= 0.5; //General 50% fuel consumption reduction for all ships
+        }
+
+        defaultValue *= modifier;
+
+        return (float)(defaultValue + (defaultValue * LFBonus));
+    }
+
 }

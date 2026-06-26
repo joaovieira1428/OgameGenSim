@@ -3,13 +3,15 @@ using OgameGenSim.Utils;
 using OgameSimulatorPack;
 using OgameSimulatorPack.Classes;
 using OgameSimulatorPack.SimUtilities;
+using OgameSimulatorPack.Statistics;
 
 namespace OgameGenSim.Services;
 
 public class BattleService()
 {
     public DirtyCombatInformation? DirtyData { get; set; }
-
+    public BattleStatistics CurrentStatistics { get; set; }
+    public double CurrentFitness { get; set; }
     
     public static readonly Dictionary<FleetComposition, UnitType[]> FleetCompositionToUnitTypeMapping = 
         new ()
@@ -17,11 +19,50 @@ public class BattleService()
             { FleetComposition.RIPS, new[] { UnitType.DEATHSTAR } },
             { FleetComposition.SLOW_FLEET, new [] { UnitType.BOMBER, UnitType.DESTROYER, }},
             { FleetComposition.FAST_FLEET, new [] { UnitType.CRUISER, UnitType.BATTLESHIP, UnitType.BATTLECRUISER}},
+            { FleetComposition.STEAL_CARGOS, new [] { UnitType.SMALL_CARGO, UnitType.LARGE_CARGO, }},
             { FleetComposition.ALL_CARGOS, new [] { UnitType.SMALL_CARGO, UnitType.LARGE_CARGO, }},
             { FleetComposition.FODDER, new [] { UnitType.LIGHT_FIGHTER, UnitType.HEAVY_FIGHTER, }},
-            { FleetComposition.PATHFINDER, new [] { UnitType.PATHFINDER}},
+            { FleetComposition.FODDER2, new [] { UnitType.ESPIONAGE_PROBE, }},
+            { FleetComposition.STEAL_PATHFINDER, new [] { UnitType.PATHFINDER}},
+            { FleetComposition.ALL_PATHFINDER, new [] { UnitType.PATHFINDER}},
             { FleetComposition.REAPER, new [] { UnitType.REAPER}}
         };
+
+    public static readonly Dictionary<FleetComposition, FleetCompositionStats> FleetCompositionToUnitTypeMapping2 =
+        new()
+        {
+            { FleetComposition.RIPS, new FleetCompositionStats { UnitTypes = [UnitType.DEATHSTAR], BaseSpeed = 0 } },
+            { FleetComposition.SLOW_FLEET, new FleetCompositionStats { UnitTypes = [UnitType.BOMBER, UnitType.DESTROYER], BaseSpeed = 5000 } },
+            { FleetComposition.FAST_FLEET, new FleetCompositionStats { UnitTypes = [UnitType.CRUISER, UnitType.BATTLESHIP, UnitType.BATTLECRUISER], BaseSpeed = 10000 } },
+            { FleetComposition.STEAL_CARGOS, new FleetCompositionStats { UnitTypes = [UnitType.SMALL_CARGO, UnitType.LARGE_CARGO], BaseSpeed = 5000 } },
+            { FleetComposition.ALL_CARGOS, new FleetCompositionStats { UnitTypes = [UnitType.SMALL_CARGO, UnitType.LARGE_CARGO], BaseSpeed = 5000 } },
+            { FleetComposition.FODDER, new FleetCompositionStats { UnitTypes = [UnitType.LIGHT_FIGHTER, UnitType.HEAVY_FIGHTER], BaseSpeed = 12500 } },
+            { FleetComposition.FODDER2, new FleetCompositionStats { UnitTypes = [UnitType.ESPIONAGE_PROBE], BaseSpeed = 100000 } },
+            { FleetComposition.STEAL_PATHFINDER, new FleetCompositionStats { UnitTypes = [UnitType.PATHFINDER], BaseSpeed = 12000 } },
+            { FleetComposition.ALL_PATHFINDER, new FleetCompositionStats { UnitTypes = [UnitType.PATHFINDER], BaseSpeed = 12000 } },
+            { FleetComposition.REAPER, new FleetCompositionStats { UnitTypes = [UnitType.REAPER], BaseSpeed = 10000 } }
+        };
+
+    public static readonly Dictionary<UnitType, int> UnitTypeEnergyMapping = 
+        new ()
+        {
+            { UnitType.DEATHSTAR, 15 },
+            { UnitType.DESTROYER, 11 },
+            { UnitType.BATTLECRUISER, 7 },
+            { UnitType.BOMBER, 8 },
+            { UnitType.BATTLESHIP, 6 },
+            { UnitType.CRUISER, 2 },   
+            { UnitType.SMALL_CARGO, 1 },
+            { UnitType.LARGE_CARGO, 1 },
+            { UnitType.LIGHT_FIGHTER, 1 },
+            { UnitType.HEAVY_FIGHTER, 1 },
+            { UnitType.PATHFINDER, 2 },
+            { UnitType.REAPER, 15 },
+            { UnitType.RECYCLER, 1 },
+            { UnitType.ESPIONAGE_PROBE, 1 },
+            { UnitType.COLONY_SHIP, 3 }
+        };
+        
     //public List<CombatUnit> Fleet { get; set; }
 
     public string DoBattles(List<FleetComposition> fleetCompositionOptions, int fleetDivisor = 1){
@@ -33,7 +74,10 @@ public class BattleService()
         Battle simlator = new(DirtyData.Universe.DebrisFactor, DirtyData.Universe.DebrisFactorDef, deutOnDebri);
 
         if(!fleetCompositionOptions.Contains(FleetComposition.ALL_OPTIONS)){
-            
+                var cleanData = BuildFleetComposition(fleetCompositionOptions, 1);
+                var statistics = simlator.DoBattle(cleanData);
+
+                return "";
         }
         
         for (int currentDivisor = 1; currentDivisor <= fleetDivisor; currentDivisor++)
@@ -41,9 +85,31 @@ public class BattleService()
             foreach (var item in fleetCompositionOptions.GetSubsets())
             {
                 var cleanData = BuildFleetComposition(item, currentDivisor);
-                var statistics = simlator.DoBattle(cleanData);
+                CurrentStatistics = simlator.DoBattle(cleanData);
                 
+                //put this on the statistics
+                //we still need to calculate this (efender is bandit?)
+                var loot = 0;
+
+                //put this on statistics (attacker debri)
+                var unitsLost = 0;
+
+                //we still need to calculate this (player class + life form techs)
+                var deuteriumSpent = 0;
+
+                //we still need to calculate this (player class + life form techs + techs)
+                var speed = 0;
+
+                var profit = loot - unitsLost - deuteriumSpent;
+                var energy = 0;
+
+                CurrentFitness = speed * 0.3 + profit * 0.6 + energy * 0.1;
+
                 //Save if it's better than before
+
+                //Fitness = Speed, Profit (Loot + Debris - UnitsLost - Deuterium Spent (fuel)), energy (Time spent reconstructing fleet)
+                //Fitness = Speed * 0.3 + Profit * 0.6 + Energy * 0.1
+
 
             }
         }
@@ -83,19 +149,15 @@ public enum FleetComposition
     STEAL_CARGOS,
     ALL_CARGOS,
     FODDER, //fighters
-    PATHFINDER, 
+    FODDER2, //
+    STEAL_PATHFINDER,
+    ALL_PATHFINDER, 
     REAPER,
     ALL_OPTIONS
 }
 
-
-/*
-       "RIPS", 
-        "Slow Fleet", 
-        "Fast Fleet", 
-        "Cargos (just enough for steal)", 
-        "Cargos (all cargos*)", 
-        "Fodder (fighters)", 
-        "Pathfiders", 
-        "Do All combinations"
-*/
+public class FleetCompositionStats
+{
+    public UnitType[] UnitTypes { get; set; } = [];
+    public int BaseSpeed { get; set; }
+}

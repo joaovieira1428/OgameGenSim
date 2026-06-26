@@ -10,34 +10,59 @@ public class UnitDefaultValues
     // Shield = Shield Power
     // Weapon = Weapon Power
 
+    //Notes:
+    // Small Cargo uses Combustion Drive until impulse drive is level 5, 
+    //      it doubles base speed at impulse drive level 5
+    //      it doubles the fuel consumption at impulse drive level 5         
+    // Large Cargo uses Impulse Drive
+    // Light Fighter uses Combustion Drive
+    // Heavy Fighter uses Impulse Drive
+    // Cruiser uses Impulse Drive
+    // Battleship uses Hyperspace Drive
+    // Battlecruiser uses Hyperspace Drive
+    // Bomber uses Impulse Drive
+    //      it upgrades speed to 5000 at Hyperspace drive level 8
+    // Destroyer uses Hyperspace Drive
+    // Deathstar uses Hyperspace Drive
+    // Reaper uses Hyperspace Drive
+    // Pathfinder uses Hyperspace Drive
+    // Recycler uses Combustion Drive
+    //      it doubles speed and fuel consumption with impulse drive level 17
+    //      it tripples speed and fuel consumption with hyperspace drive level 15
+    // Espionage Probe uses Combustion Drive
+    //      The cargo is dependent of the universe configurations
+    //      The actual base value is 5, but most of the time the cargo is disabled
+    // Colony Ship uses Impulse Drive
+
+
     public static Dictionary<UnitType, CombatUnit> DefaultValues = new()
     {
         // ========== SHIPS ==========
         // Cargo Ships
-        { UnitType.SMALL_CARGO, new CombatUnit() { Hull = 400, Shield = 10, Weapon = 5, MetalCost = 2000, CrystalCost = 2000} },
-        { UnitType.LARGE_CARGO, new CombatUnit() { Hull = 1200, Shield = 25, Weapon = 5, MetalCost = 6000, CrystalCost = 6000} },
+        { UnitType.SMALL_CARGO, new CombatUnit() { Speed = 5000, Cargo = 5000, FuelConsumption = 10, Hull = 400, Shield = 10, Weapon = 5, MetalCost = 2000, CrystalCost = 2000} },
+        { UnitType.LARGE_CARGO, new CombatUnit() { Speed = 7500, Cargo = 25000, FuelConsumption = 50, Hull = 1200, Shield = 25, Weapon = 5, MetalCost = 6000, CrystalCost = 6000} },
 
         // Combat Ships - Light
-        { UnitType.LIGHT_FIGHTER, new CombatUnit() { Hull = 400, Shield = 10, Weapon = 50, MetalCost = 3000, CrystalCost = 1000 } },
-        { UnitType.HEAVY_FIGHTER, new CombatUnit() { Hull = 1000, Shield = 25, Weapon = 150, MetalCost = 6000, CrystalCost = 4000 } },
+        { UnitType.LIGHT_FIGHTER, new CombatUnit() { Speed = 12500, Cargo = 50, FuelConsumption = 20, Hull = 400, Shield = 10, Weapon = 50, MetalCost = 3000, CrystalCost = 1000 } },
+        { UnitType.HEAVY_FIGHTER, new CombatUnit() { Speed = 10000, Cargo = 100, FuelConsumption = 75, Hull = 1000, Shield = 25, Weapon = 150, MetalCost = 6000, CrystalCost = 4000 } },
 
         // Combat Ships - Medium
-        { UnitType.CRUISER, new CombatUnit() { Hull = 2700, Shield = 50, Weapon = 400, MetalCost = 20000, CrystalCost = 7000, DeuteriumCost = 2000 } },
-        { UnitType.BATTLESHIP, new CombatUnit() { Hull = 6000, Shield = 200, Weapon = 1000, MetalCost = 45000, CrystalCost = 15000 } },
-        { UnitType.BATTLECRUISER, new CombatUnit() { Hull = 7000, Shield = 400, Weapon = 700, MetalCost = 30000, CrystalCost = 40000, DeuteriumCost = 15000 } },
+        { UnitType.CRUISER, new CombatUnit() { Speed = 15000, Cargo = 800, FuelConsumption = 300, Hull = 2700, Shield = 50, Weapon = 400, MetalCost = 20000, CrystalCost = 7000, DeuteriumCost = 2000 } },
+        { UnitType.BATTLESHIP, new CombatUnit() { Speed = 10000, Cargo = 1500, FuelConsumption = 500, Hull = 6000, Shield = 200, Weapon = 1000, MetalCost = 45000, CrystalCost = 15000 } },
+        { UnitType.BATTLECRUISER, new CombatUnit() { Speed = 10000, Cargo = 750, FuelConsumption = 250, Hull = 7000, Shield = 400, Weapon = 700, MetalCost = 30000, CrystalCost = 40000, DeuteriumCost = 15000 } },
 
         // Combat Ships - Heavy
-        { UnitType.BOMBER, new CombatUnit() { Hull = 7500, Shield = 500, Weapon = 1000, MetalCost = 50000, CrystalCost = 25000, DeuteriumCost = 15000 } },
-        { UnitType.DESTROYER, new CombatUnit() { Hull = 11000, Shield = 500, Weapon = 2000, MetalCost = 60000, CrystalCost = 50000, DeuteriumCost = 15000 } },
-        { UnitType.DEATHSTAR, new CombatUnit() { Hull = 900000, Shield = 50000, Weapon = 200000, MetalCost = 5000000, CrystalCost = 4000000, DeuteriumCost = 1000000 } },
+        { UnitType.BOMBER, new CombatUnit() { Speed = 4000, Cargo = 500, FuelConsumption = 700, Hull = 7500, Shield = 500, Weapon = 1000, MetalCost = 50000, CrystalCost = 25000, DeuteriumCost = 15000 } },
+        { UnitType.DESTROYER, new CombatUnit() { Speed = 5000, Cargo = 2000, FuelConsumption = 1000, Hull = 11000, Shield = 500, Weapon = 2000, MetalCost = 60000, CrystalCost = 50000, DeuteriumCost = 15000 } },
+        { UnitType.DEATHSTAR, new CombatUnit() { Speed = 100, Cargo = 1000000, FuelConsumption = 1, Hull = 900000, Shield = 50000, Weapon = 200000, MetalCost = 5000000, CrystalCost = 4000000, DeuteriumCost = 1000000 } },
 
         // Utility Ships
-        { UnitType.REAPER, new CombatUnit() { Hull = 14000, Shield = 700, Weapon = 2800, MetalCost = 85000, CrystalCost = 55000, DeuteriumCost = 20000 } },
-        { UnitType.PATHFINDER, new CombatUnit() { Hull = 2300, Shield = 100, Weapon = 200, MetalCost = 8000, CrystalCost = 15000, DeuteriumCost = 8000 } },
-        { UnitType.RECYCLER, new CombatUnit() { Hull = 1600, Shield = 10, Weapon = 1, MetalCost = 10000, CrystalCost = 60000, DeuteriumCost = 2000 } },
-        { UnitType.ESPIONAGE_PROBE, new CombatUnit() { Hull = 100, Shield = 0, Weapon = 0, CrystalCost = 1000 } },
+        { UnitType.REAPER, new CombatUnit() { Speed = 7000, Cargo = 10000, FuelConsumption = 1100, Hull = 14000, Shield = 700, Weapon = 2800, MetalCost = 85000, CrystalCost = 55000, DeuteriumCost = 20000 } },
+        { UnitType.PATHFINDER, new CombatUnit() { Speed = 12000, Cargo = 10000, FuelConsumption = 300, Hull = 2300, Shield = 100, Weapon = 200, MetalCost = 8000, CrystalCost = 15000, DeuteriumCost = 8000 } },
+        { UnitType.RECYCLER, new CombatUnit() { Speed = 2000, Cargo = 20000, FuelConsumption = 300, Hull = 1600, Shield = 10, Weapon = 1, MetalCost = 10000, CrystalCost = 60000, DeuteriumCost = 2000 } },
+        { UnitType.ESPIONAGE_PROBE, new CombatUnit() { Speed = 100000000, Cargo = 0, FuelConsumption = 1, Hull = 100, Shield = 0, Weapon = 0, CrystalCost = 1000 } },
         { UnitType.SOLAR_SATELLITE, new CombatUnit() { Hull = 200, Shield = 1, Weapon = 1, CrystalCost = 2000, DeuteriumCost = 500 } },
-        { UnitType.COLONY_SHIP, new CombatUnit() { Hull = 3000, Shield = 100, Weapon = 50, MetalCost = 10000, CrystalCost = 20000, DeuteriumCost = 10000 } },
+        { UnitType.COLONY_SHIP, new CombatUnit() { Speed = 2500, Cargo = 7500, FuelConsumption = 1000, Hull = 3000, Shield = 100, Weapon = 50, MetalCost = 10000, CrystalCost = 20000, DeuteriumCost = 10000 } },
         { UnitType.CRAWLER, new CombatUnit() { Hull = 400, Shield = 1, Weapon = 1, MetalCost = 2000, CrystalCost = 2000, DeuteriumCost = 1000 } },
 
         // ========== DEFENSE ==========
