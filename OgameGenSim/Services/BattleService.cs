@@ -19,28 +19,26 @@ public class BattleService()
             { FleetComposition.RIPS, new[] { UnitType.DEATHSTAR } },
             { FleetComposition.SLOW_FLEET, new [] { UnitType.BOMBER, UnitType.DESTROYER, }},
             { FleetComposition.FAST_FLEET, new [] { UnitType.CRUISER, UnitType.BATTLESHIP, UnitType.BATTLECRUISER}},
-            { FleetComposition.STEAL_CARGOS, new [] { UnitType.SMALL_CARGO, UnitType.LARGE_CARGO, }},
+            { FleetComposition.STEAL, new [] { UnitType.SMALL_CARGO, UnitType.LARGE_CARGO, UnitType.PATHFINDER}},
             { FleetComposition.ALL_CARGOS, new [] { UnitType.SMALL_CARGO, UnitType.LARGE_CARGO, }},
             { FleetComposition.FODDER, new [] { UnitType.LIGHT_FIGHTER, UnitType.HEAVY_FIGHTER, }},
             { FleetComposition.FODDER2, new [] { UnitType.ESPIONAGE_PROBE, }},
-            { FleetComposition.STEAL_PATHFINDER, new [] { UnitType.PATHFINDER}},
-            { FleetComposition.ALL_PATHFINDER, new [] { UnitType.PATHFINDER}},
+            { FleetComposition.ALL_PATHFINDERS, new [] { UnitType.PATHFINDER}},
             { FleetComposition.REAPER, new [] { UnitType.REAPER}}
         };
 
     public static readonly Dictionary<FleetComposition, FleetCompositionStats> FleetCompositionToUnitTypeMapping2 =
         new()
         {
-            { FleetComposition.RIPS, new FleetCompositionStats { UnitTypes = [UnitType.DEATHSTAR], BaseSpeed = 0 } },
-            { FleetComposition.SLOW_FLEET, new FleetCompositionStats { UnitTypes = [UnitType.BOMBER, UnitType.DESTROYER], BaseSpeed = 5000 } },
-            { FleetComposition.FAST_FLEET, new FleetCompositionStats { UnitTypes = [UnitType.CRUISER, UnitType.BATTLESHIP, UnitType.BATTLECRUISER], BaseSpeed = 10000 } },
-            { FleetComposition.STEAL_CARGOS, new FleetCompositionStats { UnitTypes = [UnitType.SMALL_CARGO, UnitType.LARGE_CARGO], BaseSpeed = 5000 } },
-            { FleetComposition.ALL_CARGOS, new FleetCompositionStats { UnitTypes = [UnitType.SMALL_CARGO, UnitType.LARGE_CARGO], BaseSpeed = 5000 } },
-            { FleetComposition.FODDER, new FleetCompositionStats { UnitTypes = [UnitType.LIGHT_FIGHTER, UnitType.HEAVY_FIGHTER], BaseSpeed = 12500 } },
-            { FleetComposition.FODDER2, new FleetCompositionStats { UnitTypes = [UnitType.ESPIONAGE_PROBE], BaseSpeed = 100000 } },
-            { FleetComposition.STEAL_PATHFINDER, new FleetCompositionStats { UnitTypes = [UnitType.PATHFINDER], BaseSpeed = 12000 } },
-            { FleetComposition.ALL_PATHFINDER, new FleetCompositionStats { UnitTypes = [UnitType.PATHFINDER], BaseSpeed = 12000 } },
-            { FleetComposition.REAPER, new FleetCompositionStats { UnitTypes = [UnitType.REAPER], BaseSpeed = 10000 } }
+            { FleetComposition.RIPS, new FleetCompositionStats { UnitTypes = [UnitType.DEATHSTAR], SpeedUnitType = UnitType.DEATHSTAR } },
+            { FleetComposition.SLOW_FLEET, new FleetCompositionStats { UnitTypes = [UnitType.BOMBER, UnitType.DESTROYER], SpeedUnitType = UnitType.BOMBER } },
+            { FleetComposition.FAST_FLEET, new FleetCompositionStats { UnitTypes = [UnitType.CRUISER, UnitType.BATTLESHIP, UnitType.BATTLECRUISER], SpeedUnitType = UnitType.BATTLECRUISER } },
+            { FleetComposition.STEAL, new FleetCompositionStats { UnitTypes = [UnitType.SMALL_CARGO, UnitType.LARGE_CARGO, UnitType.PATHFINDER], SpeedUnitType = UnitType.LARGE_CARGO } },
+            { FleetComposition.ALL_CARGOS, new FleetCompositionStats { UnitTypes = [UnitType.SMALL_CARGO, UnitType.LARGE_CARGO], SpeedUnitType = UnitType.LARGE_CARGO } },
+            { FleetComposition.FODDER, new FleetCompositionStats { UnitTypes = [UnitType.LIGHT_FIGHTER, UnitType.HEAVY_FIGHTER], SpeedUnitType = UnitType.HEAVY_FIGHTER } },
+            { FleetComposition.FODDER2, new FleetCompositionStats { UnitTypes = [UnitType.ESPIONAGE_PROBE], SpeedUnitType = UnitType.ESPIONAGE_PROBE } },
+            { FleetComposition.ALL_PATHFINDERS, new FleetCompositionStats { UnitTypes = [UnitType.PATHFINDER], SpeedUnitType = UnitType.PATHFINDER } },
+            { FleetComposition.REAPER, new FleetCompositionStats { UnitTypes = [UnitType.REAPER], SpeedUnitType = UnitType.REAPER } }
         };
 
     public static readonly Dictionary<UnitType, int> UnitTypeEnergyMapping = 
@@ -88,7 +86,7 @@ public class BattleService()
                 CurrentStatistics = simlator.DoBattle(cleanData);
                 
                 //put this on the statistics
-                //we still need to calculate this (efender is bandit?)
+                //we still need to calculate this (defender is bandit?)
                 var loot = 0;
 
                 //put this on statistics (attacker debri)
@@ -98,7 +96,7 @@ public class BattleService()
                 var deuteriumSpent = 0;
 
                 //we still need to calculate this (player class + life form techs + techs)
-                var speed = 0;
+                var speed = cleanData.Attackers.First().UnitTypeStats.Min(x => x.Value.Speed);
 
                 var profit = loot - unitsLost - deuteriumSpent;
                 var energy = 0;
@@ -146,18 +144,20 @@ public enum FleetComposition
     RIPS,
     SLOW_FLEET,
     FAST_FLEET,
-    STEAL_CARGOS,
+    STEAL,
     ALL_CARGOS,
     FODDER, //fighters
     FODDER2, //
-    STEAL_PATHFINDER,
-    ALL_PATHFINDER, 
+    ALL_PATHFINDERS, 
     REAPER,
-    ALL_OPTIONS
+
+    //TOOD: Put this two options as just flags
+    ALL_OPTIONS,
+    ACCOUNTING_SPEED
 }
 
 public class FleetCompositionStats
 {
     public UnitType[] UnitTypes { get; set; } = [];
-    public int BaseSpeed { get; set; }
+    public UnitType SpeedUnitType { get; set; }
 }

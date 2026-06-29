@@ -12,6 +12,7 @@ public class Player
     public int Shield { get; set; }
     public int Armor { get; set; }
     public Dictionary<UnitType, int> UnitTypeAmounts { get; set; } = [];
+    public Dictionary<UnitType, CombatUnit> UnitTypeStats { get; set; } = [];
     public List<CombatUnit> Units { get; set; } = [];
 }
 

@@ -18,7 +18,7 @@ public class PlayerInformation
     public int AllianceClassId { get; set; }
     public Researches Researches { get; set; }
     public Dictionary<UnitType, UnitStats> Defenses { get; set; }
-    public Dictionary<UnitType, ShipStats> Ships { get; set; }
+    public Dictionary<UnitType, UnitStats> Ships { get; set; }
     public Dictionary<UnitType, MissileStats> Missiles { get; set; }
     public Bonuses Bonuses { get; set; }
     public Resources Resources { get; set; }
