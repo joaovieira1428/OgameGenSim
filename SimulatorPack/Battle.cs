@@ -5,7 +5,6 @@ using OgameSimulatorPack.Statistics;
 
 namespace OgameSimulatorPack;
 
-
 public class Battle(double debriFactor, double DefenseDebrisFactor, bool DeuteriumOnDebris)
 {
     public double DebriFactor = debriFactor;

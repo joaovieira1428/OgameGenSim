@@ -1,5 +1,4 @@
 <Solution>
   <Project Path="OgameGenSim/OgameGenSim.csproj" />
-  <Project Path="OgameGenSimBenchmark/OgameGenSimBenchmark.csproj" />
   <Project Path="SimulatorPack/OgameSimulatorPack.csproj" />
 </Solution>
