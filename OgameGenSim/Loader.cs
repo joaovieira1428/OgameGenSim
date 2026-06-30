@@ -17,7 +17,7 @@ namespace OgameGenSim;
 /// <param name="client"></param>
 public class Loader(HttpClient client)
 {
-    private GenSimClient GenSimClient { get; set; } = new GenSimClient(client);
+    internal GenSimClient GenSimClient { get; set; } = new GenSimClient(client);
     private string reportIdForUniverseData = string.Empty;
 
     public async Task<SimCombatInformation> LoadCombatInformation(List<string> attackersAPI, List<string> defendersAPI)
@@ -45,7 +45,7 @@ public class Loader(HttpClient client)
 
     }
 
-    private async Task<List<PlayerInformation>> LoadDefenders(List<string> defendersAPI)
+    internal async Task<List<PlayerInformation>> LoadDefenders(List<string> defendersAPI)
     {
         List<PlayerInformation> defenders = [];
 
@@ -85,7 +85,7 @@ public class Loader(HttpClient client)
         }
     }
 
-    private List<PlayerInformation> LoadAttackers(List<string> attackersAPI)
+    internal List<PlayerInformation> LoadAttackers(List<string> attackersAPI)
     {
         List<PlayerInformation> attackers = [];
 
@@ -104,7 +104,7 @@ public class Loader(HttpClient client)
     /// <param name="defenders"></param>
     /// <param name="universeInformation"></param>
     /// <returns></returns>
-    private SimCombatInformation GetCleanData(List<PlayerInformation> attakcers, List<PlayerInformation> defenders, UniverseInformation universeInformation)
+    internal SimCombatInformation GetCleanData(List<PlayerInformation> attakcers, List<PlayerInformation> defenders, UniverseInformation universeInformation)
     {        
         SimCombatInformation combatInfo = new();
 
