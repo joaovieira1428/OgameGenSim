@@ -89,16 +89,26 @@ public class BattleService()
                 //we still need to calculate this (defender is bandit?)
                 var loot = 0;
 
-                //put this on statistics (attacker debri)
-                var unitsLost = 0;
+                //put this on statistics (attacker units lost)
+                var unitsLoss = 0;
+                foreach(var lostType in CurrentStatistics.GlobalAttackersLostAmount)
+                {
+                    if (UnitDefaultValues.DefaultValues.TryGetValue(lostType.Key, out var defaultValue))
+                    {
+                        unitsLoss += (defaultValue.MetalCost * lostType.Value) + 
+                                    (defaultValue.CrystalCost * lostType.Value * 2) + 
+                                    (defaultValue.DeuteriumCost * lostType.Value * 3);
+                    }
+                }
 
                 //we still need to calculate this (player class + life form techs)
-                var deuteriumSpent = 0;
+                var deuteriumSpent = cleanData.Attackers.SelectMany(x => x.UnitTypeStats).Sum(x => x.Value.Fuel * x.Value.Amount);
 
                 //we still need to calculate this (player class + life form techs + techs)
                 var speed = cleanData.Attackers.First().UnitTypeStats.Min(x => x.Value.Speed);
 
-                var profit = loot - unitsLost - deuteriumSpent;
+                var profit = loot - unitsLoss - deuteriumSpent;
+
                 var energy = 0;
 
                 CurrentFitness = speed * 0.3 + profit * 0.6 + energy * 0.1;
@@ -107,8 +117,6 @@ public class BattleService()
 
                 //Fitness = Speed, Profit (Loot + Debris - UnitsLost - Deuterium Spent (fuel)), energy (Time spent reconstructing fleet)
                 //Fitness = Speed * 0.3 + Profit * 0.6 + Energy * 0.1
-
-
             }
         }
         return "";

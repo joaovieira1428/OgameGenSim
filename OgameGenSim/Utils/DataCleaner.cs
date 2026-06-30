@@ -81,9 +81,10 @@ public static class DataCleaner
             Armor = playerInformation.Researches.ArmourTechnology,
             Shield = playerInformation.Researches.ShieldingTechnology,
             Weapon = playerInformation.Researches.WeaponsTechnology,
-            //Metal = playerInformation.Resources.Metal,
-            //Crystal = playerInformation.Resources.Crystal,
-            //Deuterium = playerInformation.Resources.Deuterium,
+            Metal = playerInformation.Resources.Metal,
+            Crystal = playerInformation.Resources.Crystal,
+            Deuterium = playerInformation.Resources.Deuterium,
+            LootPercentage = playerInformation.LootPercentage,
             UnitTypeAmounts = shipAmounts.Keys.Union(defenseAmounts.Keys)
                 .ToDictionary(x => x, x => shipAmounts.GetValueOrDefault(x) + defenseAmounts.GetValueOrDefault(x)),
             Units = units

@@ -1,3 +1,4 @@
+using OgameGenSim.Classes;
 using OgameSimulatorPack.SimUtilities;
 
 namespace OgameSimulatorPack.Classes;
@@ -11,9 +12,13 @@ public class Player
     public int Weapon {get; set;}
     public int Shield { get; set; }
     public int Armor { get; set; }
+    public int Metal { get; set; }
+    public int Crystal { get; set; }
+    public int Deuterium { get; set; }
     public Dictionary<UnitType, int> UnitTypeAmounts { get; set; } = [];
-    public Dictionary<UnitType, CombatUnit> UnitTypeStats { get; set; } = [];
+    public Dictionary<UnitType, UnitStats> UnitTypeStats { get; set; } = [];
     public List<CombatUnit> Units { get; set; } = [];
+    public int LootPercentage { get; set; }
 }
 
 //TODO: Save Plunder somewhere else

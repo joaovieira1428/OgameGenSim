@@ -22,4 +22,6 @@ public class PlayerInformation
     public Dictionary<UnitType, MissileStats> Missiles { get; set; }
     public Bonuses Bonuses { get; set; }
     public Resources Resources { get; set; }
+    [JsonPropertyName("loot_percentage")]
+    public int LootPercentage { get; set; }
 }
