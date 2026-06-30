@@ -28,6 +28,29 @@
             "type": "coreclr",
             "request": "attach",
             "processId": "${command:pickProcess}",
+        },
+        {
+            "name": "Debug OgameGenSimBenchmark",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-benchmark",
+            "program": "${workspaceFolder}/OgameGenSimBenchmark/bin/Debug/net10.0/OgameGenSimBenchmark.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/OgameGenSimBenchmark",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Run OgameGenSimBenchmark (Release)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-benchmark-release",
+            "program": "${workspaceFolder}/OgameGenSimBenchmark/bin/Release/net10.0/OgameGenSimBenchmark.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/OgameGenSimBenchmark",
+            "console": "integratedTerminal",
+            "stopAtEntry": false,
+            "noDebug": true
         }
     ]
 }

@@ -5,9 +5,9 @@ namespace OgameGenSim.Classes;
 public class CharacterClassBooster
 {
     [JsonPropertyName("1")]
-    public int Collector { get; set; }
+    public double Collector { get; set; }
     [JsonPropertyName("2")]
-    public int General { get; set; }
+    public double General { get; set; }
     [JsonPropertyName("3")]
-    public int Discoverer { get; set; }
+    public double Discoverer { get; set; }
 }
