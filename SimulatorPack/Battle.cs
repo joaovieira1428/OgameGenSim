@@ -11,6 +11,7 @@ namespace OgameSimulatorPack;
 /// <param name="debriFactor"></param>
 /// <param name="DefenseDebrisFactor"></param>
 /// <param name="DeuteriumOnDebris"></param>
+
 public class Battle(double debriFactor, double DefenseDebrisFactor, bool DeuteriumOnDebris)
 {
     public double DebriFactor = debriFactor;
