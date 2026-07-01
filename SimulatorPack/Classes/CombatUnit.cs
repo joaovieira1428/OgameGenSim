@@ -18,6 +18,7 @@ public class CombatUnit
     public int MetalCost { get; set; }
     public int CrystalCost { get; set; }
     public int DeuteriumCost { get; set; }
+    public int Energy { get; set; }
 
     internal bool IsShip()
     {

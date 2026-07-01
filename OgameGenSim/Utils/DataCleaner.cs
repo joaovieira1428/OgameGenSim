@@ -13,14 +13,14 @@ public static class DataCleaner
     /// <param name="defenders"></param>
     /// <param name="universeInformation"></param>
     /// <returns></returns>
-    public static SimCombatInformation GetCleanData(List<PlayerInformation> attakcers, List<PlayerInformation> defenders, UniverseInformation universeInformation, int divisor)
+    public static SimCombatInformation GetCleanData(List<PlayerInformation> attakcers, List<PlayerInformation> defenders, UniverseInformation universeInformation, int divisor,  UnitType? cargoUnit)
     {        
         SimCombatInformation combatInfo = new();
 
         var counterForId = 0;
         foreach(var attacker in attakcers)
         {
-            var attackerData = GetCleanAttackerData(attacker, counterForId, divisor, universeInformation.GlobalDeuteriumSaveFactor);
+            var attackerData = GetCleanAttackerData(attacker, counterForId, divisor, cargoUnit, universeInformation.GlobalDeuteriumSaveFactor);
             combatInfo.Attackers.Add(attackerData);
 
             combatInfo.GlobalAttackersUnitAmount = combatInfo.GlobalAttackersUnitAmount.Keys.Union(attackerData.UnitTypeAmounts.Keys)
@@ -69,8 +69,8 @@ public static class DataCleaner
 
         units.AddRange(GetCleanUnitData(playerInformation.Defenses, id, defTypeStatistics));
 
-        var shipAmounts = playerInformation.Ships.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value.Amount)).ToDictionary();
-        var defenseAmounts = playerInformation.Defenses.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value.Amount)).ToDictionary();
+        var shipAmounts = playerInformation.Ships.ToDictionary(x => x.Key, x => x.Value.Amount);
+        var defenseAmounts = playerInformation.Defenses.ToDictionary(x => x.Key, x => x.Value.Amount);
 
         return new Player()
         {
@@ -91,7 +91,7 @@ public static class DataCleaner
         };
     }
 
-    private static Player GetCleanAttackerData(PlayerInformation playerInformation, int id, int divisor, double universeFuelConsumptionModifier)
+    private static Player GetCleanAttackerData(PlayerInformation playerInformation, int id, int divisor, UnitType? cargoUnit, double universeFuelConsumptionModifier)
     {
         //Solar statllites are a ship so we have to whipe the out from the attacker unit list
         var shipsToAdd = playerInformation.Ships.Where(x => x.Key != UnitType.SOLAR_SATELLITE)
@@ -106,7 +106,25 @@ public static class DataCleaner
             Weapon = x.Value.Weapon
         })).ToDictionary();
 
+
+        var loot = (playerInformation.Resources.Metal + 
+                    playerInformation.Resources.Crystal + 
+                    playerInformation.Resources.Deuterium) / (playerInformation.LootPercentage / 100);
+
+        if (cargoUnit != null)
+        {
+            var cargoUnitDefaultValues = UnitDefaultValues.DefaultValues.GetValueOrDefault(cargoUnit.Value);
+
+            var cargoAmount = loot * 0.2 / cargoUnitDefaultValues.Cargo;
+
+            if (shipsToAdd.TryGetValue(cargoUnit.Value, out var cargoShipStats))
+            {
+                cargoShipStats.Amount = (int)cargoAmount;
+            }
+        }
+
         var unitTypeStatistics = GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, shipsToAdd);
+
 
         return new Player()
         {
@@ -117,8 +135,19 @@ public static class DataCleaner
             Armor = playerInformation.Researches.ArmourTechnology,
             Shield = playerInformation.Researches.ShieldingTechnology,
             Weapon = playerInformation.Researches.WeaponsTechnology,
-            UnitTypeAmounts = shipsToAdd.Select(x => new KeyValuePair<UnitType, int>(x.Key, x.Value.Amount)).ToDictionary(),
-            Units = GetCleanUnitData(shipsToAdd, id, unitTypeStatistics)
+            UnitTypeAmounts = shipsToAdd.ToDictionary(x => x.Key, x => x.Value.Amount),
+            Units = GetCleanUnitData(shipsToAdd, id, unitTypeStatistics),
+            UnitTypeStats = unitTypeStatistics.ToDictionary(x => x.Key, x => new UnitStats()
+            {
+                Amount = shipsToAdd.GetValueOrDefault(x.Key).Amount,
+                Armor = x.Value.Hull,
+                Cargo = x.Value.Cargo,
+                Fuel = x.Value.FuelConsumption,
+                Shield = x.Value.Shield,
+                Speed = x.Value.Speed,
+                Weapon = x.Value.Weapon,
+                Energy = x.Value.Energy
+            })
         };
     }
 
@@ -186,6 +215,7 @@ public static class DataCleaner
                 combatUnit.MetalCost = defaultValue.MetalCost;
                 combatUnit.CrystalCost = defaultValue.CrystalCost;
                 combatUnit.DeuteriumCost = defaultValue.DeuteriumCost;
+                combatUnit.Energy = defaultValue.Energy;
 
                 combatUnit.Shield = CalculateCombatValueWithBonuses(defaultValue.Shield, ship.Value.Shield, ResearchesIds.SHIELDING_TECH, playerInformation.Researches.ShieldingTechnology, playerInformation.CharacterClassId, playerInformation.AllianceClassId);
                 combatUnit.Hull = CalculateCombatValueWithBonuses(defaultValue.Hull, ship.Value.Armor, ResearchesIds.ARMOUR_TECH, playerInformation.Researches.ArmourTechnology, playerInformation.CharacterClassId, playerInformation.AllianceClassId);

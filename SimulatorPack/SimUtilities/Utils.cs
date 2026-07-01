@@ -33,4 +33,9 @@ public static class Utils
         return Enum.GetValues<UnitType>().Select(x => new KeyValuePair<UnitType, int>(x, 0)).ToDictionary();
     }
 
+
+    public static bool IsShip(this UnitType unitType)
+    {
+        return (int)unitType < 400;
+    }
 }

@@ -4,66 +4,28 @@ using OgameSimulatorPack;
 using OgameSimulatorPack.Classes;
 using OgameSimulatorPack.SimUtilities;
 using OgameSimulatorPack.Statistics;
+using Spectre.Console.Rendering;
 
 namespace OgameGenSim.Services;
 
 public class BattleService()
 {
     public DirtyCombatInformation? DirtyData { get; set; }
-    public BattleStatistics CurrentStatistics { get; set; }
-    public double CurrentFitness { get; set; }
+    public BattleStatistics BestStatistics { get; set; }
+    public double BestFitness { get; set; }
     
-    public static readonly Dictionary<FleetComposition, UnitType[]> FleetCompositionToUnitTypeMapping = 
+    public static readonly Dictionary<MainFleetComposition, UnitType[]> FleetCompositionToUnitTypeMapping = 
         new ()
         {
-            { FleetComposition.RIPS, new[] { UnitType.DEATHSTAR } },
-            { FleetComposition.SLOW_FLEET, new [] { UnitType.BOMBER, UnitType.DESTROYER, }},
-            { FleetComposition.FAST_FLEET, new [] { UnitType.CRUISER, UnitType.BATTLESHIP, UnitType.BATTLECRUISER}},
-            { FleetComposition.STEAL, new [] { UnitType.SMALL_CARGO, UnitType.LARGE_CARGO, UnitType.PATHFINDER}},
-            { FleetComposition.ALL_CARGOS, new [] { UnitType.SMALL_CARGO, UnitType.LARGE_CARGO, }},
-            { FleetComposition.FODDER, new [] { UnitType.LIGHT_FIGHTER, UnitType.HEAVY_FIGHTER, }},
-            { FleetComposition.FODDER2, new [] { UnitType.ESPIONAGE_PROBE, }},
-            { FleetComposition.ALL_PATHFINDERS, new [] { UnitType.PATHFINDER}},
-            { FleetComposition.REAPER, new [] { UnitType.REAPER}}
-        };
-
-    public static readonly Dictionary<FleetComposition, FleetCompositionStats> FleetCompositionToUnitTypeMapping2 =
-        new()
-        {
-            { FleetComposition.RIPS, new FleetCompositionStats { UnitTypes = [UnitType.DEATHSTAR], SpeedUnitType = UnitType.DEATHSTAR } },
-            { FleetComposition.SLOW_FLEET, new FleetCompositionStats { UnitTypes = [UnitType.BOMBER, UnitType.DESTROYER], SpeedUnitType = UnitType.BOMBER } },
-            { FleetComposition.FAST_FLEET, new FleetCompositionStats { UnitTypes = [UnitType.CRUISER, UnitType.BATTLESHIP, UnitType.BATTLECRUISER], SpeedUnitType = UnitType.BATTLECRUISER } },
-            { FleetComposition.STEAL, new FleetCompositionStats { UnitTypes = [UnitType.SMALL_CARGO, UnitType.LARGE_CARGO, UnitType.PATHFINDER], SpeedUnitType = UnitType.LARGE_CARGO } },
-            { FleetComposition.ALL_CARGOS, new FleetCompositionStats { UnitTypes = [UnitType.SMALL_CARGO, UnitType.LARGE_CARGO], SpeedUnitType = UnitType.LARGE_CARGO } },
-            { FleetComposition.FODDER, new FleetCompositionStats { UnitTypes = [UnitType.LIGHT_FIGHTER, UnitType.HEAVY_FIGHTER], SpeedUnitType = UnitType.HEAVY_FIGHTER } },
-            { FleetComposition.FODDER2, new FleetCompositionStats { UnitTypes = [UnitType.ESPIONAGE_PROBE], SpeedUnitType = UnitType.ESPIONAGE_PROBE } },
-            { FleetComposition.ALL_PATHFINDERS, new FleetCompositionStats { UnitTypes = [UnitType.PATHFINDER], SpeedUnitType = UnitType.PATHFINDER } },
-            { FleetComposition.REAPER, new FleetCompositionStats { UnitTypes = [UnitType.REAPER], SpeedUnitType = UnitType.REAPER } }
-        };
-
-    public static readonly Dictionary<UnitType, int> UnitTypeEnergyMapping = 
-        new ()
-        {
-            { UnitType.DEATHSTAR, 15 },
-            { UnitType.DESTROYER, 11 },
-            { UnitType.BATTLECRUISER, 7 },
-            { UnitType.BOMBER, 8 },
-            { UnitType.BATTLESHIP, 6 },
-            { UnitType.CRUISER, 2 },   
-            { UnitType.SMALL_CARGO, 1 },
-            { UnitType.LARGE_CARGO, 1 },
-            { UnitType.LIGHT_FIGHTER, 1 },
-            { UnitType.HEAVY_FIGHTER, 1 },
-            { UnitType.PATHFINDER, 2 },
-            { UnitType.REAPER, 15 },
-            { UnitType.RECYCLER, 1 },
-            { UnitType.ESPIONAGE_PROBE, 1 },
-            { UnitType.COLONY_SHIP, 3 }
+            { MainFleetComposition.RIPS, new[] { UnitType.DEATHSTAR } },
+            { MainFleetComposition.SLOW_FLEET, new [] { UnitType.BOMBER, UnitType.DESTROYER, }},
+            { MainFleetComposition.FAST_FLEET, new [] { UnitType.CRUISER, UnitType.BATTLESHIP, UnitType.BATTLECRUISER}},
+            { MainFleetComposition.FODDER, new [] { UnitType.LIGHT_FIGHTER, UnitType.HEAVY_FIGHTER, }},
+            { MainFleetComposition.FODDER2, new [] { UnitType.ESPIONAGE_PROBE, }},
+            { MainFleetComposition.REAPER, new [] { UnitType.REAPER}}
         };
         
-    //public List<CombatUnit> Fleet { get; set; }
-
-    public string DoBattles(List<FleetComposition> fleetCompositionOptions, int fleetDivisor = 1){
+    public string DoBattles(FleetComposition fleetComposition, int fleetDivisor = 1){
          if (DirtyData is null)
             throw new InvalidOperationException("CombatInformation must be set before building fleet composition.");
         
@@ -71,8 +33,8 @@ public class BattleService()
 
         Battle simlator = new(DirtyData.Universe.DebrisFactor, DirtyData.Universe.DebrisFactorDef, deutOnDebri);
 
-        if(!fleetCompositionOptions.Contains(FleetComposition.ALL_OPTIONS)){
-                var cleanData = BuildFleetComposition(fleetCompositionOptions, 1);
+        if(!fleetComposition.MainFleetComposition.Contains(MainFleetComposition.ALL_OPTIONS)){
+                var cleanData = BuildFleetComposition(fleetComposition.MainFleetComposition, fleetComposition.SecondaryFleetComposition, 1);
                 var statistics = simlator.DoBattle(cleanData);
 
                 return "";
@@ -80,18 +42,16 @@ public class BattleService()
         
         for (int currentDivisor = 1; currentDivisor <= fleetDivisor; currentDivisor++)
         {
-            foreach (var item in fleetCompositionOptions.GetSubsets())
+            foreach (var item in fleetComposition.MainFleetComposition.GetSubsets())
             {
-                var cleanData = BuildFleetComposition(item, currentDivisor);
-                CurrentStatistics = simlator.DoBattle(cleanData);
+                var cleanData = BuildFleetComposition(item, fleetComposition.SecondaryFleetComposition, currentDivisor);
+                var currentStatistics = simlator.DoBattle(cleanData);
                 
-                //put this on the statistics
-                //we still need to calculate this (defender is bandit?)
-                var loot = 0;
+                var firstDefender = cleanData.Defenders.First();
+                var loot = firstDefender.Metal + firstDefender.Crystal + firstDefender.Deuterium;
 
-                //put this on statistics (attacker units lost)
                 var unitsLoss = 0;
-                foreach(var lostType in CurrentStatistics.GlobalAttackersLostAmount)
+                foreach(var lostType in BestStatistics.GlobalAttackersLostAmount)
                 {
                     if (UnitDefaultValues.DefaultValues.TryGetValue(lostType.Key, out var defaultValue))
                     {
@@ -101,17 +61,32 @@ public class BattleService()
                     }
                 }
 
-                //we still need to calculate this (player class + life form techs)
-                var deuteriumSpent = cleanData.Attackers.SelectMany(x => x.UnitTypeStats).Sum(x => x.Value.Fuel * x.Value.Amount);
+                var attackers = cleanData.Attackers.SelectMany(x => x.UnitTypeStats);
 
-                //we still need to calculate this (player class + life form techs + techs)
-                var speed = cleanData.Attackers.First().UnitTypeStats.Min(x => x.Value.Speed);
+                var deuteriumSpent = attackers.Sum(x => x.Value.Fuel * x.Value.Amount);
 
                 var profit = loot - unitsLoss - deuteriumSpent;
+                
+                var speed = cleanData.Attackers.First().UnitTypeStats.Min(x => x.Value.Speed);
 
-                var energy = 0;
+                var energy = attackers.Sum(x => x.Value.Energy * x.Value.Amount);
 
-                CurrentFitness = speed * 0.3 + profit * 0.6 + energy * 0.1;
+                double currentFitness = 0;
+
+                if (fleetComposition.IsAccountingSpeed)
+                {
+                    currentFitness = -speed * 0.3 - profit * 0.6 + energy * 0.1;
+                }
+                else
+                {
+                    currentFitness = -profit * 0.9 + energy * 0.1;
+                }
+
+                if (currentFitness < BestFitness)
+                {
+                    BestFitness = currentFitness;
+                    BestStatistics = currentStatistics;
+                }
 
                 //Save if it's better than before
 
@@ -122,23 +97,29 @@ public class BattleService()
         return "";
     }
 
-    public SimCombatInformation BuildFleetComposition(IReadOnlyList<FleetComposition> fleetCompositionOptions, int fleetDivisor)
+    public SimCombatInformation BuildFleetComposition(IReadOnlyList<MainFleetComposition> mainFleetCompositionOptions, SecondaryFleetComposition secondaryFleetComposition, int fleetDivisor)
     {
         List<UnitType> types = [];
 
-        foreach (var option in fleetCompositionOptions)
+        foreach (var option in mainFleetCompositionOptions)
         {
-            var hasValues = FleetCompositionToUnitTypeMapping.TryGetValue(option, out var unitTypesToAdd);
-
-            if (!hasValues) continue;
+            if (!FleetCompositionToUnitTypeMapping.TryGetValue(option, out var unitTypesToAdd)) continue;
 
             types.AddRange(unitTypesToAdd);
         }
 
-        var newSimCombatInformation = DataCleaner.GetCleanData(DirtyData.Attackers, DirtyData.Defenders, DirtyData.Universe, fleetDivisor);
+        UnitType? cargoType = secondaryFleetComposition.IsAllSmallCargosComposition ||
+                        secondaryFleetComposition.IsAllLargeCargosComposition || 
+                        secondaryFleetComposition.IsAllPathFindersComposition ? null :
+                        secondaryFleetComposition.CargoType;
+
+        var newSimCombatInformation = DataCleaner.GetCleanData(DirtyData.Attackers, DirtyData.Defenders, DirtyData.Universe, fleetDivisor, secondaryFleetComposition.CargoType);
+
 
         foreach (var attacker in newSimCombatInformation.Attackers)
         {
+            var asd = attacker.Units.Where(x => x.ShipType == secondaryFleetComposition.CargoType);
+
             attacker.Units = [.. attacker.Units.Where(x => types.Contains(x.ShipType))];
             attacker.UnitTypeAmounts = attacker.UnitTypeAmounts.Where(x => types.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
         }
@@ -147,7 +128,7 @@ public class BattleService()
     }
 }
 
-public enum FleetComposition
+public enum MainFleetComposition
 {
     RIPS,
     SLOW_FLEET,
@@ -158,14 +139,30 @@ public enum FleetComposition
     FODDER2, //
     ALL_PATHFINDERS, 
     REAPER,
-
-    //TOOD: Put this two options as just flags
     ALL_OPTIONS,
     ACCOUNTING_SPEED
 }
+
 
 public class FleetCompositionStats
 {
     public UnitType[] UnitTypes { get; set; } = [];
     public UnitType SpeedUnitType { get; set; }
+}
+
+public class FleetComposition
+{
+    public List<MainFleetComposition> MainFleetComposition { get; set; }
+    public SecondaryFleetComposition SecondaryFleetComposition { get; set; }
+    public bool IsAccountingSpeed { get; set; }
+}
+
+public class SecondaryFleetComposition
+{
+    public bool IsStealComposition { get; set; }
+    public int UnitNumber { get; set; }
+    public UnitType CargoType { get; set; }
+    public bool IsAllSmallCargosComposition { get; set; }
+    public bool IsAllLargeCargosComposition { get; set; } 
+    public bool IsAllPathFindersComposition { get; set; }
 }

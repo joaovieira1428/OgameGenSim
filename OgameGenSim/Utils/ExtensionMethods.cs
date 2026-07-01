@@ -41,28 +41,4 @@ public static class ExtensionMethods
             yield return subset;
         }
     }
-
-    
-
-
-
-/*
-List A
-List subsets
-
-for (item in a){
-    List subset
-    subset.Add(item)
-    
-}
-
-*/
-
-
-
-
-
-
-
-
 }
