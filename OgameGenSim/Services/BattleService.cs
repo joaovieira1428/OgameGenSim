@@ -33,7 +33,7 @@ public class BattleService()
 
         Battle simlator = new(DirtyData.Universe.DebrisFactor, DirtyData.Universe.DebrisFactorDef, deutOnDebri);
 
-        if(!fleetComposition.MainFleetComposition.Contains(MainFleetComposition.ALL_OPTIONS)){
+        if(!fleetComposition.IsAllCombinations){
                 var cleanData = BuildFleetComposition(fleetComposition.MainFleetComposition, fleetComposition.SecondaryFleetComposition, 1);
                 var statistics = simlator.DoBattle(cleanData);
 
@@ -133,21 +133,9 @@ public enum MainFleetComposition
     RIPS,
     SLOW_FLEET,
     FAST_FLEET,
-    STEAL,
-    ALL_CARGOS,
     FODDER, //fighters
-    FODDER2, //
-    ALL_PATHFINDERS, 
+    FODDER2, //probes
     REAPER,
-    ALL_OPTIONS,
-    ACCOUNTING_SPEED
-}
-
-
-public class FleetCompositionStats
-{
-    public UnitType[] UnitTypes { get; set; } = [];
-    public UnitType SpeedUnitType { get; set; }
 }
 
 public class FleetComposition
@@ -155,6 +143,7 @@ public class FleetComposition
     public List<MainFleetComposition> MainFleetComposition { get; set; }
     public SecondaryFleetComposition SecondaryFleetComposition { get; set; }
     public bool IsAccountingSpeed { get; set; }
+    public bool IsAllCombinations { get; set; }
 }
 
 public class SecondaryFleetComposition

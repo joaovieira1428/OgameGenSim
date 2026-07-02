@@ -3,18 +3,20 @@
 @using Microsoft.AspNetCore.Components.Web
 @using RazorConsole.Components
 
+@typeparam TEnum where TEnum : struct, Enum
+
 @foreach(var item in Objects){
-    <TextButton Content="@GetContentString(item)" OnClick="@( () => ToggleSelectionV2(item))"></TextButton>
+    <TextButton Content="@GetContentString(item)" OnClick="@( () => ToggleSelection(item))"></TextButton>
 }
 @code {
     [Parameter]
-    public List<string> Options { get; set; } = new();
+    public Dictionary<TEnum, string> Options { get; set; } = new();
 
     [Parameter]
-    public List<string> Value { get; set; } = new();
+    public List<TEnum> Value { get; set; } = new();
 
     [Parameter]
-    public EventCallback<List<string>> ValueChanged { get; set; }
+    public EventCallback<List<TEnum>> ValueChanged { get; set; }
 
     public List<MultiSelectObject> Objects = new();
 
@@ -25,13 +27,14 @@
         if (Options != default)
         {
             Objects = Options
-                .Select(x => new MultiSelectObject { Content = x, IsSelected = Value.Contains(x) })
+                .Select(x => new MultiSelectObject { Key = x.Key, Content = x.Value, IsSelected = Value.Contains(x.Key) })
                 .ToList();
         }
     }
 
     public class MultiSelectObject
     {
+        public TEnum Key {get;set;}
         public string Content { get; set; } = "";
         public bool IsSelected { get; set; }
     }
@@ -41,15 +44,15 @@
         return item.IsSelected ? $"[x]{item.Content}" : $"[]{item.Content}";
     }
 
-    private async Task ToggleSelectionV2(MultiSelectObject item)
+    private async Task ToggleSelection(MultiSelectObject item)
     {
         item.IsSelected = !item.IsSelected;
         StateHasChanged();
 
         if (item.IsSelected)
-            Value.Add(item.Content);
+            Value.Add(item.Key);
         else
-            Value.Remove(item.Content);
+            Value.Remove(item.Key);
 
         await ValueChanged.InvokeAsync(Value);
     }
