@@ -227,14 +227,21 @@
     {
         if(attackersNumber > 0 && defendersNumber > 0){
             DirtyCombatInformation dirtyData = await LoaderService.LoadCombatInformation(_attackersAPI, _defendersAPI);
-            
-            //SimCombatInformation cleanData = await LoaderService.LoadCombatInformation(_attackersAPI, _defendersAPI);
 
-            //Battle simlator = new OgameSimulatorPack.Battle(cleanData.Universe.Debrifactor, cleanData.Universe.DefenseDebrisFactor, cleanData.Universe.DeuteriumOnDebris);
-
-            //BattleStatistics result = simlator.DoBattle(cleanData);
-
-            //BattleStatisticsService.BattleStatistics = result;
+            FleetComposition composition = new FleetComposition{
+                MainFleetComposition = _selectedFleetComposition,
+                IsAllCombinations = _isAllCombinations,
+                IsAccountingSpeed = _isAccountingSpeed,
+                SecondaryFleetComposition = new SecondaryFleetComposition{
+                    IsStealComposition = _isStealCompositino,
+                    CargoType = stealCargoType,
+                    UnitNumber = stealUnitNumber,
+                    IsAllSmallCargosComposition = _isAllSmallCargosComposition,
+                    IsAllLargeCargosComposition = _isAllLargeCargosComposition,
+                    IsAllPathFindersComposition = _isAllPathFindersComposition
+                }
+            };
+            BattleStatisticsService.BestStatistics = BattleStatisticsService.DoBattles(composition, dirtyData, 10);
 
             Nav.NavigateTo("/battleStatistics");
         } 

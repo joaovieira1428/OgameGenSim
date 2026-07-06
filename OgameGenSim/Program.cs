@@ -12,6 +12,7 @@ using OgameGenSim.StateMachine;
 
 //sr-en-271-c5a37ce8be7144f68f295f5acea2c7b834708113
 //sr-en-273-15332eba4207ef4bbce946173dcc5ecb7cb0b7ea
+//sr-en-273-8f5e1b4aafd845d4c5d45db13458c32662d506bc
 
 HttpClient httpClient = new();
 
@@ -33,7 +34,6 @@ hostBuilder.ConfigureServices(services =>
         .ConfigureState((BSimState.PlayerAPIs, BSimTrigger.Previous), BSimState.FleetNumber)
         .ConfigureState((BSimState.MainFleetComposition, BSimTrigger.Previous), BSimState.PlayerAPIs)
         .ConfigureState((BSimState.SecondaryFleetComposition, BSimTrigger.Previous), BSimState.MainFleetComposition));
-
     // Configure console options
     services.Configure<ConsoleAppOptions>(options =>
     {

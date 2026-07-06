@@ -14,7 +14,7 @@
 <h3>BattleStatistics</h3>
 
 
-@if (BattleStatisticsService.BattleStatistics != null)
+@if (BattleStatisticsService.BestStatistics != null)
 {
     <FlexBox>
         <Padder Padding=(new(0,0,2,0))>
@@ -79,18 +79,18 @@ else
 
     protected override void OnInitialized()
     {
-        if (BattleStatisticsService.BattleStatistics != null)
+        if (BattleStatisticsService.BestStatistics != null)
         {
             attackerOptions.Add("All");
-            attackerOptions.AddRange(BattleStatisticsService.BattleStatistics.Attackers.Select(x=> x.Coordinates));
+            attackerOptions.AddRange(BattleStatisticsService.BestStatistics.Attackers.Select(x=> x.Coordinates));
             _selectedAttackingPlayer = "All";
 
             defenderOptions.Add("All");
-            defenderOptions.AddRange(BattleStatisticsService.BattleStatistics.Defenders.Select(x=> x.Coordinates));
+            defenderOptions.AddRange(BattleStatisticsService.BestStatistics.Defenders.Select(x=> x.Coordinates));
             _selectedDefendingPlayer = "All";
 
             roundOptions.Add("All");
-            for(var i = 0; i < BattleStatisticsService.BattleStatistics.RoundStatistics.Count(); i++){
+            for(var i = 0; i < BattleStatisticsService.BestStatistics.RoundStatistics.Count(); i++){
                 roundOptions.Add(i.ToString());
             }
             _selectedRound = "All";
@@ -101,32 +101,32 @@ else
 
     private void PopulateUnits()
     {
-        if (BattleStatisticsService.BattleStatistics == null) return;
+        if (BattleStatisticsService.BestStatistics == null) return;
 
         if(_selectedRound == "All"){
             PopulateGlobal();
         }else{
-            var round = BattleStatisticsService.BattleStatistics.RoundStatistics[int.Parse(_selectedRound)];
+            var round = BattleStatisticsService.BestStatistics.RoundStatistics[int.Parse(_selectedRound)];
             PopulateRound(round);
         }
     }
 
     private void PopulateGlobal(){
         if(_selectedAttackingPlayer == "All"){
-            PopulatePlayer(attackerAmount, BattleStatisticsService.BattleStatistics.GlobalAttackersAmount);
-            PopulatePlayer(attackerLostAmount, BattleStatisticsService.BattleStatistics.GlobalAttackersLostAmount);
+            PopulatePlayer(attackerAmount, BattleStatisticsService.BestStatistics.GlobalAttackersAmount);
+            PopulatePlayer(attackerLostAmount, BattleStatisticsService.BestStatistics.GlobalAttackersLostAmount);
         }else{
-            var attackingPlayer = BattleStatisticsService.BattleStatistics.Attackers.FirstOrDefault(x => x.Coordinates == _selectedAttackingPlayer);
+            var attackingPlayer = BattleStatisticsService.BestStatistics.Attackers.FirstOrDefault(x => x.Coordinates == _selectedAttackingPlayer);
 
             PopulatePlayer(attackerAmount, attackingPlayer.UnitAmount);
             PopulatePlayer(attackerLostAmount, attackingPlayer.UnitLostAmount);
         }
 
         if(_selectedDefendingPlayer == "All"){
-            PopulatePlayer(defenderAmount, BattleStatisticsService.BattleStatistics.GlobalDefendersAmount);
-            PopulatePlayer(defenderLostAmount, BattleStatisticsService.BattleStatistics.GlobalDefendersLostAmount);
+            PopulatePlayer(defenderAmount, BattleStatisticsService.BestStatistics.GlobalDefendersAmount);
+            PopulatePlayer(defenderLostAmount, BattleStatisticsService.BestStatistics.GlobalDefendersLostAmount);
         }else{
-            var defendingPlayer = BattleStatisticsService.BattleStatistics.Defenders.FirstOrDefault(x => x.Coordinates == _selectedDefendingPlayer);
+            var defendingPlayer = BattleStatisticsService.BestStatistics.Defenders.FirstOrDefault(x => x.Coordinates == _selectedDefendingPlayer);
             PopulatePlayer(defenderAmount, defendingPlayer.UnitAmount);
             PopulatePlayer(defenderLostAmount, defendingPlayer.UnitLostAmount);
         }
