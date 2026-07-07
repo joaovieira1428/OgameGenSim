@@ -5,6 +5,13 @@ using OgameSimulatorPack.Statistics;
 
 namespace OgameSimulatorPack;
 
+/// <summary>
+/// Main class of the simulator, Battle simulates a battle between 2 or more players
+/// </summary>
+/// <param name="debriFactor"></param>
+/// <param name="DefenseDebrisFactor"></param>
+/// <param name="DeuteriumOnDebris"></param>
+
 public class Battle(double debriFactor, double DefenseDebrisFactor, bool DeuteriumOnDebris)
 {
     public double DebriFactor = debriFactor;
