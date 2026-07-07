@@ -12,9 +12,9 @@ public class Player
     public int Weapon {get; set;}
     public int Shield { get; set; }
     public int Armor { get; set; }
-    public int Metal { get; set; }
-    public int Crystal { get; set; }
-    public int Deuterium { get; set; }
+    public long Metal { get; set; }
+    public long Crystal { get; set; }
+    public long Deuterium { get; set; }
     public Dictionary<UnitType, int> UnitTypeAmounts { get; set; } = [];
     public Dictionary<UnitType, UnitStats> UnitTypeStats { get; set; } = [];
     public List<CombatUnit> Units { get; set; } = [];

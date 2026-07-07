@@ -14,10 +14,12 @@ public class BattleStatistics
     public Dictionary<UnitType, int> GlobalDefendersAmount { get; set; } = [];
     public Dictionary<UnitType, int> GlobalAttackersLostAmount { get; set; } = Utils.GetInitialUnitTypeAmounts();
     public Dictionary<UnitType, int> GlobalDefendersLostAmount { get; set; } = Utils.GetInitialUnitTypeAmounts();
-    public int MetalDebri { get; set; }
-    public int CrystalDebri { get; set; }
-    public int DeuteriumDebri { get; set; }
+    public long MetalDebri { get; set; }
+    public long CrystalDebri { get; set; }
+    public long DeuteriumDebri { get; set; }
     public bool AttackerWon { get; set; }
+    public List<CombatUnit> SurvivingAttackerUnits { get; set; } = [];
+    public List<CombatUnit> SurvivingDefenderUnits { get; set; } = [];
 
     public BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, 
                             Dictionary<UnitType, int> defendersGlobalUnitAmount, 

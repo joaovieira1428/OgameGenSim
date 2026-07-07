@@ -86,6 +86,8 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
         }
 
         battleStatistics.AttackerWon = defendersUnits.Count == 0;
+        battleStatistics.SurvivingAttackerUnits = attackersUnits;
+        battleStatistics.SurvivingDefenderUnits = defendersUnits;
 
         return battleStatistics;
     }

@@ -16,20 +16,8 @@ public static class DataCleaner
     public static SimCombatInformation GetCleanData(List<PlayerInformation> attakcers, List<PlayerInformation> defenders, UniverseInformation universeInformation, int divisor,  UnitType? cargoUnit)
     {        
         SimCombatInformation combatInfo = new();
-
-        var counterForId = 0;
-        foreach(var attacker in attakcers)
-        {
-            var attackerData = GetCleanAttackerData(attacker, counterForId, divisor, cargoUnit, universeInformation.GlobalDeuteriumSaveFactor);
-            combatInfo.Attackers.Add(attackerData);
-
-            combatInfo.GlobalAttackersUnitAmount = combatInfo.GlobalAttackersUnitAmount.Keys.Union(attackerData.UnitTypeAmounts.Keys)
-            .ToDictionary(x => x, x => combatInfo.GlobalAttackersUnitAmount.GetValueOrDefault(x) 
-                            + attackerData.UnitTypeAmounts.GetValueOrDefault(x));
-        counterForId++;
-        }
         
-        counterForId = 0;
+        var counterForId = 0;
         foreach(var defender in defenders)
         {
             var defenderData = GetCleanDefenderData(defender, counterForId, universeInformation.GlobalDeuteriumSaveFactor);
@@ -41,6 +29,24 @@ public static class DataCleaner
         counterForId++;
         }
 
+        //TODO: Add LootPercentage.
+        var lootDefender = defenders.First();
+        var loot = (lootDefender.Resources.Metal + 
+            lootDefender.Resources.Crystal + 
+            lootDefender.Resources.Deuterium) / (100 / 100);
+
+        counterForId = 0;
+        foreach(var attacker in attakcers)
+        {
+            var attackerData = GetCleanAttackerData(attacker, loot, counterForId, divisor, cargoUnit, universeInformation.GlobalDeuteriumSaveFactor);
+            combatInfo.Attackers.Add(attackerData);
+
+            combatInfo.GlobalAttackersUnitAmount = combatInfo.GlobalAttackersUnitAmount.Keys.Union(attackerData.UnitTypeAmounts.Keys)
+            .ToDictionary(x => x, x => combatInfo.GlobalAttackersUnitAmount.GetValueOrDefault(x) 
+                            + attackerData.UnitTypeAmounts.GetValueOrDefault(x));
+        counterForId++;
+        }
+        
         combatInfo.Universe = new Universe()
         {
             EcoSpeed = universeInformation.Speed,
@@ -91,7 +97,7 @@ public static class DataCleaner
         };
     }
 
-    private static Player GetCleanAttackerData(PlayerInformation playerInformation, int id, int divisor, UnitType? cargoUnit, double universeFuelConsumptionModifier)
+    private static Player GetCleanAttackerData(PlayerInformation playerInformation, int loot, int id, int divisor, UnitType? cargoUnit, double universeFuelConsumptionModifier)
     {
         //Solar statllites are a ship so we have to whipe the out from the attacker unit list
         var shipsToAdd = playerInformation.Ships.Where(x => x.Key != UnitType.SOLAR_SATELLITE)
@@ -107,9 +113,7 @@ public static class DataCleaner
         })).ToDictionary();
 
 
-        var loot = (playerInformation.Resources.Metal + 
-                    playerInformation.Resources.Crystal + 
-                    playerInformation.Resources.Deuterium) / (playerInformation.LootPercentage / 100);
+  
 
         if (cargoUnit != null)
         {
@@ -119,7 +123,7 @@ public static class DataCleaner
 
             if (shipsToAdd.TryGetValue(cargoUnit.Value, out var cargoShipStats))
             {
-                cargoShipStats.Amount = (int)cargoAmount;
+                cargoShipStats.Amount = (int)Math.Ceiling(cargoAmount);
             }
         }
 
@@ -245,12 +249,12 @@ public static class DataCleaner
     {
         if(charatcterClassId == (int)PlayerClass.General)
         {
-            techLevel +=2; // General class grants an effective +2 levels to all combat researches
+            techLevel += 2; // General class grants an effective +2 levels to all combat researches
         }
 
         if(allianceClassId == (int)AllianceClass.Warrior)
         {
-            techLevel +=1; // War alliance class grants an effective +1 level to all combat researches
+            techLevel += 1; // War alliance class grants an effective +1 level to all combat researches
         }
 
         var techBonus = ResearchesIds.ResearchLevelMapping.GetValueOrDefault(techId) * techLevel;
