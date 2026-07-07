@@ -1,9 +1,5 @@
 namespace OgameGenSim.Classes;
 
-/// <summary>
-/// Resouces from the defender for calculations
-/// Not used yet
-/// </summary>
 public class Resources
 {
     public int Metal { get; set; }

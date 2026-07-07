@@ -9,7 +9,9 @@
 @using OgameGenSim.StateMachine
 @using OgameSimulatorPack
 @using OgameSimulatorPack.Classes
-@using OgameSimulatorPack.Statistics
+@using OgameGenSim.Classes
+@using OgameGenSim.Services
+@using OgameSimulatorPack.SimUtilities
 @using RazorConsole.Components
 
 @inject NavigationManager Nav
@@ -49,17 +51,73 @@
     </Align>
 }
 
-@if(BattleSimStateMachine.CurrentState == BSimState.FleetComposition){
+@if(BattleSimStateMachine.CurrentState == BSimState.MainFleetComposition){
     <Align>
-        <MultiSelect @bind-Value="_selectedFleetComposition" Options="@fleetCompositionOptions"></MultiSelect>
+        <MultiSelect @bind-Value="_selectedFleetComposition" Options="@fleetCompositionOptionsKeyValues"></MultiSelect>
+        
+        <CheckBox @bind-Value="_isAllCombinations" Label="Do all combinations"></CheckBox>
 
-        <p>Note* - Takes priority over Cargos (just enough for steal)</p>
+        @if(_isAllCombinations)
+        {
+            <CheckBox @bind-Value="_isAccountingSpeed" Label="Use speed to decide"></CheckBox>
 
-        <FlexBox>
-            <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
-            <TextButton Content="Next" OnClick="LoadPlayers"></TextButton>
-        </FlexBox>
+            <FlexBox>
+                <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
+                <TextButton Content="Next" OnClick="NextSimPage"></TextButton>
+            </FlexBox>
+        }else{
+            <FlexBox>
+                <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
+                <TextButton Content="Next" OnClick="NextSimPage"></TextButton>
+            </FlexBox>
+        }
+    </Align>
+}
 
+@if(BattleSimStateMachine.CurrentState == BSimState.SecondaryFleetComposition){
+    <Align>
+        <CheckBox @bind-Value="_isStealCompositino" Label="Steal Only"></CheckBox>
+        
+        @if(_isStealCompositino)
+        {
+            <Select Options="cargoFleetTypes.Select(x => x.Value).ToArray()" 
+                    Value="_stealCargoType" 
+                    ValueChanged="@((string? value) => OnCargoUnitTypeChange(value))"></Select>
+
+
+            <TextInput Value="@_stealUnitNumber" ValueChanged="OnStealUnitNumberChanged" Label="Number of units to send"></TextInput>
+        
+            <CheckBox @bind-Value="_isAllSmallCargosComposition" Label="Send all Small Cargos"></CheckBox>
+            <CheckBox @bind-Value="_isAllLargeCargosComposition" Label="Send all Large Cargos"></CheckBox>
+            <CheckBox @bind-Value="_isAllPathFindersComposition" Label="Send all PathFinders"></CheckBox>
+            
+            <Align>
+                <p>Note* - Steal Only will send enough units to steal + 20% for losses</p>
+                <p>Note** - Send all amounts will be adjusted by the simulator like any other fleet type</p>
+                <p>Note*** - Send all [Type] will take priority over the Cargo type to steal</p>
+            </Align>
+
+            <FlexBox>
+                <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
+                <TextButton Content="Next" OnClick="LoadPlayers"></TextButton>
+            </FlexBox>
+        }else{
+            <CheckBox @bind-Value="_isAllSmallCargosComposition" Label="Send all Small Cargos"></CheckBox>
+            <CheckBox @bind-Value="_isAllLargeCargosComposition" Label="Send all Large Cargos"></CheckBox>
+            <CheckBox @bind-Value="_isAllPathFindersComposition" Label="Send all PathFinders"></CheckBox>
+
+            <Align>
+                <p>Note* - Steal Only will send enough units to steal + 20% for losses</p>
+                <p>Note** - Send all amounts will be adjusted by the simulator like any other fleet type</p>
+                <p>Note*** - Send all [Type] will take priority over the Cargo type to steal</p>
+            </Align>
+            
+            <FlexBox>
+                <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
+                <TextButton Content="Next" OnClick="LoadPlayers"></TextButton>
+            </FlexBox>
+        }
+        
     </Align>
 }
 
@@ -70,21 +128,36 @@
     private int defendersNumber = 0;
     private List<string> _attackersAPI = new List<string>();
     private List<string> _defendersAPI = new List<string>();
+    public List<MainFleetComposition> _selectedFleetComposition = new();
+    public bool _isAllCombinations = false;
+    public bool _isAccountingSpeed = false;
+    public bool _isStealCompositino = false;
+    public string _stealUnitNumber = string.Empty;
+    public int stealUnitNumber = 0;
+    public string _stealCargoType = string.Empty;
+    public UnitType stealCargoType = UnitType.SMALL_CARGO;
+    public bool _isAllSmallCargosComposition = false;
+    public bool _isAllLargeCargosComposition = false;
+    public bool _isAllPathFindersComposition = false;
 
-    private List<string> fleetCompositionOptions = new (){
-        "RIPS", 
-        "Slow Fleet", 
-        "Fast Fleet", 
-        "Cargos (just enough for steal)", 
-        "Cargos (all cargos*)", 
-        "Fodder (fighters)", 
-        "Pathfiders", 
-        "Do All combinations"
+    private Dictionary<MainFleetComposition, string> fleetCompositionOptionsKeyValues = new (){
+        {MainFleetComposition.RIPS, "RIPS"}, 
+        {MainFleetComposition.SLOW_FLEET, "Slow Fleet"}, 
+        {MainFleetComposition.FAST_FLEET, "Fast Fleet"}, 
+        {MainFleetComposition.FODDER, "Fodder (fighters)"}, 
+        {MainFleetComposition.FODDER2, "Fodder (probes)"},
+        {MainFleetComposition.REAPER, "Reapers"}
     };
 
-    public List<string> _selectedFleetComposition = new();
+    private Dictionary<UnitType, string> cargoFleetTypes = new (){
+        {UnitType.SMALL_CARGO, "Small Cargo"}, 
+        {UnitType.LARGE_CARGO, "Large Cargo"}, 
+        {UnitType.PATHFINDER, "Pathfinder"}, 
+    };
+
+
     
-    private void OnSelectCompositionChanged(List<string> value){
+    private void OnSelectCompositionChanged(List<MainFleetComposition> value){
         _selectedFleetComposition = value;
     }
 
@@ -130,16 +203,47 @@
         return Task.CompletedTask;
     }
 
+    private Task OnStealUnitNumberChanged(string? value)
+    {
+        _stealUnitNumber = value ?? string.Empty;
+        int.TryParse(_stealUnitNumber, out stealUnitNumber);
+
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private Task OnCargoUnitTypeChange(string? value)
+    {
+        _stealCargoType = value ?? string.Empty;
+
+        var cargoTypeEnumType = cargoFleetTypes.FirstOrDefault(x => x.Value == _stealCargoType).Key;
+
+        stealCargoType = cargoTypeEnumType;
+        
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+
     private async void LoadPlayers()
     {
         if(attackersNumber > 0 && defendersNumber > 0){
-            SimCombatInformation cleanData = await LoaderService.LoadCombatInformation(_attackersAPI, _defendersAPI);
+            DirtyCombatInformation dirtyData = await LoaderService.LoadCombatInformation(_attackersAPI, _defendersAPI);
 
-            Battle simlator = new OgameSimulatorPack.Battle(cleanData.Universe.Debrifactor, cleanData.Universe.DefenseDebrisFactor, cleanData.Universe.DeuteriumOnDebris);
-
-            BattleStatistics result = simlator.DoBattle(cleanData);
-
-            BattleStatisticsService.BattleStatistics = result;
+            FleetComposition composition = new FleetComposition{
+                MainFleetComposition = _selectedFleetComposition,
+                IsAllCombinations = _isAllCombinations,
+                IsAccountingSpeed = _isAccountingSpeed,
+                SecondaryFleetComposition = new SecondaryFleetComposition{
+                    IsStealComposition = _isStealCompositino,
+                    CargoType = stealCargoType,
+                    UnitNumber = stealUnitNumber,
+                    IsAllSmallCargosComposition = _isAllSmallCargosComposition,
+                    IsAllLargeCargosComposition = _isAllLargeCargosComposition,
+                    IsAllPathFindersComposition = _isAllPathFindersComposition
+                }
+            };
+            BattleStatisticsService.BestStatistics = BattleStatisticsService.DoBattles(composition, dirtyData, 5);
 
             Nav.NavigateTo("/battleStatistics");
         } 
@@ -147,13 +251,13 @@
 
     private void NextSimPage(){
         var state = BattleSimStateMachine.ChangeState(BSimTrigger.Next);
-        Console.Clear();
-        Console.WriteLine(state);
+        StateHasChanged();
+        @* Console.WriteLine(state); *@
     }
 
     private void PreviousSimPage(){
         var state = BattleSimStateMachine.ChangeState(BSimTrigger.Previous);
-        Console.Clear();
-        Console.WriteLine(state);
+        StateHasChanged();
+        @* Console.WriteLine(state); *@
     }
 }

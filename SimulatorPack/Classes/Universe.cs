@@ -1,9 +1,5 @@
 namespace OgameSimulatorPack.Classes;
 
-/// <summary>
-/// Universe information
-/// A lot of it is not being used for right now, but might be usefull for flight times and other things
-/// </summary>
 public class Universe
 {
     public int EcoSpeed { get; set; }

@@ -18,32 +18,6 @@
                 "kind": "build",
                 "isDefault": true
             }
-        },
-        {
-            "label": "build-benchmark",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/OgameGenSimBenchmark/OgameGenSimBenchmark.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "build-benchmark-release",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/OgameGenSimBenchmark/OgameGenSimBenchmark.csproj",
-                "-c",
-                "Release",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
-            ],
-            "problemMatcher": "$msCompile"
         }
     ]
 }

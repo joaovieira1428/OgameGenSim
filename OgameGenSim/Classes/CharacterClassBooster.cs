@@ -2,7 +2,6 @@ using System.Text.Json.Serialization;
 
 namespace OgameGenSim.Classes;
 
-// Not used
 public class CharacterClassBooster
 {
     [JsonPropertyName("1")]

@@ -2,9 +2,6 @@
 
 namespace OgameSimulatorPack.Classes;
 
-/// <summary>
-/// Player classes and it's ID
-/// </summary>
 public enum PlayerClass
 {
     NoClass = 0,
@@ -13,9 +10,6 @@ public enum PlayerClass
     Discoverer = 3
 }
 
-/// <summary>
-/// Aliiance classes and it's ID
-/// </summary>
 public enum AllianceClass
 {
     NoClass = 0,
