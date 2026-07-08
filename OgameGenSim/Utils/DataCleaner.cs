@@ -6,13 +6,15 @@ namespace OgameGenSim.Utils;
 
 public static class DataCleaner
 {
-        /// <summary>
+    /// <summary>
     /// Transform all combat information from attackers and defenders into workable/clean data for the simulator
     /// </summary>
-    /// <param name="attakcers"></param>
-    /// <param name="defenders"></param>
-    /// <param name="universeInformation"></param>
-    /// <returns></returns>
+    /// <param name="attakcers">List of the dirty information of the attackers</param>
+    /// <param name="defenders">List of the dirty information of the defenders</param>
+    /// <param name="universeInformation">Universe info</param>
+    /// <param name="divisor">Divisor for multiple attemps with multiple amounts</param>
+    /// <param name="cargoUnit">Unit type to be used as cargo ship for the attackers</param>
+    /// <returns>Clean data to send to the simulator</returns>
     public static SimCombatInformation GetCleanData(List<PlayerInformation> attakcers, List<PlayerInformation> defenders, UniverseInformation universeInformation, int divisor,  UnitType? cargoUnit)
     {        
         SimCombatInformation combatInfo = new();
@@ -26,19 +28,18 @@ public static class DataCleaner
             combatInfo.GlobalDefendersUnitAmount = combatInfo.GlobalDefendersUnitAmount.Keys.Union(defenderData.UnitTypeAmounts.Keys)
             .ToDictionary(x => x, x => combatInfo.GlobalDefendersUnitAmount.GetValueOrDefault(x) 
                             + defenderData.UnitTypeAmounts.GetValueOrDefault(x));
-        counterForId++;
+            counterForId++;
         }
 
-        //TODO: Add LootPercentage.
         var lootDefender = defenders.First();
         var loot = (lootDefender.Resources.Metal + 
-            lootDefender.Resources.Crystal + 
-            lootDefender.Resources.Deuterium) / (100 / 100);
+                    lootDefender.Resources.Crystal + 
+                    lootDefender.Resources.Deuterium) / (lootDefender.LootPercentage / 100);
 
         counterForId = 0;
         foreach(var attacker in attakcers)
         {
-            var attackerData = GetCleanAttackerData(attacker, loot, counterForId, divisor, cargoUnit, universeInformation.GlobalDeuteriumSaveFactor);
+            var attackerData = GetCleanAttackerData(attacker, lootDefender.LootPercentage, loot, counterForId, divisor, cargoUnit, universeInformation.GlobalDeuteriumSaveFactor);
             combatInfo.Attackers.Add(attackerData);
 
             combatInfo.GlobalAttackersUnitAmount = combatInfo.GlobalAttackersUnitAmount.Keys.Union(attackerData.UnitTypeAmounts.Keys)
@@ -66,42 +67,65 @@ public static class DataCleaner
         return combatInfo;
     }
 
+    #region Cleaners for the players data
+
+    /// <summary>
+    /// Cleans the defender data and adds all bonuses 
+    /// </summary>
+    /// <param name="playerInformation">Player information to clean</param>
+    /// <param name="id">Id to track player</param>
+    /// <param name="universeFuelConsumptionModifier">Universe fuel consumption modifier</param>
+    /// <returns></returns>
     private static Player GetCleanDefenderData(PlayerInformation playerInformation, int id, double universeFuelConsumptionModifier)
     {
         var shipTypeStatistics = GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, playerInformation.Ships);
-        var defTypeStatistics = GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, playerInformation.Ships);
+        var defTypeStatistics = GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, playerInformation.Defenses);
 
         var units = GetCleanUnitData(playerInformation.Ships, id, shipTypeStatistics);
-
         units.AddRange(GetCleanUnitData(playerInformation.Defenses, id, defTypeStatistics));
 
-        var shipAmounts = playerInformation.Ships.ToDictionary(x => x.Key, x => x.Value.Amount);
-        var defenseAmounts = playerInformation.Defenses.ToDictionary(x => x.Key, x => x.Value.Amount);
+        var unitAmounts = playerInformation.Ships.Union(playerInformation.Defenses)
+            .ToDictionary(x => x.Key, x => x.Value.Amount);
 
+        var loot = (playerInformation.Resources.Metal + 
+            playerInformation.Resources.Crystal + 
+            playerInformation.Resources.Deuterium) / (playerInformation.LootPercentage / 100);
+            
         return new Player()
         {
             Id = id,
             Coordinates = playerInformation.Coordinates,
-            AllianceClass = (AllianceClass)playerInformation.AllianceClassId,
-            PlayerClass = (PlayerClass)playerInformation.CharacterClassId,
-            Armor = playerInformation.Researches.ArmourTechnology,
-            Shield = playerInformation.Researches.ShieldingTechnology,
-            Weapon = playerInformation.Researches.WeaponsTechnology,
+//            AllianceClass = (AllianceClass)playerInformation.AllianceClassId,
+//            PlayerClass = (PlayerClass)playerInformation.CharacterClassId,
+//            Armor = playerInformation.Researches.ArmourTechnology,
+//            Shield = playerInformation.Researches.ShieldingTechnology,
+//            Weapon = playerInformation.Researches.WeaponsTechnology,
             Metal = playerInformation.Resources.Metal,
             Crystal = playerInformation.Resources.Crystal,
             Deuterium = playerInformation.Resources.Deuterium,
             LootPercentage = playerInformation.LootPercentage,
-            UnitTypeAmounts = shipAmounts.Keys.Union(defenseAmounts.Keys)
-                .ToDictionary(x => x, x => shipAmounts.GetValueOrDefault(x) + defenseAmounts.GetValueOrDefault(x)),
+            PossibleLoot = loot,
+            UnitTypeAmounts = unitAmounts,
             Units = units
         };
     }
 
-    private static Player GetCleanAttackerData(PlayerInformation playerInformation, int loot, int id, int divisor, UnitType? cargoUnit, double universeFuelConsumptionModifier)
+    /// <summary>
+    /// Cleans the attacker data and adds all bonuses
+    /// </summary>
+    /// <param name="playerInformation">Player information to clean</param>
+    /// <param name="lootPercentage">Loot percentage of the defender</param>
+    /// <param name="loot">Loot amount available to steal</param>
+    /// <param name="id">Id to track player</param>
+    /// <param name="divisor">Divisor for multiple attemps with multiple amounts</param>
+    /// <param name="cargoUnit">Unit type to be used as cargo ship for the attackers</param>
+    /// <param name="universeFuelConsumptionModifier">Universe fuel consumption modifier</param>
+    /// <returns>Clean data to send to the simulator</returns>
+    private static Player GetCleanAttackerData(PlayerInformation playerInformation, int lootPercentage, int loot, int id, int divisor, UnitType? cargoUnit, double universeFuelConsumptionModifier)
     {
         //Solar statllites are a ship so we have to whipe the out from the attacker unit list
         var shipsToAdd = playerInformation.Ships.Where(x => x.Key != UnitType.SOLAR_SATELLITE)
-        .Select(x => new KeyValuePair<UnitType, UnitStats>(x.Key, new UnitStats()
+        .ToDictionary(x => x.Key, x => new UnitStats()
         {
             Amount = x.Value.Amount / divisor,
             Armor = x.Value.Armor,
@@ -110,16 +134,11 @@ public static class DataCleaner
             Shield = x.Value.Shield,
             Speed = x.Value.Speed,
             Weapon = x.Value.Weapon
-        })).ToDictionary();
+        });
 
-
-  
-
-        if (cargoUnit != null)
+        if (cargoUnit != null && UnitDefaultValues.DefaultValues.TryGetValue(cargoUnit.Value, out var cargoUnitDefaultValues))
         {
-            var cargoUnitDefaultValues = UnitDefaultValues.DefaultValues.GetValueOrDefault(cargoUnit.Value);
-
-            var cargoAmount = loot * 0.2 / cargoUnitDefaultValues.Cargo;
+            var cargoAmount = loot * 1.2 / cargoUnitDefaultValues.Cargo / (lootPercentage / 100);
 
             if (shipsToAdd.TryGetValue(cargoUnit.Value, out var cargoShipStats))
             {
@@ -129,21 +148,22 @@ public static class DataCleaner
 
         var unitTypeStatistics = GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, shipsToAdd);
 
-
         return new Player()
         {
             Id = id,
             Coordinates = playerInformation.Coordinates,
-            AllianceClass = (AllianceClass)playerInformation.AllianceClassId,
-            PlayerClass = (PlayerClass)playerInformation.CharacterClassId,
-            Armor = playerInformation.Researches.ArmourTechnology,
-            Shield = playerInformation.Researches.ShieldingTechnology,
-            Weapon = playerInformation.Researches.WeaponsTechnology,
+//            AllianceClass = (AllianceClass)playerInformation.AllianceClassId,
+//            PlayerClass = (PlayerClass)playerInformation.CharacterClassId,
+//            Armor = playerInformation.Researches.ArmourTechnology,
+//            Shield = playerInformation.Researches.ShieldingTechnology,
+//            Weapon = playerInformation.Researches.WeaponsTechnology,
             UnitTypeAmounts = shipsToAdd.ToDictionary(x => x.Key, x => x.Value.Amount),
             Units = GetCleanUnitData(shipsToAdd, id, unitTypeStatistics),
+            LootPercentage = lootPercentage,
+            PossibleLoot = loot,
             UnitTypeStats = unitTypeStatistics.ToDictionary(x => x.Key, x => new UnitStats()
             {
-                Amount = shipsToAdd.GetValueOrDefault(x.Key).Amount,
+//                Amount = shipsToAdd.GetValueOrDefault(x.Key).Amount,
                 Armor = x.Value.Hull,
                 Cargo = x.Value.Cargo,
                 Fuel = x.Value.FuelConsumption,
@@ -155,6 +175,9 @@ public static class DataCleaner
         };
     }
 
+    #endregion
+
+    #region Cleaners for the unit data
     /// <summary>
     /// Cleans the unit data and adds all bonuses to base values of shild, hull and weapon
     /// </summary>
@@ -205,7 +228,17 @@ public static class DataCleaner
 
         return cleanUnits;
     }
+    #endregion
 
+    #region Calculations for the players units
+    
+    /// <summary>
+    /// Calculates the combat value of a unit based on its default value, LF bonus, research level, character class, and alliance class
+    /// </summary>
+    /// <param name="playerInformation">player information (researches and classes)</param>
+    /// <param name="universeFuelConsumptionModifier">Universe fuel modifier</param>
+    /// <param name="shipsToAdd">ShipTypes to get bonuses</param>
+    /// <returns>ShipsTypes with bonuses</returns>
     private static Dictionary<UnitType, CombatUnit> GetUnitTypeStatsWithBonuses(PlayerInformation playerInformation, double universeFuelConsumptionModifier, Dictionary<UnitType, UnitStats> shipsToAdd)
     {
         Dictionary<UnitType, CombatUnit> unitTypesStats = [];
@@ -245,6 +278,16 @@ public static class DataCleaner
         return unitTypesStats;
     }
 
+    /// <summary>
+    /// Calculates the combat value of a unit based on its default value, LF bonus, research level, character class, and alliance class
+    /// </summary>
+    /// <param name="defaultValue">Default value of combat value (weapon, shield and hull)</param>
+    /// <param name="LFBonus">LF bonus</param>
+    /// <param name="techId">Research ID</param>
+    /// <param name="techLevel">Research level</param>
+    /// <param name="charatcterClassId">Character class ID</param>
+    /// <param name="allianceClassId">Alliance class ID</param>
+    /// <returns>Value of the final combat stat</returns>
     private static float CalculateCombatValueWithBonuses(double defaultValue, double LFBonus, int techId, int techLevel, int charatcterClassId, int allianceClassId)
     {
         if(charatcterClassId == (int)PlayerClass.General)
@@ -262,6 +305,18 @@ public static class DataCleaner
         return (float)(defaultValue + (defaultValue * (LFBonus + techBonus)));
     }
 
+    /// <summary>
+    /// Calculates the speed value of a unit based on its default value, LF bonus, research levels, character class, and alliance class
+    /// </summary>
+    /// <param name="unitType">Type of the unit</param>
+    /// <param name="defaultValue">Default speed value</param>
+    /// <param name="LFBonus">LF bonus</param>
+    /// <param name="combustionDriveLevel">Combustion drive level</param>
+    /// <param name="impulseDriveLevel">Impulse drive level</param>
+    /// <param name="hyperspaceDriveLevel">Hyperspace drive level</param>
+    /// <param name="charatcterClassId">Character class ID</param>
+    /// <param name="allianceClassId">Alliance class ID</param>
+    /// <returns>Value of the final speed stat</returns>
     private static float CalculateSpeedValueWithBonuses(UnitType unitType, double defaultValue, double LFBonus,                                                  
                                                         int combustionDriveLevel, int impulseDriveLevel, int hyperspaceDriveLevel, 
                                                         int charatcterClassId, int allianceClassId)
@@ -348,6 +403,15 @@ public static class DataCleaner
         return (float)(defaultValue + (defaultValue * (LFBonus + techBonus)));
     }
 
+    /// <summary>
+    /// Calculates the cargo value of a unit based on its default value, LF bonus, research level, character class, and alliance class
+    /// </summary>
+    /// <param name="unitType">Type of the unit</param>
+    /// <param name="defaultValue">Default cargo value</param>
+    /// <param name="LFBonus">LF bonus</param>
+    /// <param name="techLevel">Research level</param>
+    /// <param name="charatcterClassId">Character class ID</param>
+    /// <returns>Value of the final cargo stat</returns>
     private static float CalculateCargoValueWithBonuses(UnitType unitType, double defaultValue, double LFBonus, int techLevel, int charatcterClassId)
     {
         double modifier = 1;
@@ -368,6 +432,14 @@ public static class DataCleaner
         return (float)(defaultValue + (defaultValue * (LFBonus + techBonus)));
     }
 
+    /// <summary>
+    /// Calculates the fuel consumption value of a unit based on its default value, LF bonus, character class, and universe modifier
+    /// </summary>
+    /// <param name="defaultValue">Default fuel consumption value</param>
+    /// <param name="LFBonus">LF bonus</param>
+    /// <param name="charatcterClassId">Character class ID</param>
+    /// <param name="universeModifier">Universe modifier</param>
+    /// <returns>Value of the final fuel consumption stat</returns>
     private static float CalculateFuelConsumptionWithBonuses(double defaultValue, double LFBonus, int charatcterClassId, double universeModifier)
     {
         defaultValue *= universeModifier;
@@ -383,5 +455,5 @@ public static class DataCleaner
 
         return (float)(defaultValue + (defaultValue * LFBonus));
     }
-
+    #endregion
 }

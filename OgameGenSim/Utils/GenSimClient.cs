@@ -90,6 +90,8 @@ public class GenSimClient(HttpClient client)
             PropertyNameCaseInsensitive = true
         });
 
+        var lootPercentage = jsonObject["RESULT_DATA"]["generic"]["loot_percentage"].GetValue<int>();
+
         if(playerInformation == null)
         {
             return new ClientResultObject<PlayerInformation>
@@ -98,6 +100,8 @@ public class GenSimClient(HttpClient client)
                 ErrorMessage = "Failed to deserialize espionage report"
             };
         }
+
+        playerInformation.LootPercentage = lootPercentage;
 
         return  new ClientResultObject<PlayerInformation>
         {

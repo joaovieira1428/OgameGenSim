@@ -29,13 +29,19 @@ public class BattleStatisticsService
 
     //Fitness = Speed, Profit (Loot + Debris - UnitsLost - Deuterium Spent (fuel)), energy (Time spent reconstructing fleet)
     //Fitness = Speed * 0.3 + Profit * 0.6 + Energy * 0.1
+    /// <summary>
+    /// Calculates the best fleet composition based on the given fleet composition, dirty combat information, and fleet divisor. It simulates battles and compares fitness to determine the best statistics.
+    /// </summary>
+    /// <param name="fleetComposition">Fleet composition or compositions to simulate</param>
+    /// <param name="dirtyData">Dirty data retrieved from the attacker(s) json(s) and defender(s) report id(s)</param>
+    /// <param name="fleetDivisor">Number of times to divide the fleet for simulation</param>
+    /// <returns>The best battle statistics found</returns>
+    /// <exception cref="InvalidOperationException"></exception>
     public BattleStatistics DoBattles(FleetComposition fleetComposition, DirtyCombatInformation dirtyData, int fleetDivisor = 1){
          if (dirtyData is null)
             throw new InvalidOperationException("CombatInformation must be set before building fleet composition.");
         
-        var deutOnDebri = Convert.ToBoolean(dirtyData.Universe.DeuteriumInDebris);
-
-        Battle simlator = new(dirtyData.Universe.DebrisFactor, dirtyData.Universe.DebrisFactorDef, deutOnDebri);
+        Battle simlator = new();
         
         for (int currentDivisor = 1; currentDivisor <= fleetDivisor; currentDivisor++)
         {
@@ -63,25 +69,9 @@ public class BattleStatisticsService
 
     private void CompareFitness(FleetComposition fleetComposition, SimCombatInformation cleanData, BattleStatistics currentStatistics)
     {
-        var firstDefender = cleanData.Defenders.First();
+        var firstDefender = currentStatistics.Defenders.First();
 
-        var cargoCapacity = currentStatistics.SurvivingAttackerUnits.Sum(x => x.Cargo);
-
-        double possibleLoot = firstDefender.Metal + firstDefender.Crystal + firstDefender.Deuterium;
-
-        double loot = 0;
-
-        //TODO: Calculate this properly with the game rules for now just take all you can until 100%
-        if (cargoCapacity >= possibleLoot)
-        {
-            loot = firstDefender.Metal + (firstDefender.Crystal * 2) + (firstDefender.Deuterium * 3);
-        }
-        else
-        {
-            var equalDistribution = cargoCapacity / 3;
-            loot = equalDistribution + (equalDistribution * 2) + (equalDistribution * 3);
-        }
-
+        var firstAttacker = currentStatistics.Attackers.First();
 
         long unitsLoss = 0;
         foreach (var lostType in currentStatistics.GlobalAttackersLostAmount)
@@ -94,27 +84,21 @@ public class BattleStatisticsService
             }
         }
 
-        var attackers = cleanData.Attackers.SelectMany(x => x.UnitTypeStats);
+        var statsAttackers = currentStatistics.Attackers.SelectMany(x => x.UnitTypeStats);
 
-        var deuteriumSpent = attackers.Sum(x => x.Value.Fuel * x.Value.Amount);
+        var deuteriumSpent = statsAttackers.Sum(x => x.Value.Fuel * x.Value.Amount);
 
-        var profit = (loot - unitsLoss - deuteriumSpent) / 1000;
+        var profit = (currentStatistics.Loot - unitsLoss - deuteriumSpent) / 1000;
 
-        var speed = cleanData.Attackers.First().UnitTypeStats.Min(x => x.Value.Speed);
+        var speed = firstAttacker.UnitTypeStats.Min(x => x.Value.Speed);
 
-        //Do this with surviving units instead of all units to get a more accurate energy value
-        var energy = attackers.Sum(x => x.Value.Energy * x.Value.Amount);
+        var energy = statsAttackers.Sum(x => x.Value.Energy * x.Value.Amount);
 
         double currentFitness = 0;
 
-        if (fleetComposition.IsAccountingSpeed)
-        {
-            currentFitness = -speed * 0.3 - profit * 0.6 + energy * 0.1;
-        }
-        else
-        {
-            currentFitness = -profit * 0.9 + energy * 0.1;
-        }
+        currentFitness = fleetComposition.IsAccountingSpeed ? 
+                        -speed * 0.3 - profit * 0.6 + energy * 0.1 :
+                        -profit * 0.9 + energy * 0.1;
 
         DebugStuff.Add(new Services.DebugStuff
         {
@@ -123,7 +107,7 @@ public class BattleStatisticsService
             Fitness = currentFitness,
             Profit = profit,
             DeuteriumCost = deuteriumSpent,
-            Loot = loot,
+            Loot = currentStatistics.Loot,
             UnitsLoss = unitsLoss,
         });
 
@@ -170,8 +154,6 @@ public class BattleStatisticsService
 
         foreach (var attacker in newSimCombatInformation.Attackers)
         {
-            var asd = attacker.Units.Where(x => x.ShipType == secondaryFleetComposition.CargoType);
-
             attacker.Units = [.. attacker.Units.Where(x => types.Contains(x.ShipType))];
             attacker.UnitTypeAmounts = attacker.UnitTypeAmounts.Where(x => types.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
         }
