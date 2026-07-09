@@ -31,9 +31,11 @@ hostBuilder.ConfigureServices(services =>
         .ConfigureState((BSimState.FleetNumber, BSimTrigger.Next), BSimState.PlayerAPIs)
         .ConfigureState((BSimState.PlayerAPIs, BSimTrigger.Next), BSimState.MainFleetComposition)
         .ConfigureState((BSimState.MainFleetComposition, BSimTrigger.Next), BSimState.SecondaryFleetComposition)
+        .ConfigureState((BSimState.SecondaryFleetComposition, BSimTrigger.Next), BSimState.DefenseFleetComposition)
         .ConfigureState((BSimState.PlayerAPIs, BSimTrigger.Previous), BSimState.FleetNumber)
         .ConfigureState((BSimState.MainFleetComposition, BSimTrigger.Previous), BSimState.PlayerAPIs)
-        .ConfigureState((BSimState.SecondaryFleetComposition, BSimTrigger.Previous), BSimState.MainFleetComposition));
+        .ConfigureState((BSimState.SecondaryFleetComposition, BSimTrigger.Previous), BSimState.MainFleetComposition)
+        .ConfigureState((BSimState.DefenseFleetComposition, BSimTrigger.Previous), BSimState.SecondaryFleetComposition));
     // Configure console options
     services.Configure<ConsoleAppOptions>(options =>
     {

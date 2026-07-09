@@ -95,11 +95,11 @@ else
         if (BattleStatisticsService.BestStatistics != null)
         {
             attackerOptions.Add("All");
-            attackerOptions.AddRange(BattleStatisticsService.BestStatistics.Attackers.Select(x=> x.Coordinates));
+            attackerOptions.AddRange(BattleStatisticsService.BestStatistics.Attackers.Select(x=> $"{x.Coordinates}({x.Id})"));
             _selectedAttackingPlayer = "All";
 
             defenderOptions.Add("All");
-            defenderOptions.AddRange(BattleStatisticsService.BestStatistics.Defenders.Select(x=> x.Coordinates));
+            defenderOptions.AddRange(BattleStatisticsService.BestStatistics.Defenders.Select(x=> $"{x.Coordinates}({x.Id})"));
             _selectedDefendingPlayer = "All";
 
             roundOptions.Add("All");

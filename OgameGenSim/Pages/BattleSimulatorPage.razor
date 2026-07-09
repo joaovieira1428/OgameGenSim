@@ -53,7 +53,7 @@
 
 @if(BattleSimStateMachine.CurrentState == BSimState.MainFleetComposition){
     <Align>
-        <MultiSelect @bind-Value="_selectedFleetComposition" Options="@fleetCompositionOptionsKeyValues"></MultiSelect>
+        <MultiSelect @bind-Value="_selectedAttackerFleetComposition" Options="@fleetCompositionOptionsKeyValues"></MultiSelect>
         
         <CheckBox @bind-Value="_isAllCombinations" Label="Do all combinations"></CheckBox>
 
@@ -76,9 +76,9 @@
 
 @if(BattleSimStateMachine.CurrentState == BSimState.SecondaryFleetComposition){
     <Align>
-        <CheckBox @bind-Value="_isStealCompositino" Label="Steal Only"></CheckBox>
+        <CheckBox @bind-Value="_isStealComposition" Label="Steal Only"></CheckBox>
         
-        @if(_isStealCompositino)
+        @if(_isStealComposition)
         {
             <Select Options="cargoFleetTypes.Select(x => x.Value).ToArray()" 
                     Value="_stealCargoType" 
@@ -87,9 +87,9 @@
 
             <TextInput Value="@_stealUnitNumber" ValueChanged="OnStealUnitNumberChanged" Label="Number of units to send"></TextInput>
         
-            <CheckBox @bind-Value="_isAllSmallCargosComposition" Label="Send all Small Cargos"></CheckBox>
-            <CheckBox @bind-Value="_isAllLargeCargosComposition" Label="Send all Large Cargos"></CheckBox>
-            <CheckBox @bind-Value="_isAllPathFindersComposition" Label="Send all PathFinders"></CheckBox>
+            <CheckBox @bind-Value="_isAllSmallCargosAttackerComposition" Label="Send all Small Cargos"></CheckBox>
+            <CheckBox @bind-Value="_isAllLargeCargosAttackerComposition" Label="Send all Large Cargos"></CheckBox>
+            <CheckBox @bind-Value="_isAllPathFindersAttackerComposition" Label="Send all PathFinders"></CheckBox>
             
             <Align>
                 <p>Note* - Steal Only will send enough units to steal + 20% for losses</p>
@@ -102,9 +102,9 @@
                 <TextButton Content="Next" OnClick="LoadPlayers"></TextButton>
             </FlexBox>
         }else{
-            <CheckBox @bind-Value="_isAllSmallCargosComposition" Label="Send all Small Cargos"></CheckBox>
-            <CheckBox @bind-Value="_isAllLargeCargosComposition" Label="Send all Large Cargos"></CheckBox>
-            <CheckBox @bind-Value="_isAllPathFindersComposition" Label="Send all PathFinders"></CheckBox>
+            <CheckBox @bind-Value="_isAllSmallCargosAttackerComposition" Label="Send all Small Cargos"></CheckBox>
+            <CheckBox @bind-Value="_isAllLargeCargosAttackerComposition" Label="Send all Large Cargos"></CheckBox>
+            <CheckBox @bind-Value="_isAllPathFindersAttackerComposition" Label="Send all PathFinders"></CheckBox>
 
             <Align>
                 <p>Note* - Steal Only will send enough units to steal + 20% for losses</p>
@@ -114,10 +114,36 @@
             
             <FlexBox>
                 <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
-                <TextButton Content="Next" OnClick="LoadPlayers"></TextButton>
+                <TextButton Content="Next" OnClick="NextSimPage"></TextButton>
             </FlexBox>
         }
         
+    </Align>
+}
+
+@if(BattleSimStateMachine.CurrentState == BSimState.DefenseFleetComposition)
+{
+    <Align>
+        <CheckBox @bind-Value="_isSameAsAttackerComposition" Label="Same as the attacker fleet composition"></CheckBox>
+
+        @if(!_isSameAsAttackerComposition){
+            <MultiSelect @bind-Value="_selectedDefenderFleetComposition" Options="@fleetCompositionOptionsKeyValues"></MultiSelect>
+            <CheckBox @bind-Value="_isAllSmallCargosDefenderComposition" Label="Send all Small Cargos"></CheckBox>
+            <CheckBox @bind-Value="_isAllLargeCargosDefenderComposition" Label="Send all Large Cargos"></CheckBox>
+            <CheckBox @bind-Value="_isAllPathFindersDefenderComposition" Label="Send all PathFinders"></CheckBox>
+
+            <FlexBox>
+                <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
+                <TextButton Content="Next" OnClick="LoadPlayers"></TextButton>
+            </FlexBox>
+        }else{
+            <FlexBox>
+                <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
+                <TextButton Content="Next" OnClick="LoadPlayers"></TextButton>
+            </FlexBox>
+        }
+
+       
     </Align>
 }
 
@@ -128,17 +154,22 @@
     private int defendersNumber = 0;
     private List<string> _attackersAPI = new List<string>();
     private List<string> _defendersAPI = new List<string>();
-    public List<MainFleetComposition> _selectedFleetComposition = new();
+    public List<MainFleetComposition> _selectedAttackerFleetComposition = new();
+    public List<MainFleetComposition> _selectedDefenderFleetComposition = new();
     public bool _isAllCombinations = false;
     public bool _isAccountingSpeed = false;
-    public bool _isStealCompositino = false;
+    public bool _isStealComposition = false;
     public string _stealUnitNumber = string.Empty;
     public int stealUnitNumber = 0;
     public string _stealCargoType = string.Empty;
     public UnitType stealCargoType = UnitType.SMALL_CARGO;
-    public bool _isAllSmallCargosComposition = false;
-    public bool _isAllLargeCargosComposition = false;
-    public bool _isAllPathFindersComposition = false;
+    public bool _isAllSmallCargosAttackerComposition = false;
+    public bool _isAllLargeCargosAttackerComposition = false;
+    public bool _isAllPathFindersAttackerComposition = false;
+    public bool _isAllSmallCargosDefenderComposition = false;
+    public bool _isAllLargeCargosDefenderComposition = false;
+    public bool _isAllPathFindersDefenderComposition = false;
+    public bool _isSameAsAttackerComposition = true;
 
     private Dictionary<MainFleetComposition, string> fleetCompositionOptionsKeyValues = new (){
         {MainFleetComposition.RIPS, "RIPS"}, 
@@ -158,7 +189,7 @@
 
     
     private void OnSelectCompositionChanged(List<MainFleetComposition> value){
-        _selectedFleetComposition = value;
+        _selectedDefenderFleetComposition = value;
     }
 
     private async Task OnAttackersAPIChanged(string? value, int index){
@@ -230,20 +261,30 @@
         if(attackersNumber > 0 && defendersNumber > 0){
             DirtyCombatInformation dirtyData = await LoaderService.LoadCombatInformation(_attackersAPI, _defendersAPI);
 
-            FleetComposition composition = new FleetComposition{
-                MainFleetComposition = _selectedFleetComposition,
+            FleetComposition attackerComposition = new FleetComposition{
+                MainFleetComposition = _selectedAttackerFleetComposition,
                 IsAllCombinations = _isAllCombinations,
                 IsAccountingSpeed = _isAccountingSpeed,
                 SecondaryFleetComposition = new SecondaryFleetComposition{
-                    IsStealComposition = _isStealCompositino,
+                    IsStealComposition = _isStealComposition,
                     CargoType = stealCargoType,
                     UnitNumber = stealUnitNumber,
-                    IsAllSmallCargosComposition = _isAllSmallCargosComposition,
-                    IsAllLargeCargosComposition = _isAllLargeCargosComposition,
-                    IsAllPathFindersComposition = _isAllPathFindersComposition
+                    IsAllSmallCargosComposition = _isAllSmallCargosAttackerComposition,
+                    IsAllLargeCargosComposition = _isAllLargeCargosAttackerComposition,
+                    IsAllPathFindersComposition = _isAllPathFindersAttackerComposition
                 }
             };
-            BattleStatisticsService.BestStatistics = BattleStatisticsService.DoBattles(composition, dirtyData, 5);
+
+            FleetComposition defenderFleetComposition = new FleetComposition{
+                MainFleetComposition = _isSameAsAttackerComposition ? _selectedAttackerFleetComposition : _selectedDefenderFleetComposition,
+                SecondaryFleetComposition = new SecondaryFleetComposition{
+                    IsAllSmallCargosComposition = _isAllSmallCargosDefenderComposition,
+                    IsAllLargeCargosComposition = _isAllLargeCargosDefenderComposition,
+                    IsAllPathFindersComposition = _isAllPathFindersDefenderComposition
+                }
+            };
+
+            BattleStatisticsService.BestStatistics = BattleStatisticsService.DoBattles(attackerComposition, defenderFleetComposition, dirtyData, 5);
 
             Nav.NavigateTo("/battleStatistics");
         } 

@@ -15,9 +15,9 @@ public class CombatUnit
     public double Cargo { get; set; }
     public double FuelConsumption { get; set; }
     public bool IsDestroyed { get; set; }
-    public long MetalCost { get; set; }
-    public long CrystalCost { get; set; }
-    public long DeuteriumCost { get; set; }
+    public int MetalCost { get; set; }
+    public int CrystalCost { get; set; }
+    public int DeuteriumCost { get; set; }
     public int Energy { get; set; }
 
     internal bool IsShip()

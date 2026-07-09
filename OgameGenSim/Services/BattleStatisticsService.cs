@@ -37,7 +37,7 @@ public class BattleStatisticsService
     /// <param name="fleetDivisor">Number of times to divide the fleet for simulation</param>
     /// <returns>The best battle statistics found</returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public BattleStatistics DoBattles(FleetComposition fleetComposition, DirtyCombatInformation dirtyData, int fleetDivisor = 1){
+    public BattleStatistics DoBattles(FleetComposition fleetComposition,FleetComposition defendersFleetComposition, DirtyCombatInformation dirtyData, int fleetDivisor = 1){
          if (dirtyData is null)
             throw new InvalidOperationException("CombatInformation must be set before building fleet composition.");
         
@@ -47,7 +47,7 @@ public class BattleStatisticsService
         {
             if(!fleetComposition.IsAllCombinations)
             {
-                var cleanData = BuildFleetComposition(fleetComposition.MainFleetComposition, fleetComposition.SecondaryFleetComposition, dirtyData, currentDivisor);
+                var cleanData = BuildFleetComposition(fleetComposition.MainFleetComposition, fleetComposition.SecondaryFleetComposition, defendersFleetComposition, dirtyData, currentDivisor);
                 var currentStatistics = simlator.DoBattle(cleanData);
 
                 CompareFitness(fleetComposition, cleanData, currentStatistics);
@@ -57,7 +57,7 @@ public class BattleStatisticsService
                 var subsets = fleetComposition.MainFleetComposition.GetSubsets();
                 foreach (var item in subsets)
                 {
-                    var cleanData = BuildFleetComposition(item, fleetComposition.SecondaryFleetComposition, dirtyData, currentDivisor);
+                    var cleanData = BuildFleetComposition(item, fleetComposition.SecondaryFleetComposition, defendersFleetComposition, dirtyData, currentDivisor);
                     var currentStatistics = simlator.DoBattle(cleanData);
 
                     CompareFitness(fleetComposition, cleanData, currentStatistics);
@@ -69,8 +69,6 @@ public class BattleStatisticsService
 
     private void CompareFitness(FleetComposition fleetComposition, SimCombatInformation cleanData, BattleStatistics currentStatistics)
     {
-        var firstDefender = currentStatistics.Defenders.First();
-
         var firstAttacker = currentStatistics.Attackers.First();
 
         long unitsLoss = 0;
@@ -118,49 +116,59 @@ public class BattleStatisticsService
         }
     }
 
-    public SimCombatInformation BuildFleetComposition(IReadOnlyList<MainFleetComposition> mainFleetCompositionOptions, SecondaryFleetComposition secondaryFleetComposition, DirtyCombatInformation dirtyData, int fleetDivisor)
+    public SimCombatInformation BuildFleetComposition(IReadOnlyList<MainFleetComposition> mainFleetCompositionOptions, SecondaryFleetComposition secondaryFleetComposition, FleetComposition defendersFleetComposition, DirtyCombatInformation dirtyData, int fleetDivisor)
+    {
+
+        var attackersTypes = getFleetTypes(mainFleetCompositionOptions, secondaryFleetComposition);
+        var defendersTypes = getFleetTypes(defendersFleetComposition.MainFleetComposition, defendersFleetComposition.SecondaryFleetComposition);
+
+        UnitType? cargoType = secondaryFleetComposition.IsAllSmallCargosComposition ||
+                        secondaryFleetComposition.IsAllLargeCargosComposition ||
+                        secondaryFleetComposition.IsAllPathFindersComposition ? null :
+                        secondaryFleetComposition.CargoType;
+
+        var newSimCombatInformation = DataCleaner.GetCleanData(dirtyData.Attackers, attackersTypes, dirtyData.Defenders, defendersTypes, dirtyData.Universe, fleetDivisor, secondaryFleetComposition.CargoType);
+
+
+        foreach (var attacker in newSimCombatInformation.Attackers)
+        {
+            attacker.Units = [.. attacker.Units.Where(x => attackersTypes.Contains(x.ShipType))];
+            attacker.UnitTypeAmounts = attacker.UnitTypeAmounts.Where(x => attackersTypes.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
+        }
+
+        newSimCombatInformation.GlobalAttackersUnitAmount = newSimCombatInformation.GlobalAttackersUnitAmount.Where(x => attackersTypes.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
+
+
+        return newSimCombatInformation;
+    }
+
+    private static List<UnitType> getFleetTypes(IReadOnlyList<MainFleetComposition> mainFleetComposition, SecondaryFleetComposition secondaryFleetComposition)
     {
         List<UnitType> types = [];
 
-        foreach (var option in mainFleetCompositionOptions)
+        foreach (var option in mainFleetComposition)
         {
             if (!FleetCompositionToUnitTypeMapping.TryGetValue(option, out var unitTypesToAdd)) continue;
 
             types.AddRange(unitTypesToAdd);
         }
 
-        UnitType? cargoType = secondaryFleetComposition.IsAllSmallCargosComposition ||
-                        secondaryFleetComposition.IsAllLargeCargosComposition || 
-                        secondaryFleetComposition.IsAllPathFindersComposition ? null :
-                        secondaryFleetComposition.CargoType;
-
-        if(secondaryFleetComposition.IsAllSmallCargosComposition)
+        if (secondaryFleetComposition.IsAllSmallCargosComposition)
         {
             types.Add(UnitType.SMALL_CARGO);
         }
 
-        if(secondaryFleetComposition.IsAllLargeCargosComposition)
+        if (secondaryFleetComposition.IsAllLargeCargosComposition)
         {
             types.Add(UnitType.LARGE_CARGO);
         }
-        
-        if(secondaryFleetComposition.IsAllPathFindersComposition)
+
+        if (secondaryFleetComposition.IsAllPathFindersComposition)
         {
             types.Add(UnitType.PATHFINDER);
         }
 
-        var newSimCombatInformation = DataCleaner.GetCleanData(dirtyData.Attackers, dirtyData.Defenders, dirtyData.Universe, fleetDivisor, secondaryFleetComposition.CargoType);
-
-
-        foreach (var attacker in newSimCombatInformation.Attackers)
-        {
-            attacker.Units = [.. attacker.Units.Where(x => types.Contains(x.ShipType))];
-            attacker.UnitTypeAmounts = attacker.UnitTypeAmounts.Where(x => types.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
-        }
-
-        newSimCombatInformation.GlobalAttackersUnitAmount = newSimCombatInformation.GlobalAttackersUnitAmount.Where(x => types.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
-
-        return newSimCombatInformation;
+        return types;
     }
 }
 

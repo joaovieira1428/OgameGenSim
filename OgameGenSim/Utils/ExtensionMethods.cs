@@ -12,7 +12,7 @@ public static class ExtensionMethods
             Amount = ship.Amount,
             Weapon = ship.Weapon,
             Shield = ship.Shield,
-            Armor = ship.Armor
+            StructuralIntegrity = ship.StructuralIntegrity
         };
     }
 

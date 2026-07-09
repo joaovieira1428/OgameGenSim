@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Xml;
 using OgameGenSim.Classes;
+using OgameSimulatorPack.SimUtilities;
 using static OgameGenSim.Utils.ClientResult;
 
 namespace OgameGenSim.Utils;
@@ -91,6 +92,9 @@ public class GenSimClient(HttpClient client)
         });
 
         var lootPercentage = jsonObject["RESULT_DATA"]["generic"]["loot_percentage"].GetValue<int>();
+
+        playerInformation.Ships = playerInformation.Ships.Where(x => UnitIds.Ships.Contains((int)x.Key))
+                                  .ToDictionary(x => x.Key, x => x.Value);
 
         if(playerInformation == null)
         {
