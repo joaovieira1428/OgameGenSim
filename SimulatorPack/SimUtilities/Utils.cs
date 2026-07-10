@@ -30,7 +30,7 @@ public static class Utils
 
     public static Dictionary<UnitType, int> GetInitialUnitTypeAmounts()
     {
-        return Enum.GetValues<UnitType>().Select(x => new KeyValuePair<UnitType, int>(x, 0)).ToDictionary();
+        return Enum.GetValues<UnitType>().ToDictionary(x => x, x => 0);
     }
 
 

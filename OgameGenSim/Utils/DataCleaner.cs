@@ -43,15 +43,12 @@ public static class DataCleaner
             counterForId++;
         }
 
-        var lootDefender = defenders.First();
-        var loot = (lootDefender.Resources.Metal + 
-                    lootDefender.Resources.Crystal + 
-                    lootDefender.Resources.Deuterium) / (lootDefender.LootPercentage / 100);
+        var lootDefender = combatInfo.Defenders.First();
 
         counterForId = 0;
         foreach(var attacker in attakcers)
         {
-            var attackerData = GetCleanAttackerData(attacker, lootDefender.LootPercentage, loot, counterForId, attackerTypes, divisor, cargoUnit, universeInformation.GlobalDeuteriumSaveFactor);
+            var attackerData = GetCleanAttackerData(attacker, lootDefender.LootPercentage, lootDefender.PossibleLoot, counterForId, attackerTypes, divisor, cargoUnit, universeInformation.GlobalDeuteriumSaveFactor);
             combatInfo.Attackers.Add(attackerData);
 
             combatInfo.GlobalAttackersUnitAmount = combatInfo.GlobalAttackersUnitAmount.Keys.Union(attackerData.UnitTypeAmounts.Keys)
@@ -93,10 +90,10 @@ public static class DataCleaner
         var shipTypeStatistics = GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, playerInformation.Ships, unitTypes);
         var defTypeStatistics = GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, playerInformation.Defenses, unitTypes);
 
-        var units = GetCleanUnitData(playerInformation.Ships, id, shipTypeStatistics);
-        units.AddRange(GetCleanUnitData(playerInformation.Defenses, id, defTypeStatistics));
+        var units = GetCleanUnitData(shipTypeStatistics, id);
+        units.AddRange(GetCleanUnitData(defTypeStatistics, id));
 
-        var unitAmounts = playerInformation.Ships.Union(playerInformation.Defenses)
+        var unitAmounts = shipTypeStatistics.Union(defTypeStatistics)
             .ToDictionary(x => x.Key, x => x.Value.Amount);
 
         var loot = (playerInformation.Resources.Metal + 
@@ -148,17 +145,17 @@ public static class DataCleaner
             Weapon = x.Value.Weapon
         });
 
-        if (cargoUnit != null && UnitDefaultValues.DefaultValues.TryGetValue(cargoUnit.Value, out var cargoUnitDefaultValues))
+        var unitTypeStatistics = GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, shipsToAdd, attackerTypes);
+
+        if (cargoUnit != null && unitTypeStatistics.TryGetValue(cargoUnit.Value, out var cargoUnitDefaultValues))
         {
             var cargoAmount = loot * 1.2 / cargoUnitDefaultValues.Cargo / (lootPercentage / 100);
 
             if (shipsToAdd.TryGetValue(cargoUnit.Value, out var cargoShipStats))
             {
-                cargoShipStats.Amount = (int)Math.Ceiling(cargoAmount);
+                unitTypeStatistics[cargoUnit.Value].Amount = Math.Min(cargoShipStats.Amount, (int)Math.Ceiling(cargoAmount));;
             }
         }
-
-        var unitTypeStatistics = GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, shipsToAdd, attackerTypes);
 
         return new Player()
         {
@@ -169,21 +166,11 @@ public static class DataCleaner
 //            Armor = playerInformation.Researches.ArmourTechnology,
 //            Shield = playerInformation.Researches.ShieldingTechnology,
 //            Weapon = playerInformation.Researches.WeaponsTechnology,
-            UnitTypeAmounts = shipsToAdd.ToDictionary(x => x.Key, x => x.Value.Amount),
-            Units = GetCleanUnitData(shipsToAdd, id, unitTypeStatistics),
+            UnitTypeAmounts = unitTypeStatistics.ToDictionary(x => x.Key, x => x.Value.Amount),
+            Units = GetCleanUnitData(unitTypeStatistics, id),
             LootPercentage = lootPercentage,
             PossibleLoot = loot,
-            UnitTypeStats = unitTypeStatistics.ToDictionary(x => x.Key, x => new UnitStats()
-            {
-//                Amount = shipsToAdd.GetValueOrDefault(x.Key).Amount,
-                StructuralIntegrity = x.Value.Hull,
-                Cargo = x.Value.Cargo,
-                Fuel = x.Value.FuelConsumption,
-                Shield = x.Value.Shield,
-                Speed = x.Value.Speed,
-                Weapon = x.Value.Weapon,
-                Energy = x.Value.Energy
-            })
+            UnitTypeStats = unitTypeStatistics
         };
     }
 
@@ -200,13 +187,13 @@ public static class DataCleaner
     /// <param name="charatcterClassId"></param>
     /// <param name="allianceClassId"></param>
     /// <returns></returns>
-    private static List<CombatUnit> GetCleanUnitData<T>(Dictionary<UnitType, T> units, int id, Dictionary<UnitType, UnitStats> unitTypeStatistics) where T : UnitStats
+    private static List<CombatUnit> GetCleanUnitData<T>(Dictionary<UnitType, T> units, int id) where T : UnitStats
     {
         var cleanUnits = new List<CombatUnit>();
 
         foreach (var ship in units)
         {
-            if (!unitTypeStatistics.TryGetValue(ship.Key, out var shipStatistics)) continue;
+            if (!units.TryGetValue(ship.Key, out var shipStatistics)) continue;
             
             for (var i = 0; i < ship.Value.Amount; i++)
             {
@@ -257,6 +244,7 @@ public static class DataCleaner
 
             if (UnitDefaultValues.DefaultValues.TryGetValue(unitType, out var defaultValue))
             {
+                unit.Amount = unitStat.Amount;
                 unit.MetalCost = defaultValue.MetalCost;
                 unit.CrystalCost = defaultValue.CrystalCost;
                 unit.DeuteriumCost = defaultValue.DeuteriumCost;

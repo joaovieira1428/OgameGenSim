@@ -50,7 +50,7 @@ public class BattleStatisticsService
                 var cleanData = BuildFleetComposition(fleetComposition.MainFleetComposition, fleetComposition.SecondaryFleetComposition, defendersFleetComposition, dirtyData, currentDivisor);
                 var currentStatistics = simlator.DoBattle(cleanData);
 
-                CompareFitness(fleetComposition, cleanData, currentStatistics);
+                CompareFitness(fleetComposition, cleanData, currentStatistics, currentDivisor);
             }
             else
             {
@@ -60,14 +60,14 @@ public class BattleStatisticsService
                     var cleanData = BuildFleetComposition(item, fleetComposition.SecondaryFleetComposition, defendersFleetComposition, dirtyData, currentDivisor);
                     var currentStatistics = simlator.DoBattle(cleanData);
 
-                    CompareFitness(fleetComposition, cleanData, currentStatistics);
+                    CompareFitness(fleetComposition, cleanData, currentStatistics, currentDivisor);
                 }
             } 
         }
         return BestStatistics;
     }
 
-    private void CompareFitness(FleetComposition fleetComposition, SimCombatInformation cleanData, BattleStatistics currentStatistics)
+    private void CompareFitness(FleetComposition fleetComposition, SimCombatInformation cleanData, BattleStatistics currentStatistics, int divisor)
     {
         var firstAttacker = currentStatistics.Attackers.First();
 
@@ -107,6 +107,8 @@ public class BattleStatisticsService
             DeuteriumCost = deuteriumSpent,
             Loot = currentStatistics.Loot,
             UnitsLoss = unitsLoss,
+            Divisor = divisor,
+
         });
 
         if (currentFitness < BestFitness || BestStatistics is null)
@@ -130,6 +132,7 @@ public class BattleStatisticsService
         var newSimCombatInformation = DataCleaner.GetCleanData(dirtyData.Attackers, attackersTypes, dirtyData.Defenders, defendersTypes, dirtyData.Universe, fleetDivisor, secondaryFleetComposition.CargoType);
 
 
+/*
         foreach (var attacker in newSimCombatInformation.Attackers)
         {
             attacker.Units = [.. attacker.Units.Where(x => attackersTypes.Contains(x.ShipType))];
@@ -137,7 +140,7 @@ public class BattleStatisticsService
         }
 
         newSimCombatInformation.GlobalAttackersUnitAmount = newSimCombatInformation.GlobalAttackersUnitAmount.Where(x => attackersTypes.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
-
+*/
 
         return newSimCombatInformation;
     }
@@ -153,17 +156,17 @@ public class BattleStatisticsService
             types.AddRange(unitTypesToAdd);
         }
 
-        if (secondaryFleetComposition.IsAllSmallCargosComposition)
+        if (secondaryFleetComposition.IsAllSmallCargosComposition || secondaryFleetComposition.CargoType == UnitType.SMALL_CARGO)
         {
             types.Add(UnitType.SMALL_CARGO);
         }
 
-        if (secondaryFleetComposition.IsAllLargeCargosComposition)
+        if (secondaryFleetComposition.IsAllLargeCargosComposition || secondaryFleetComposition.CargoType == UnitType.LARGE_CARGO)
         {
             types.Add(UnitType.LARGE_CARGO);
         }
 
-        if (secondaryFleetComposition.IsAllPathFindersComposition)
+        if (secondaryFleetComposition.IsAllPathFindersComposition || secondaryFleetComposition.CargoType == UnitType.PATHFINDER)
         {
             types.Add(UnitType.PATHFINDER);
         }
@@ -182,4 +185,5 @@ public class DebugStuff
     public double Loot { get; set; }
     public double DeuteriumCost { get; set; }
     public double UnitsLoss { get; set; }
+    public int Divisor { get; set; }
 }

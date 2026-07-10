@@ -81,7 +81,7 @@ public class Battle()
         
             foreach(var attacker in round.AttackersRoundStatistics.Players)
             {
-                var globalAttacker = battleStatistics.Attackers.FirstOrDefault(x => x.Coordinates == attacker.Coordinates);
+                var globalAttacker = battleStatistics.Attackers.FirstOrDefault(x => x.Id == attacker.Id);
                 
                 if(globalAttacker == null) continue;
 
@@ -91,7 +91,7 @@ public class Battle()
 
             foreach(var defender in round.DefendersRoundStatistics.Players)
             {
-                var globalDefender = battleStatistics.Defenders.FirstOrDefault(x => x.Coordinates == defender.Coordinates);
+                var globalDefender = battleStatistics.Defenders.FirstOrDefault(x => x.Id == defender.Id);
                 
                 if(globalDefender == null) continue;
 

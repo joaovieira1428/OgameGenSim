@@ -162,7 +162,7 @@
     public string _stealUnitNumber = string.Empty;
     public int stealUnitNumber = 0;
     public string _stealCargoType = string.Empty;
-    public UnitType stealCargoType = UnitType.SMALL_CARGO;
+    public UnitType stealCargoType = UnitType.NONE;
     public bool _isAllSmallCargosAttackerComposition = false;
     public bool _isAllLargeCargosAttackerComposition = false;
     public bool _isAllPathFindersAttackerComposition = false;
@@ -275,8 +275,8 @@
                 }
             };
 
-            FleetComposition defenderFleetComposition = new FleetComposition{
-                MainFleetComposition = _isSameAsAttackerComposition ? _selectedAttackerFleetComposition : _selectedDefenderFleetComposition,
+            FleetComposition defenderFleetComposition = _isSameAsAttackerComposition ? attackerComposition : new FleetComposition{
+                MainFleetComposition = _selectedDefenderFleetComposition,
                 SecondaryFleetComposition = new SecondaryFleetComposition{
                     IsAllSmallCargosComposition = _isAllSmallCargosDefenderComposition,
                     IsAllLargeCargosComposition = _isAllLargeCargosDefenderComposition,

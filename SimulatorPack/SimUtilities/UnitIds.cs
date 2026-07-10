@@ -59,6 +59,7 @@ public class UnitIds
 
 public enum UnitType
 {
+    NONE = 0,
     // ========== SHIPS ==========
     // Transport Ships
     SMALL_CARGO = 202,
