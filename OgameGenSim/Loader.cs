@@ -14,6 +14,12 @@ public class Loader(HttpClient client)
     internal GenSimClient GenSimClient { get; set; } = new GenSimClient(client);
     private string reportIdForUniverseData = string.Empty;
 
+    /// <summary>
+    /// Retrieves the information from the attackers jsons and defenders reportId through Ogame API
+    /// </summary>
+    /// <param name="attackersAPI">List of the attackers jsons</param>
+    /// <param name="defendersAPI">List of the defenders reports</param>
+    /// <returns>All combat information to be cleaned later</returns>
     public async Task<DirtyCombatInformation> LoadCombatInformation(List<string> attackersAPI, List<string> defendersAPI)
     {
         var attackers = LoadAttackers(attackersAPI);
@@ -48,7 +54,13 @@ public class Loader(HttpClient client)
         }
 
     }
+    #region cycle functions
 
+    /// <summary>
+    /// Cycles through all de defenders reportIds and calls LoaderDefender functio to retrieve its data
+    /// </summary>
+    /// <param name="defendersAPI">List of the defenders reportIds</param>
+    /// <returns>The information of all defenders</returns>
     internal async Task<List<PlayerInformation>> LoadDefenders(List<string> defendersAPI)
     {
         List<PlayerInformation> defenders = [];
@@ -61,6 +73,33 @@ public class Loader(HttpClient client)
         return defenders;
     }
 
+    /// <summary>
+    /// Cycles through all de attackers jsons and calls ParseAttackerData function to parse its data
+    /// </summary>
+    /// <param name="attackersAPI">List of the attackers jsons</param>
+    /// <returns>The information of all attackers</returns>
+    internal List<PlayerInformation> LoadAttackers(List<string> attackersAPI)
+    {
+        List<PlayerInformation> attackers = [];
+
+        for(var i = 0; i < attackersAPI.Count; i++)
+        {
+            attackers.Add(ParseAttackerData(attackersAPI[i], i+1));
+        }
+
+        return attackers;
+    }
+
+    #endregion
+
+    #region Retrieve players raw data
+    /// <summary>
+    /// Loads defender data though the Ogame API, and parses the response data
+    /// </summary>
+    /// <param name="defendersAPI">ReportId of the defender</param>
+    /// <param name="index">Index to be saved in order to connect the units to the player, 
+    /// this is only needed because a player can simulate with repeated reportIds wich will have the same coordinates</param>
+    /// <returns>Player information of given reportId</returns>
     private async Task<PlayerInformation> LoaderDefender(string defendersAPI, int index)
     {
         string? defenderAPI = defendersAPI;
@@ -89,18 +128,14 @@ public class Loader(HttpClient client)
         }
     }
 
-    internal List<PlayerInformation> LoadAttackers(List<string> attackersAPI)
-    {
-        List<PlayerInformation> attackers = [];
-
-        for(var i = 0; i < attackersAPI.Count; i++)
-        {
-            attackers.Add(ParseAttackerData(attackersAPI[i], i+1));
-        }
-
-        return attackers;
-    }
-
+  
+    /// <summary>
+    /// Parses the attacker information from its json
+    /// </summary>
+    /// <param name="attackerApi">Attacker json to parse</param>
+    /// <param name="index">Index to be saved in order to connect the units to the player, 
+    /// this is only needed because a player can simulate with repeated reportIds wich will have the same coordinates</param>
+    /// <returns>Player information of given attacker json</returns>
     private PlayerInformation ParseAttackerData(string attackerApi, int index)
     {
         string? attackerJson = attackerApi;
@@ -142,4 +177,5 @@ public class Loader(HttpClient client)
      
         return combatInformation;
     }
+    #endregion
 }

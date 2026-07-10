@@ -7,7 +7,8 @@ public enum BSimState
     FleetNumber,
     PlayerAPIs,
     MainFleetComposition,
-    SecondaryFleetComposition
+    SecondaryFleetComposition,
+    DefenseFleetComposition
 }
 
 public enum BSimTrigger

@@ -6,7 +6,7 @@ public static class ResearchesIds
 {
     public static int WEAPONS_TECH = 109;
     public static int SHIELDING_TECH = 110;
-    public static int ARMOUR_TECH = 111;
+    public static int ARMOR_TECH = 111;
     public static int HYPERSPACE_TECH = 114;
     public static int COMBUSTION_DRIVE = 115;
     public static int IMPULSE_DRIVE = 117;
@@ -21,7 +21,7 @@ public static class ResearchesIds
         // combat research
         { WEAPONS_TECH, 0.10 },      // +10% weapon power per level
         { SHIELDING_TECH, 0.10 },    // +10% shield power per level
-        { ARMOUR_TECH, 0.10 },       // +10% hull (structural) integrity per level
+        { ARMOR_TECH, 0.10 },        // +10% hull (structural) integrity per level
 
         // advanced propulsion / cargo
         { HYPERSPACE_TECH, 0.05 },   // +5% cargo capacity per level

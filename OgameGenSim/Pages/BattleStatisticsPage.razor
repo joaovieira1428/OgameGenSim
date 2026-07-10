@@ -95,11 +95,11 @@ else
         if (BattleStatisticsService.BestStatistics != null)
         {
             attackerOptions.Add("All");
-            attackerOptions.AddRange(BattleStatisticsService.BestStatistics.Attackers.Select(x=> x.Coordinates));
+            attackerOptions.AddRange(BattleStatisticsService.BestStatistics.Attackers.Select(x=> $"{x.Coordinates}({x.Id})"));
             _selectedAttackingPlayer = "All";
 
             defenderOptions.Add("All");
-            defenderOptions.AddRange(BattleStatisticsService.BestStatistics.Defenders.Select(x=> x.Coordinates));
+            defenderOptions.AddRange(BattleStatisticsService.BestStatistics.Defenders.Select(x=> $"{x.Coordinates}({x.Id})"));
             _selectedDefendingPlayer = "All";
 
             roundOptions.Add("All");
@@ -129,7 +129,7 @@ else
             PopulatePlayer(attackerAmount, BattleStatisticsService.BestStatistics.GlobalAttackersAmount);
             PopulatePlayer(attackerLostAmount, BattleStatisticsService.BestStatistics.GlobalAttackersLostAmount);
         }else{
-            var attackingPlayer = BattleStatisticsService.BestStatistics.Attackers.FirstOrDefault(x => x.Coordinates == _selectedAttackingPlayer);
+            var attackingPlayer = BattleStatisticsService.BestStatistics.Attackers.FirstOrDefault(x => $"{x.Coordinates}({x.Id})" == _selectedAttackingPlayer);
 
             PopulatePlayer(attackerAmount, attackingPlayer.UnitAmount);
             PopulatePlayer(attackerLostAmount, attackingPlayer.UnitLostAmount);
@@ -139,7 +139,7 @@ else
             PopulatePlayer(defenderAmount, BattleStatisticsService.BestStatistics.GlobalDefendersAmount);
             PopulatePlayer(defenderLostAmount, BattleStatisticsService.BestStatistics.GlobalDefendersLostAmount);
         }else{
-            var defendingPlayer = BattleStatisticsService.BestStatistics.Defenders.FirstOrDefault(x => x.Coordinates == _selectedDefendingPlayer);
+            var defendingPlayer = BattleStatisticsService.BestStatistics.Defenders.FirstOrDefault(x => $"{x.Coordinates}({x.Id})" == _selectedDefendingPlayer);
             PopulatePlayer(defenderAmount, defendingPlayer.UnitAmount);
             PopulatePlayer(defenderLostAmount, defendingPlayer.UnitLostAmount);
         }
@@ -152,7 +152,7 @@ else
             PopulatePlayer(attackerAmount, round.AttackersRoundStatistics.GlobalUnitAmount);
             PopulatePlayer(attackerLostAmount, round.AttackersRoundStatistics.GlobalUnitLostAmount);
         }else{
-            var attackingPlayer = round.AttackersRoundStatistics.Players.FirstOrDefault(x => x.Coordinates == _selectedAttackingPlayer);
+            var attackingPlayer = round.AttackersRoundStatistics.Players.FirstOrDefault(x => $"{x.Coordinates}({x.Id})" == _selectedAttackingPlayer);
             if(attackingPlayer != null){
                 PopulatePlayer(attackerAmount, attackingPlayer.UnitAmount);
                 PopulatePlayer(attackerLostAmount, attackingPlayer.UnitLostAmount);
@@ -163,7 +163,7 @@ else
             PopulatePlayer(defenderAmount, round.DefendersRoundStatistics.GlobalUnitAmount);
             PopulatePlayer(defenderLostAmount, round.DefendersRoundStatistics.GlobalUnitLostAmount);
         }else{
-            var defendingPlayer = round.DefendersRoundStatistics.Players.FirstOrDefault(x => x.Coordinates == _selectedDefendingPlayer);
+            var defendingPlayer = round.DefendersRoundStatistics.Players.FirstOrDefault(x => $"{x.Coordinates}({x.Id})" == _selectedDefendingPlayer);
             if(defendingPlayer != null){
                 PopulatePlayer(defenderAmount, defendingPlayer.UnitAmount);
                 PopulatePlayer(defenderLostAmount, defendingPlayer.UnitLostAmount);

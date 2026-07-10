@@ -12,14 +12,18 @@ namespace OgameSimulatorPack;
 /// <param name="DefenseDebrisFactor"></param>
 /// <param name="DeuteriumOnDebris"></param>
 
-public class Battle(double debriFactor, double DefenseDebrisFactor, bool DeuteriumOnDebris)
+public class Battle()
 {
-    public double DebriFactor = debriFactor;
-    public double DefenseDebrisFactor = DefenseDebrisFactor;
-    public bool DeuteriumOnDebris = DeuteriumOnDebris;
+    public double DebriFactor;
+    public double DefenseDebrisFactor;
+    public bool DeuteriumOnDebris;
 
     public BattleStatistics DoBattle(SimCombatInformation simCombatInformation)
     {
+        DebriFactor = simCombatInformation.Universe.Debrifactor;
+        DefenseDebrisFactor = simCombatInformation.Universe.DefenseDebrisFactor;
+        DeuteriumOnDebris = simCombatInformation.Universe.DeuteriumOnDebris;
+
         var attackersUnits = simCombatInformation.Attackers.SelectMany(a => a.Units).ToList();
         var defendersUnits = simCombatInformation.Defenders.SelectMany(d => d.Units).ToList();
 
@@ -77,7 +81,7 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
         
             foreach(var attacker in round.AttackersRoundStatistics.Players)
             {
-                var globalAttacker = battleStatistics.Attackers.FirstOrDefault(x => x.Coordinates == attacker.Coordinates);
+                var globalAttacker = battleStatistics.Attackers.FirstOrDefault(x => x.Id == attacker.Id);
                 
                 if(globalAttacker == null) continue;
 
@@ -87,7 +91,7 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
 
             foreach(var defender in round.DefendersRoundStatistics.Players)
             {
-                var globalDefender = battleStatistics.Defenders.FirstOrDefault(x => x.Coordinates == defender.Coordinates);
+                var globalDefender = battleStatistics.Defenders.FirstOrDefault(x => x.Id == defender.Id);
                 
                 if(globalDefender == null) continue;
 
@@ -100,7 +104,31 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
             //var asd = round.AttackersRoundStatistics.Players[0].UnitAmount;
         }
 
-        battleStatistics.AttackerWon = defendersUnits.Count == 0;
+        var cargoCapacity = battleStatistics.SurvivingAttackerUnits.Sum(x => x.Cargo);
+
+        double loot = 0;
+        
+        var firstAttacker = simCombatInformation.Attackers.First();
+        var firstDefender = simCombatInformation.Defenders.First();
+
+        if (cargoCapacity >= firstAttacker.PossibleLoot)
+        { 
+            loot = firstDefender.Metal / firstDefender.LootPercentage + 
+                  (firstDefender.Crystal / firstDefender.LootPercentage * 2) + 
+                  (firstDefender.Deuterium / firstDefender.LootPercentage * 3);
+        }
+        else
+        {
+            var equalDistribution = cargoCapacity / 3;
+            loot = equalDistribution + (equalDistribution * 2) + (equalDistribution * 3);
+        }
+
+        battleStatistics.Loot = loot;
+
+        battleStatistics.BattleResult = defendersUnits.Count == 0 ? BattleResult.AttackerWon : 
+                                        attackersUnits.Count == 0 ? BattleResult.DefenderWon : 
+                                        BattleResult.Draw;
+        
         battleStatistics.SurvivingAttackerUnits = attackersUnits;
         battleStatistics.SurvivingDefenderUnits = defendersUnits;
 
