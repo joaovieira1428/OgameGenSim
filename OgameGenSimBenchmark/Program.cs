@@ -1,8 +1,8 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using BenchmarkDotNet.Running;
-using OgameGenSimBenchmark.Classes;
+using OgameGenSimBenchmark.OgameGenSim;
 using OgameGenSimBenchmark.SimulatorPack;
 
 HttpClient client = new HttpClient();
 
-var summary = BenchmarkRunner.Run<LoaderBenchmark>();
+var summary = BenchmarkRunner.Run<DoBattlesBenchmark>();

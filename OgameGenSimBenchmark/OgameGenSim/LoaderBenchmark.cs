@@ -8,17 +8,19 @@ using OgameGenSim.Utils;
 using OgameGenSimBenchmark.SimulatorPack;
 using OgameSimulatorPack.Classes;
 
-namespace OgameGenSimBenchmark.Classes;
+namespace OgameGenSimBenchmark.OgameGenSim;
 
 [DisassemblyDiagnoser]
 [MemoryDiagnoser(displayGenColumns: false)]
 [HideColumns("Job", "Error", "StdDev", "Median", "RatioSD", "y")]
 public class LoaderBenchmark()
 {
+    private UniverseInformation _universeInfo = new();
     private List<PlayerInformation> _attackers = [];
     private List<PlayerInformation> _defenders = [];
-    private Loader _loader;
-    private UniverseInformation _universeInfo = new();
+
+    private List<OgameSimulatorPack.SimUtilities.UnitType> _attackersTypes = [];
+    private List<OgameSimulatorPack.SimUtilities.UnitType> _defendersTypes = [];
 
     [GlobalSetup]
     public async Task GlobalSetupAsync()
@@ -31,23 +33,19 @@ public class LoaderBenchmark()
         List<string> defendersArray = [defender1, defender1];
 
 
-        _loader = new Loader(new HttpClient());
+        var loader = new Loader(new HttpClient());
 
-        _attackers = _loader.LoadAttackers(attackersArray);
-        _defenders = await _loader.LoadDefenders(defendersArray);
+        _attackers = loader.LoadAttackers(attackersArray);
+        _defenders = await loader.LoadDefenders(defendersArray);
 
         string[] splitReportId = defender1.Split("-");
         var universeLanguage = splitReportId[1];        
         int.TryParse(splitReportId[2], out int universeNumber);
 
-        var universeInfo = await _loader.GenSimClient.LoadUniversesDataAsync(universeLanguage, universeNumber);
+        var universeInfo = await loader.GenSimClient.LoadUniversesDataAsync(universeLanguage, universeNumber);
 
         _universeInfo = universeInfo.Result;
-    }
 
-    [Benchmark]
-    public async Task LoadCombatInformationAsync()
-    {
         FleetComposition attackerFleetComposition = new()
         {
             MainFleetComposition = [
@@ -62,11 +60,14 @@ public class LoaderBenchmark()
             }
         };
 
-        List<OgameSimulatorPack.SimUtilities.UnitType> attackersTypes = BattleStatisticsService.GetFleetTypes(attackerFleetComposition.MainFleetComposition, attackerFleetComposition.SecondaryFleetComposition);
-        List<OgameSimulatorPack.SimUtilities.UnitType> defendersTypes = BattleStatisticsService.GetFleetTypes(attackerFleetComposition.MainFleetComposition, attackerFleetComposition.SecondaryFleetComposition);
+        _attackersTypes = BattleStatisticsService.GetFleetTypes(attackerFleetComposition.MainFleetComposition, attackerFleetComposition.SecondaryFleetComposition);
+        _defendersTypes = BattleStatisticsService.GetFleetTypes(attackerFleetComposition.MainFleetComposition, attackerFleetComposition.SecondaryFleetComposition);
 
-        DataCleaner.GetCleanData(_attackers, attackersTypes, _defenders, defendersTypes, _universeInfo, 1, null);
     }
 
-    //GetCleanData(List<PlayerInformation> attakcers, List<UnitType> attackerTypes, List<PlayerInformation> defenders, List<UnitType> defenderTypes, UniverseInformation universeInformation, int divisor,  UnitType? cargoUnit)
+    [Benchmark]
+    public async Task LoadCombatInformationAsync()
+    {
+        DataCleaner.GetCleanData(_attackers, _attackersTypes, _defenders, _defendersTypes, _universeInfo, 1, null);
+    }
 }

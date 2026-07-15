@@ -38,10 +38,7 @@ public class CombatUnit
     // public int CrystalCost { get; set; }
     // public int DeuteriumCost { get; set; }
     // public int Energy { get; set; }
-    public UnitStats UnitStats { get; set; }
+    public required UnitStats UnitStats { get; set; }
 
-    internal bool IsShip()
-    {
-        return (int)ShipType < 400;
-    }
+    internal bool IsShip => (int)ShipType < 400;
 }

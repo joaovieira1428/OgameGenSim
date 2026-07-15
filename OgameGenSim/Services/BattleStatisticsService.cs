@@ -44,28 +44,56 @@ public class BattleStatisticsService
         
         Battle simlator = new();
         
-        for (int currentDivisor = 1; currentDivisor <= fleetDivisor; currentDivisor++)
+        var simulationContextList = GetSimulationContexts(fleetComposition, fleetDivisor);
+
+        var options = new ParallelOptions()
         {
-            if(!fleetComposition.IsAllCombinations)
-            {
-                var cleanData = BuildFleetComposition(fleetComposition.MainFleetComposition, fleetComposition.SecondaryFleetComposition, defendersFleetComposition, dirtyData, currentDivisor);
-                var currentStatistics = simlator.DoBattle(cleanData);
+          MaxDegreeOfParallelism = 8  
+        };
 
-                CompareFitness(fleetComposition, cleanData, currentStatistics, currentDivisor);
-            }
-            else
-            {
-                var subsets = fleetComposition.MainFleetComposition.GetSubsets();
-                foreach (var item in subsets)
-                {
-                    var cleanData = BuildFleetComposition(item, fleetComposition.SecondaryFleetComposition, defendersFleetComposition, dirtyData, currentDivisor);
-                    var currentStatistics = simlator.DoBattle(cleanData);
+        Parallel.For(0, simulationContextList.Count(), options, i =>
+        {
+            var context = simulationContextList[i];
+            var cleanData = BuildFleetComposition(context.MainComposition, fleetComposition.SecondaryFleetComposition, defendersFleetComposition, dirtyData, context.Divisor);      
+            var statistics = simlator.DoBattle(cleanData);
+            context.Fitness =  ComputeFitness(fleetComposition, statistics);
+        });
 
-                    CompareFitness(fleetComposition, cleanData, currentStatistics, currentDivisor);
-                }
-            } 
-        }
-        return BestStatistics;
+        var bestFitnessContext = simulationContextList.MinBy(x => x.Fitness);
+        
+        bestFitnessContext ??= new SimulationContext();
+
+        var cleanData = BuildFleetComposition(bestFitnessContext.MainComposition, fleetComposition.SecondaryFleetComposition, defendersFleetComposition, dirtyData, bestFitnessContext.Divisor);      
+        var statistics = simlator.DoBattle(cleanData);
+        return statistics;
+
+
+        // for (int currentDivisor = 1; currentDivisor <= fleetDivisor; currentDivisor++)
+        // {
+        //     if(!fleetComposition.IsAllCombinations)
+        //     {
+        //         var cleanData = BuildFleetComposition(fleetComposition.MainFleetComposition, fleetComposition.SecondaryFleetComposition, defendersFleetComposition, dirtyData, currentDivisor);
+                
+        //         var currentStatistics = simlator.DoBattle(cleanData);
+
+        //         CompareFitness(fleetComposition, cleanData, currentStatistics, currentDivisor);
+        //     }
+        //     else
+        //     {
+        //         var subsets = fleetComposition.MainFleetComposition.GetSubsets();
+        //         foreach (var item in subsets)
+        //         {
+        //             var cleanData = BuildFleetComposition(item, fleetComposition.SecondaryFleetComposition, defendersFleetComposition, dirtyData, currentDivisor);
+                    
+        //             var currentStatistics = simlator.DoBattle(cleanData);
+
+        //             CompareFitness(fleetComposition, cleanData, currentStatistics, currentDivisor);
+        //         }
+        //     } 
+        // }
+
+        // return BestStatistics;
+        
     }
 
     private void CompareFitness(FleetComposition fleetComposition, SimCombatInformation cleanData, BattleStatistics currentStatistics, int divisor)
@@ -99,24 +127,56 @@ public class BattleStatisticsService
                         -speed * 0.3 - profit * 0.6 + energy * 0.1 :
                         -profit * 0.9 + energy * 0.1;
 
-        DebugStuff.Add(new Services.DebugStuff
-        {
-            AttackUits = cleanData.GlobalAttackersUnitAmount,
-            Energy = energy,
-            Fitness = currentFitness,
-            Profit = profit,
-            DeuteriumCost = deuteriumSpent,
-            Loot = currentStatistics.Loot,
-            UnitsLoss = unitsLoss,
-            Divisor = divisor,
+        // DebugStuff.Add(new Services.DebugStuff
+        // {
+        //     AttackUits = cleanData.GlobalAttackersUnitAmount,
+        //     Energy = energy,
+        //     Fitness = currentFitness,
+        //     Profit = profit,
+        //     DeuteriumCost = deuteriumSpent,
+        //     Loot = currentStatistics.Loot,
+        //     UnitsLoss = unitsLoss,
+        //     Divisor = divisor,
 
-        });
+        // });
 
         if (currentFitness < BestFitness || BestStatistics is null)
         {
             BestFitness = currentFitness;
             BestStatistics = currentStatistics;
         }
+    }
+
+    public double ComputeFitness(FleetComposition fleetComposition, BattleStatistics currentStatistics)
+    {
+        var firstAttacker = currentStatistics.Attackers.First();
+
+        long unitsLoss = 0;
+        foreach (var lostType in currentStatistics.GlobalAttackersLostAmount)
+        {
+            if (UnitDefaultValues.DefaultValues.TryGetValue(lostType.Key, out var defaultValue))
+            {
+                unitsLoss += (defaultValue.MetalCost * lostType.Value) +
+                            (defaultValue.CrystalCost * lostType.Value * 2) +
+                            (defaultValue.DeuteriumCost * lostType.Value * 3);
+            }
+        }
+
+        var statsAttackers = currentStatistics.Attackers.SelectMany(x => x.UnitTypeStats);
+
+        var deuteriumSpent = statsAttackers.Sum(x => x.Value.Fuel * x.Value.Amount);
+
+        var profit = (currentStatistics.Loot - unitsLoss - deuteriumSpent) / 1000;
+
+        var speed = firstAttacker.UnitTypeStats.Min(x => x.Value.Speed);
+
+        var energy = statsAttackers.Sum(x => x.Value.Energy * x.Value.Amount);
+
+
+
+        return fleetComposition.IsAccountingSpeed ? 
+                -speed * 0.3 - profit * 0.6 + energy * 0.1 :
+                -profit * 0.9 + energy * 0.1;;
     }
 
     public SimCombatInformation BuildFleetComposition(IReadOnlyList<MainFleetComposition> mainFleetCompositionOptions, SecondaryFleetComposition secondaryFleetComposition, FleetComposition defendersFleetComposition, DirtyCombatInformation dirtyData, int fleetDivisor)
@@ -131,18 +191,7 @@ public class BattleStatisticsService
                         secondaryFleetComposition.CargoType;
 
 
-
-        Console.WriteLine("Press ENTER after attaching...");
-        Console.ReadLine();
-
-        GC.Collect();
         var newSimCombatInformation = DataCleaner.GetCleanData(dirtyData.Attackers, attackersTypes, dirtyData.Defenders, defendersTypes, dirtyData.Universe, fleetDivisor, secondaryFleetComposition.CargoType);
-
-        Console.WriteLine("Units created. Press ENTER to exit.");
-        Console.WriteLine(newSimCombatInformation.Attackers.Sum(x => x.Units.Count()) + newSimCombatInformation.Defenders.Sum(x => x.Units.Count()));
-        GC.Collect();
-        Console.ReadLine();
-
 
 
 /*
@@ -186,6 +235,43 @@ public class BattleStatisticsService
 
         return types;
     }
+
+    public List<SimulationContext> GetSimulationContexts(FleetComposition attackerComposition, int divisor)
+    {
+        List<SimulationContext> simulationContexts = [];
+        if (!attackerComposition.IsAllCombinations)
+        {
+            for (int currentDivisor = 1; currentDivisor <= divisor; currentDivisor++)
+            {
+                var context = new SimulationContext()
+                {
+                    Divisor = divisor,
+                    MainComposition = attackerComposition.MainFleetComposition
+                };
+
+                simulationContexts.Add(context);
+            }
+        }
+        else
+        {
+            var subsets = attackerComposition.MainFleetComposition.GetSubsets();
+            for (int currentDivisor = 1; currentDivisor <= divisor; currentDivisor++)
+            {
+                foreach (var item in subsets)
+                {
+                    var context = new SimulationContext()
+                    {
+                        Divisor = divisor,
+                        MainComposition = item
+                    };
+
+                    simulationContexts.Add(context);
+                }
+            }
+        }
+
+        return simulationContexts;
+    }
 }
 
 
@@ -199,4 +285,11 @@ public class DebugStuff
     public double DeuteriumCost { get; set; }
     public double UnitsLoss { get; set; }
     public int Divisor { get; set; }
+}
+
+public class SimulationContext
+{
+    public IReadOnlyList<MainFleetComposition> MainComposition { get; set; } = [];
+    public int Divisor { get; set; }
+    public double Fitness { get; set; }
 }

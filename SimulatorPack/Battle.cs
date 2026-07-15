@@ -220,7 +220,7 @@ public class Battle()
             defenderPlayerStats.UnitLostAmount[defender.ShipType]++;
             defenderPlayerStats.UnitAmount[defender.ShipType]--;
 
-            if (defender.IsShip())
+            if (defender.IsShip)
             {
                 defenderRoundStats.MetalDebri += (int)(defender.UnitStats.MetalCost * DebriFactor);
                 defenderRoundStats.CrystalDebri += (int)(defender.UnitStats.CrystalCost * DebriFactor);
