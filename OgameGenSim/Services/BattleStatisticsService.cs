@@ -6,6 +6,7 @@ using OgameSimulatorPack;
 using OgameSimulatorPack.Classes;
 using OgameSimulatorPack.SimUtilities;
 using OgameGenSim.Classes;
+using OgameGenSim.Classes.Views;
 
 public class BattleStatisticsService
 {
@@ -121,16 +122,23 @@ public class BattleStatisticsService
     public SimCombatInformation BuildFleetComposition(IReadOnlyList<MainFleetComposition> mainFleetCompositionOptions, SecondaryFleetComposition secondaryFleetComposition, FleetComposition defendersFleetComposition, DirtyCombatInformation dirtyData, int fleetDivisor)
     {
 
-        var attackersTypes = getFleetTypes(mainFleetCompositionOptions, secondaryFleetComposition);
-        var defendersTypes = getFleetTypes(defendersFleetComposition.MainFleetComposition, defendersFleetComposition.SecondaryFleetComposition);
+        var attackersTypes = GetFleetTypes(mainFleetCompositionOptions, secondaryFleetComposition);
+        var defendersTypes = GetFleetTypes(defendersFleetComposition.MainFleetComposition, defendersFleetComposition.SecondaryFleetComposition);
 
         UnitType? cargoType = secondaryFleetComposition.IsAllSmallCargosComposition ||
                         secondaryFleetComposition.IsAllLargeCargosComposition ||
                         secondaryFleetComposition.IsAllPathFindersComposition ? null :
                         secondaryFleetComposition.CargoType;
 
+
+        Console.WriteLine("Press ENTER after attaching...");
+        Console.ReadLine();
+
+
         var newSimCombatInformation = DataCleaner.GetCleanData(dirtyData.Attackers, attackersTypes, dirtyData.Defenders, defendersTypes, dirtyData.Universe, fleetDivisor, secondaryFleetComposition.CargoType);
 
+        Console.WriteLine("Units created. Press ENTER to exit.");
+        Console.ReadLine();
 
 /*
         foreach (var attacker in newSimCombatInformation.Attackers)
@@ -145,7 +153,7 @@ public class BattleStatisticsService
         return newSimCombatInformation;
     }
 
-    private static List<UnitType> getFleetTypes(IReadOnlyList<MainFleetComposition> mainFleetComposition, SecondaryFleetComposition secondaryFleetComposition)
+    internal static List<UnitType> GetFleetTypes(IReadOnlyList<MainFleetComposition> mainFleetComposition, SecondaryFleetComposition secondaryFleetComposition)
     {
         List<UnitType> types = [];
 

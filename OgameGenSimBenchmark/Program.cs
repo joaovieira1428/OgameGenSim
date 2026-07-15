@@ -5,4 +5,4 @@ using OgameGenSimBenchmark.SimulatorPack;
 
 HttpClient client = new HttpClient();
 
-var summary = BenchmarkRunner.Run<BattleBenchmark>();
+var summary = BenchmarkRunner.Run<LoaderBenchmark>();

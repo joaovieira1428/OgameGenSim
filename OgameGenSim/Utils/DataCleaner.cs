@@ -134,7 +134,7 @@ public static class DataCleaner
     {
         //Solar statllites are a ship so we have to whipe the out from the attacker unit list
         var shipsToAdd = playerInformation.Ships.Where(x => x.Key != UnitType.SOLAR_SATELLITE)
-        .ToDictionary(x => x.Key, x => new UnitStats()
+        .ToDictionary(x => x.Key, x => new UnitStatistics()
         {
             Amount = x.Value.Amount / divisor,
             StructuralIntegrity = x.Value.StructuralIntegrity,
@@ -170,7 +170,7 @@ public static class DataCleaner
             Units = GetCleanUnitData(unitTypeStatistics, id),
             LootPercentage = lootPercentage,
             PossibleLoot = loot,
-            UnitTypeStats = unitTypeStatistics
+            UnitTypeStats = unitTypeStatistics.ToUnitStatsDictionary()
         };
     }
 
@@ -187,7 +187,7 @@ public static class DataCleaner
     /// <param name="charatcterClassId"></param>
     /// <param name="allianceClassId"></param>
     /// <returns></returns>
-    private static List<CombatUnit> GetCleanUnitData<T>(Dictionary<UnitType, T> units, int id) where T : UnitStats
+    private static List<CombatUnit> GetCleanUnitData<T>(Dictionary<UnitType, T> units, int id) where T : UnitStatistics
     {
         var cleanUnits = new List<CombatUnit>();
 
@@ -232,15 +232,15 @@ public static class DataCleaner
     /// <param name="universeFuelConsumptionModifier">Universe fuel modifier</param>
     /// <param name="unitStats">ShipTypes to get bonuses</param>
     /// <returns>ShipsTypes with bonuses</returns>
-    private static Dictionary<UnitType, UnitStats> GetUnitTypeStatsWithBonuses(PlayerInformation playerInformation, double universeFuelConsumptionModifier, Dictionary<UnitType, UnitStats> unitStats, List<UnitType> unitTypes)
+    private static Dictionary<UnitType, UnitStatistics> GetUnitTypeStatsWithBonuses(PlayerInformation playerInformation, double universeFuelConsumptionModifier, Dictionary<UnitType, UnitStatistics> unitStats, List<UnitType> unitTypes)
     {
-        Dictionary<UnitType, UnitStats> unitTypesStats = [];
+        Dictionary<UnitType, UnitStatistics> unitTypesStats = [];
 
         foreach (var unitType in unitTypes)
         {
             if(!unitStats.TryGetValue(unitType, out var unitStat)) continue;
 
-            UnitStats unit = new();
+            UnitStatistics unit = new();
 
             if (UnitDefaultValues.DefaultValues.TryGetValue(unitType, out var defaultValue))
             {

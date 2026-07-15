@@ -2,6 +2,7 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Columns;
 using OgameGenSim;
 using OgameGenSim.Classes;
+using OgameGenSim.Classes.Views;
 using OgameGenSim.Services;
 using OgameGenSim.Utils;
 using OgameGenSimBenchmark.SimulatorPack;

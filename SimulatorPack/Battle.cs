@@ -1,4 +1,5 @@
 using System;
+using OgameGenSim.Classes;
 using OgameSimulatorPack.Classes;
 using OgameSimulatorPack.SimUtilities;
 using OgameSimulatorPack.Statistics;

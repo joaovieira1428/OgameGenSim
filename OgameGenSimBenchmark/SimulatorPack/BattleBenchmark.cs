@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using OgameGenSim;
 using OgameGenSim.Classes;
+using OgameGenSim.Classes.Views;
 using OgameGenSim.Services;
 using OgameGenSim.Utils;
 using OgameSimulatorPack;

@@ -1,4 +1,4 @@
-namespace OgameGenSim.Classes;
+namespace OgameGenSim.Classes.Views;
 
 public class FleetComposition
 {
