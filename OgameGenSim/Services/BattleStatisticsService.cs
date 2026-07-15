@@ -131,14 +131,19 @@ public class BattleStatisticsService
                         secondaryFleetComposition.CargoType;
 
 
+
         Console.WriteLine("Press ENTER after attaching...");
         Console.ReadLine();
 
-
+        GC.Collect();
         var newSimCombatInformation = DataCleaner.GetCleanData(dirtyData.Attackers, attackersTypes, dirtyData.Defenders, defendersTypes, dirtyData.Universe, fleetDivisor, secondaryFleetComposition.CargoType);
 
         Console.WriteLine("Units created. Press ENTER to exit.");
+        Console.WriteLine(newSimCombatInformation.Attackers.Sum(x => x.Units.Count()) + newSimCombatInformation.Defenders.Sum(x => x.Units.Count()));
+        GC.Collect();
         Console.ReadLine();
+
+
 
 /*
         foreach (var attacker in newSimCombatInformation.Attackers)

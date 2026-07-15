@@ -193,26 +193,18 @@ public static class DataCleaner
 
         foreach (var ship in units)
         {
-            if (!units.TryGetValue(ship.Key, out var shipStatistics)) continue;
-            
+            var unitStatsToAdd = ship.Value.ToUnitStat();
+                        
             for (var i = 0; i < ship.Value.Amount; i++)
             {
                 var unit = new CombatUnit
                 {
                     Id = id,
                     ShipType = ship.Key,
-                    Weapon = shipStatistics.Weapon,
-                    Shield = shipStatistics.Shield,
-                    FullShieldValue = shipStatistics.Shield,
-                    Hull = shipStatistics.Hull,
-                    FullHullValue = shipStatistics.Hull,
-                    Speed = shipStatistics.Speed,
-                    Cargo = shipStatistics.Cargo,
-                    FuelConsumption = shipStatistics.FuelConsumption,
-                    MetalCost = shipStatistics.MetalCost,
-                    CrystalCost = shipStatistics.CrystalCost,
-                    DeuteriumCost = shipStatistics.DeuteriumCost,
-                    IsDestroyed = false
+                    CurrentShield = ship.Value.Shield,   
+                    CurrentHull = ship.Value.Hull,
+                    IsDestroyed = false,
+                    UnitStats = unitStatsToAdd     
                 };
 
                 cleanUnits.Add(unit);
