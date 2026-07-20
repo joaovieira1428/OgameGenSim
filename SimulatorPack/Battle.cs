@@ -1,4 +1,5 @@
 using System;
+using OgameGenSim.Classes;
 using OgameSimulatorPack.Classes;
 using OgameSimulatorPack.SimUtilities;
 using OgameSimulatorPack.Statistics;
@@ -104,7 +105,7 @@ public class Battle()
             //var asd = round.AttackersRoundStatistics.Players[0].UnitAmount;
         }
 
-        var cargoCapacity = battleStatistics.SurvivingAttackerUnits.Sum(x => x.Cargo);
+        var cargoCapacity = battleStatistics.SurvivingAttackerUnits.Sum(x => x.UnitStats.Cargo);
 
         double loot = 0;
         
@@ -156,8 +157,8 @@ public class Battle()
         var count2 = attackersUnits.Count(x => x.IsDestroyed);
         attackersUnits.RemoveAll(x => x.IsDestroyed);
 
-        foreach(var a_Unit in attackersUnits) a_Unit.Shield = a_Unit.FullShieldValue;
-        foreach(var d_Unit in defendersUnits) d_Unit.Shield = d_Unit.FullShieldValue;
+        foreach(var a_Unit in attackersUnits) a_Unit.CurrentShield = a_Unit.UnitStats.Shield;
+        foreach(var d_Unit in defendersUnits) d_Unit.CurrentShield = d_Unit.UnitStats.Shield;
         
         return (attackersUnits, defendersUnits);
     }
@@ -169,9 +170,9 @@ public class Battle()
         var index = Utils.GetRandomUnitIndex(defenders.Count);
         var defender = defenders[index];
 
-        if(defender.IsDestroyed || attacker.Weapon < defender.Shield * 0.01)
+        if(defender.IsDestroyed || attacker.UnitStats.Weapon < defender.CurrentShield * 0.01)
         {     
-            attackerRoundStats.DamageDealt += attacker.Weapon; 
+            attackerRoundStats.DamageDealt += attacker.UnitStats.Weapon; 
 
             if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
                 Combat(attacker, defenders, attackerRoundStats, defenderRoundStats);
@@ -180,36 +181,36 @@ public class Battle()
             return defenders; 
         }
 
-        if(defender.Shield > 0)
+        if(defender.CurrentShield > 0)
         {
-            if (attacker.Weapon < defender.Shield)
+            if (attacker.UnitStats.Weapon < defender.CurrentShield)
             {
-                attackerRoundStats.DamageDealt += attacker.Weapon;
-                attackerRoundStats.DamageAbsorbedByDefendingPlayer += attacker.Weapon;
+                attackerRoundStats.DamageDealt += attacker.UnitStats.Weapon;
+                attackerRoundStats.DamageAbsorbedByDefendingPlayer += attacker.UnitStats.Weapon;
 
-                defender.Shield -= attacker.Weapon;
+                defender.CurrentShield -= attacker.UnitStats.Weapon;
             }else
             {
-                attackerRoundStats.DamageDealt += attacker.Weapon;
-                attackerRoundStats.DamageAbsorbedByDefendingPlayer += defender.Shield;
-                attackerRoundStats.DamageTakenByDefendingPlayer += attacker.Weapon - defender.Shield;
+                attackerRoundStats.DamageDealt += attacker.UnitStats.Weapon;
+                attackerRoundStats.DamageAbsorbedByDefendingPlayer += defender.CurrentShield;
+                attackerRoundStats.DamageTakenByDefendingPlayer += attacker.UnitStats.Weapon - defender.CurrentShield;
 
-                defender.Hull -= attacker.Weapon - defender.Shield;
-                defender.Shield = 0;
+                defender.CurrentHull -= attacker.UnitStats.Weapon - defender.CurrentShield;
+                defender.CurrentShield = 0;
             }
         }
         else
         {
-            attackerRoundStats.DamageDealt += attacker.Weapon;
-            attackerRoundStats.DamageTakenByDefendingPlayer += attacker.Weapon;
+            attackerRoundStats.DamageDealt += attacker.UnitStats.Weapon;
+            attackerRoundStats.DamageTakenByDefendingPlayer += attacker.UnitStats.Weapon;
 
-            defender.Hull -= attacker.Weapon;
+            defender.CurrentHull -= attacker.UnitStats.Weapon;
         }
 
         if (IsTargetDestroyed(defender))
         {
-            defender.Hull = 0;
-            defender.Shield = 0;
+            defender.CurrentHull = 0;
+            defender.CurrentShield = 0;
             defender.IsDestroyed = true;
 
             var defenderPlayerStats = defenderRoundStats.Players.First(x => x.Id == defender.Id);
@@ -219,21 +220,21 @@ public class Battle()
             defenderPlayerStats.UnitLostAmount[defender.ShipType]++;
             defenderPlayerStats.UnitAmount[defender.ShipType]--;
 
-            if (defender.IsShip())
+            if (defender.IsShip)
             {
-                defenderRoundStats.MetalDebri += (int)(defender.MetalCost * DebriFactor);
-                defenderRoundStats.CrystalDebri += (int)(defender.CrystalCost * DebriFactor);
+                defenderRoundStats.MetalDebri += (int)(defender.UnitStats.MetalCost * DebriFactor);
+                defenderRoundStats.CrystalDebri += (int)(defender.UnitStats.CrystalCost * DebriFactor);
 
                 if(DeuteriumOnDebris) 
-                    defenderRoundStats.DeuteriumDebri += (int)(defender.DeuteriumCost * DebriFactor);
+                    defenderRoundStats.DeuteriumDebri += (int)(defender.UnitStats.DeuteriumCost * DebriFactor);
             }
             else
             {
-                defenderRoundStats.MetalDebri += (int)(defender.MetalCost * DefenseDebrisFactor);
-                defenderRoundStats.CrystalDebri += (int)(defender.CrystalCost * DefenseDebrisFactor);
+                defenderRoundStats.MetalDebri += (int)(defender.UnitStats.MetalCost * DefenseDebrisFactor);
+                defenderRoundStats.CrystalDebri += (int)(defender.UnitStats.CrystalCost * DefenseDebrisFactor);
 
                 if(DeuteriumOnDebris) 
-                    defenderRoundStats.DeuteriumDebri += (int)(defender.DeuteriumCost * DefenseDebrisFactor);
+                    defenderRoundStats.DeuteriumDebri += (int)(defender.UnitStats.DeuteriumCost * DefenseDebrisFactor);
             }
         }
 
@@ -246,12 +247,12 @@ public class Battle()
 
     private bool IsTargetDestroyed(CombatUnit target)
     {
-        if(target.Hull <= 0) return true;
+        if(target.CurrentHull <= 0) return true;
         
 
-        if(target.Hull / target.FullHullValue < 0.7)
+        if(target.CurrentHull / target.UnitStats.Hull < 0.7)
         {
-            var probability = 1 - (target.Hull / target.FullHullValue);
+            var probability = 1 - (target.CurrentHull / target.UnitStats.Hull);
 
             bool isDestroyed = Utils.RollSuccess(probability);
 

@@ -1,6 +1,6 @@
 using OgameSimulatorPack.SimUtilities;
 
-namespace OgameGenSim.Classes;
+namespace OgameGenSim.Classes.Views;
 
 public class SecondaryFleetComposition
 {

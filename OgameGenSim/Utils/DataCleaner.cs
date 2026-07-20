@@ -17,7 +17,7 @@ public static class DataCleaner
     /// <param name="divisor">Divisor for multiple attemps with multiple amounts</param>
     /// <param name="cargoUnit">Unit type to be used as cargo ship for the attackers</param>
     /// <returns>Clean data to send to the simulator</returns>
-    public static SimCombatInformation GetCleanData(List<PlayerInformation> attakcers, List<UnitType> attackerTypes, List<PlayerInformation> defenders, List<UnitType> defenderTypes, UniverseInformation universeInformation, int divisor,  UnitType? cargoUnit)
+    public static SimCombatInformation GetCleanData(List<PlayerInformation> attakcers, List<UnitType> attackerTypes, List<PlayerInformation> defenders, List<UnitType> defenderTypes, UniverseInformation universeInformation, int divisor,  UnitType cargoUnit)
     {        
         SimCombatInformation combatInfo = new();
         
@@ -130,11 +130,11 @@ public static class DataCleaner
     /// <param name="cargoUnit">Unit type to be used as cargo ship for the attackers</param>
     /// <param name="universeFuelConsumptionModifier">Universe fuel consumption modifier</param>
     /// <returns>Clean data to send to the simulator</returns>
-    private static Player GetCleanAttackerData(PlayerInformation playerInformation, int lootPercentage, int loot, int id, List<UnitType> attackerTypes, int divisor, UnitType? cargoUnit, double universeFuelConsumptionModifier)
+    private static Player GetCleanAttackerData(PlayerInformation playerInformation, int lootPercentage, int loot, int id, List<UnitType> attackerTypes, int divisor, UnitType cargoUnit, double universeFuelConsumptionModifier)
     {
         //Solar statllites are a ship so we have to whipe the out from the attacker unit list
         var shipsToAdd = playerInformation.Ships.Where(x => x.Key != UnitType.SOLAR_SATELLITE)
-        .ToDictionary(x => x.Key, x => new UnitStats()
+        .ToDictionary(x => x.Key, x => new UnitStatistics()
         {
             Amount = x.Value.Amount / divisor,
             StructuralIntegrity = x.Value.StructuralIntegrity,
@@ -147,13 +147,13 @@ public static class DataCleaner
 
         var unitTypeStatistics = GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, shipsToAdd, attackerTypes);
 
-        if (cargoUnit != null && unitTypeStatistics.TryGetValue(cargoUnit.Value, out var cargoUnitDefaultValues))
+        if (cargoUnit != UnitType.NONE && unitTypeStatistics.TryGetValue(cargoUnit, out var cargoUnitDefaultValues))
         {
             var cargoAmount = loot * 1.2 / cargoUnitDefaultValues.Cargo / (lootPercentage / 100);
 
-            if (shipsToAdd.TryGetValue(cargoUnit.Value, out var cargoShipStats))
+            if (shipsToAdd.TryGetValue(cargoUnit, out var cargoShipStats))
             {
-                unitTypeStatistics[cargoUnit.Value].Amount = Math.Min(cargoShipStats.Amount, (int)Math.Ceiling(cargoAmount));;
+                unitTypeStatistics[cargoUnit].Amount = Math.Min(cargoShipStats.Amount, (int)Math.Ceiling(cargoAmount));;
             }
         }
 
@@ -170,7 +170,7 @@ public static class DataCleaner
             Units = GetCleanUnitData(unitTypeStatistics, id),
             LootPercentage = lootPercentage,
             PossibleLoot = loot,
-            UnitTypeStats = unitTypeStatistics
+            UnitTypeStats = unitTypeStatistics.ToUnitStatsDictionary()
         };
     }
 
@@ -187,32 +187,24 @@ public static class DataCleaner
     /// <param name="charatcterClassId"></param>
     /// <param name="allianceClassId"></param>
     /// <returns></returns>
-    private static List<CombatUnit> GetCleanUnitData<T>(Dictionary<UnitType, T> units, int id) where T : UnitStats
+    private static List<CombatUnit> GetCleanUnitData<T>(Dictionary<UnitType, T> units, int id) where T : UnitStatistics
     {
         var cleanUnits = new List<CombatUnit>();
 
         foreach (var ship in units)
         {
-            if (!units.TryGetValue(ship.Key, out var shipStatistics)) continue;
-            
+            var unitStatsToAdd = ship.Value.ToUnitStat();
+                        
             for (var i = 0; i < ship.Value.Amount; i++)
             {
                 var unit = new CombatUnit
                 {
                     Id = id,
                     ShipType = ship.Key,
-                    Weapon = shipStatistics.Weapon,
-                    Shield = shipStatistics.Shield,
-                    FullShieldValue = shipStatistics.Shield,
-                    Hull = shipStatistics.Hull,
-                    FullHullValue = shipStatistics.Hull,
-                    Speed = shipStatistics.Speed,
-                    Cargo = shipStatistics.Cargo,
-                    FuelConsumption = shipStatistics.FuelConsumption,
-                    MetalCost = shipStatistics.MetalCost,
-                    CrystalCost = shipStatistics.CrystalCost,
-                    DeuteriumCost = shipStatistics.DeuteriumCost,
-                    IsDestroyed = false
+                    CurrentShield = ship.Value.Shield,   
+                    CurrentHull = ship.Value.Hull,
+                    IsDestroyed = false,
+                    UnitStats = unitStatsToAdd     
                 };
 
                 cleanUnits.Add(unit);
@@ -232,15 +224,15 @@ public static class DataCleaner
     /// <param name="universeFuelConsumptionModifier">Universe fuel modifier</param>
     /// <param name="unitStats">ShipTypes to get bonuses</param>
     /// <returns>ShipsTypes with bonuses</returns>
-    private static Dictionary<UnitType, UnitStats> GetUnitTypeStatsWithBonuses(PlayerInformation playerInformation, double universeFuelConsumptionModifier, Dictionary<UnitType, UnitStats> unitStats, List<UnitType> unitTypes)
+    private static Dictionary<UnitType, UnitStatistics> GetUnitTypeStatsWithBonuses(PlayerInformation playerInformation, double universeFuelConsumptionModifier, Dictionary<UnitType, UnitStatistics> unitStats, List<UnitType> unitTypes)
     {
-        Dictionary<UnitType, UnitStats> unitTypesStats = [];
+        Dictionary<UnitType, UnitStatistics> unitTypesStats = [];
 
         foreach (var unitType in unitTypes)
         {
             if(!unitStats.TryGetValue(unitType, out var unitStat)) continue;
 
-            UnitStats unit = new();
+            UnitStatistics unit = new();
 
             if (UnitDefaultValues.DefaultValues.TryGetValue(unitType, out var defaultValue))
             {
