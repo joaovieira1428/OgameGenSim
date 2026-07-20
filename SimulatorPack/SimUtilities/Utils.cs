@@ -30,12 +30,12 @@ public static class Utils
 
     public static Dictionary<UnitType, int> GetInitialUnitTypeAmounts()
     {
-        return Enum.GetValues<UnitType>().ToDictionary(x => x, x => 0);
+        return Enum.GetValues<UnitType>().Where(x => x != UnitType.NONE).ToDictionary(x => x, x => 0);
     }
 
 
     public static bool IsShip(this UnitType unitType)
     {
-        return (int)unitType < 400;
+        return (int)unitType < 400 && unitType != UnitType.NONE;
     }
 }

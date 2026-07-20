@@ -2,9 +2,10 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Web
 @using RazorConsole.Components
+@using Spectre.Console
 
 
-<TextButton Content="@GetContentString(Label)" OnClick="@( () => ToggleSelection(Value))"></TextButton>
+<TextButton FocusedColor="Color.Blue" Content="@GetContentString(Label)" OnClick="@( () => ToggleSelection(Value))"></TextButton>
 
 @code {
     [Parameter]

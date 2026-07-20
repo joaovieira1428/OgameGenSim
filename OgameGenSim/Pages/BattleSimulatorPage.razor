@@ -2,153 +2,203 @@
 
 @namespace OgameGenSim.Pages
 
-@using Microsoft.Extensions.Hosting
 @using OgameGenSim.Components
 @using Microsoft.AspNetCore.Components
-@using Microsoft.AspNetCore.Components.Web
 @using OgameGenSim.StateMachine
-@using OgameSimulatorPack
-@using OgameSimulatorPack.Classes
 @using OgameGenSim.Classes
 @using OgameGenSim.Classes.Views
 @using OgameGenSim.Services
 @using OgameSimulatorPack.SimUtilities
 @using RazorConsole.Components
+@using Spectre.Console
+@using RazorConsole.Core.Renderables
 
 @inject NavigationManager Nav
 @inject Loader LoaderService 
 @inject StateMachine<BSimState, BSimTrigger> BattleSimStateMachine
 @inject OgameGenSim.Services.BattleStatisticsService BattleStatisticsService
 
-<h3>BattleSimulatorPage</h3>
-
 @if(BattleSimStateMachine.CurrentState == BSimState.FleetNumber){
-    <Align>
-        <TextInput Value="@_attackersNumber" ValueChanged="OnAttackersChanged" Label="Number of attackers"></TextInput>
-        <TextInput Value="@_defendersNumber" ValueChanged="OnDefendersChanged" Label="Number of defenders"></TextInput>
-        <FlexBox>
-            <TextButton Content="Back" OnClick="@(() => Nav.NavigateTo("/"))"></TextButton>
-            <TextButton Content="Next" OnClick="NextSimPage"></TextButton>
-        </FlexBox>
+    <Align Horizontal="HorizontalAlignment.Center">
+        <Panel Title="Number of Players" Width="80">
+            <Rows>
+                <TextInput FocusedBorderColor="Color.Blue" Value="@_attackersNumber" ValueChanged="OnAttackersChanged" Label="Number of attackers"></TextInput>
+                <TextInput FocusedBorderColor="Color.Blue" Value="@_defendersNumber" ValueChanged="OnDefendersChanged" Label="Number of defenders"></TextInput>
+                <Newline></Newline>
+
+                <FlexBox Justify="FlexJustify.SpaceBetween">
+                    <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="@(() => Nav.NavigateTo("/"))"></TextButton>
+                    <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
+                </FlexBox>
+            </Rows>
+        </Panel>
     </Align>
 }
 
-@if(BattleSimStateMachine.CurrentState == BSimState.PlayerAPIs){
-    <Align>
-        @for(var i = 0; i < _attackersAPI.Count ; i++){
-            var index = i;
-            <TextInput Value="@_attackersAPI[i]" ValueChanged="@(value => OnAttackersAPIChanged(value, index))" Label="@("Attacker " + (i+1))"></TextInput>
-        }
+@if(BattleSimStateMachine.CurrentState == BSimState.PlayerAPIs1){
+    <Align Horizontal="HorizontalAlignment.Center">
+        <Panel Title="API (1) - Main Players" Width="80">
+            <Rows>
+                <TextInput FocusedBorderColor="Color.Blue" Value="@_attackersAPI[0]" ValueChanged="@(value => OnAttackersAPIChanged(value, 0))" Label="@("Attacker")"></TextInput>
+                <TextInput FocusedBorderColor="Color.Blue" Value="@_defendersAPI[0]" ValueChanged="@(value => OnDefendersAPIChanged(value, 0))" Label="@("Defender")"></TextInput>
+                <Newline></Newline>
 
-        @for(var i = 0; i < _defendersAPI.Count; i++){
-            var index = i;
-            <TextInput Value="@_defendersAPI[i]" ValueChanged="@(value => OnDefendersAPIChanged(value, index))" Label="@("Defender " + (i+1))"></TextInput>
-        }
+                <FlexBox Justify="FlexJustify.SpaceBetween">
+                    <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                    <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
+                </FlexBox>
+            </Rows>
+        </Panel>
+    </Align>
+}
 
-        <FlexBox>
-            <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
-            <TextButton Content="Next" OnClick="NextSimPage"></TextButton>
-        </FlexBox>
+@if(BattleSimStateMachine.CurrentState == BSimState.PlayerAPIs2){
+    <Align Horizontal="HorizontalAlignment.Center">
+        <Panel Title="API (2) - ACS" Width="80">
+            <Rows>
+                @for(var i = 1; i < _attackersAPI.Count ; i++){
+                    var index = i;
+                    <TextInput FocusedBorderColor="Color.Blue" Value="@_attackersAPI[i]" ValueChanged="@(value => OnAttackersAPIChanged(value, index))" Label="@("Attacker " + (i))"></TextInput>
+                }
+
+                @for(var i = 1; i < _defendersAPI.Count; i++){
+                    var index = i;
+                    <TextInput FocusedBorderColor="Color.Blue" Value="@_defendersAPI[i]" ValueChanged="@(value => OnDefendersAPIChanged(value, index))" Label="@("Defender " + (i))"></TextInput>
+                }
+                <Newline></Newline>
+
+                <FlexBox Justify="FlexJustify.SpaceBetween">
+                    <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                    <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
+                </FlexBox>
+            </Rows>
+        </Panel>
     </Align>
 }
 
 @if(BattleSimStateMachine.CurrentState == BSimState.MainFleetComposition){
-    <Align>
-        <MultiSelect @bind-Value="_selectedAttackerFleetComposition" Options="@fleetCompositionOptionsKeyValues"></MultiSelect>
-        
-        <CheckBox @bind-Value="_isAllCombinations" Label="Do all combinations"></CheckBox>
+    <Align Horizontal="HorizontalAlignment.Center">
+        <Panel Title="Attacker Fleet Composition (1)" Width="80">
+            <Rows>
+                <MultiSelect @bind-Value="_selectedAttackerFleetComposition" Options="@fleetCompositionOptionsKeyValues"></MultiSelect>
+                <CheckBox @bind-Value="_isAllCombinations" Label="Do all combinations"></CheckBox>
+                <Newline></Newline>
+                @if(_isAllCombinations)
+                {
+                    <CheckBox @bind-Value="_isAccountingSpeed" Label="Use speed to decide"></CheckBox>
 
-        @if(_isAllCombinations)
-        {
-            <CheckBox @bind-Value="_isAccountingSpeed" Label="Use speed to decide"></CheckBox>
-
-            <FlexBox>
-                <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
-                <TextButton Content="Next" OnClick="NextSimPage"></TextButton>
-            </FlexBox>
-        }else{
-            <FlexBox>
-                <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
-                <TextButton Content="Next" OnClick="NextSimPage"></TextButton>
-            </FlexBox>
-        }
+                    <FlexBox Justify="FlexJustify.SpaceBetween">
+                        <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                        <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
+                    </FlexBox>
+                }else{
+                    <FlexBox Justify="FlexJustify.SpaceBetween">
+                        <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                        <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
+                    </FlexBox>
+                } 
+            </Rows>
+        </Panel>
     </Align>
 }
 
 @if(BattleSimStateMachine.CurrentState == BSimState.SecondaryFleetComposition){
-    <Align>
-        <CheckBox @bind-Value="_isStealComposition" Label="Steal Only"></CheckBox>
-        
-        @if(_isStealComposition)
-        {
-            <Select Options="cargoFleetTypes.Select(x => x.Value).ToArray()" 
-                    Value="_stealCargoType" 
-                    ValueChanged="@((string? value) => OnCargoUnitTypeChange(value))"></Select>
+    <Align Horizontal="HorizontalAlignment.Center">
+        <Panel Title="Attacker Fleet Composition (2)" Width="80">
+            <Rows>
+                <CheckBox @bind-Value="_isStealComposition" Label="Steal Only"></CheckBox>
+                <Newline></Newline>
+                @if(_isStealComposition)
+                {
+                    <Select Expand="true" Placeholder="Select a Cargo Type" Options="cargoFleetTypes.Select(x => x.Value).ToArray()" 
+                            Value="_stealCargoType" 
+                            ValueChanged="@((string? value) => OnCargoUnitTypeChange(value))"></Select>
 
+                    <Newline></Newline>
+                    <TextInput FocusedBorderColor="Color.Blue" Value="@_stealUnitNumber" ValueChanged="OnStealUnitNumberChanged" Label="Number of units to send"></TextInput>
+                    <Newline></Newline>
 
-            <TextInput Value="@_stealUnitNumber" ValueChanged="OnStealUnitNumberChanged" Label="Number of units to send"></TextInput>
-        
-            <CheckBox @bind-Value="_isAllSmallCargosAttackerComposition" Label="Send all Small Cargos"></CheckBox>
-            <CheckBox @bind-Value="_isAllLargeCargosAttackerComposition" Label="Send all Large Cargos"></CheckBox>
-            <CheckBox @bind-Value="_isAllPathFindersAttackerComposition" Label="Send all PathFinders"></CheckBox>
-            
-            <Align>
-                <p>Note* - Steal Only will send enough units to steal + 20% for losses</p>
-                <p>Note** - Send all amounts will be adjusted by the simulator like any other fleet type</p>
-                <p>Note*** - Send all [Type] will take priority over the Cargo type to steal</p>
-            </Align>
+                    <CheckBox @bind-Value="_isAllSmallCargosAttackerComposition" Label="Send all Small Cargos"></CheckBox>
+                    <CheckBox @bind-Value="_isAllLargeCargosAttackerComposition" Label="Send all Large Cargos"></CheckBox>
+                    <CheckBox @bind-Value="_isAllPathFindersAttackerComposition" Label="Send all PathFinders"></CheckBox>
+                    <Newline></Newline>
+                
+                    <Markup Background="Color.DarkOrange3" Content="Note* - Steal Only will send enough units to steal + 20% for losses"></Markup>
+                    <Markup Background="Color.DarkOrange3" Content="Note** - Send all amounts will be adjusted by the simulator like any other fleet type"></Markup>
+                    <Markup Background="Color.DarkOrange3" Content="Note*** - Send all [Type] will take priority over the Cargo type to steal"></Markup>
+                    <Newline></Newline>
 
-            <FlexBox>
-                <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
-                <TextButton Content="Next" OnClick="LoadPlayers"></TextButton>
-            </FlexBox>
-        }else{
-            <CheckBox @bind-Value="_isAllSmallCargosAttackerComposition" Label="Send all Small Cargos"></CheckBox>
-            <CheckBox @bind-Value="_isAllLargeCargosAttackerComposition" Label="Send all Large Cargos"></CheckBox>
-            <CheckBox @bind-Value="_isAllPathFindersAttackerComposition" Label="Send all PathFinders"></CheckBox>
+                    <FlexBox Justify="FlexJustify.SpaceBetween">
+                        <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                        <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
+                    </FlexBox>
+                }else{
+                    <CheckBox @bind-Value="_isAllSmallCargosAttackerComposition" Label="Send all Small Cargos"></CheckBox>
+                    <CheckBox @bind-Value="_isAllLargeCargosAttackerComposition" Label="Send all Large Cargos"></CheckBox>
+                    <CheckBox @bind-Value="_isAllPathFindersAttackerComposition" Label="Send all PathFinders"></CheckBox>
+                    <Newline></Newline>
+   
+                    <Markup Background="Color.DarkOrange3" Content="Note* - Steal Only will send enough units to steal + 20% for losses"></Markup>
+                    <Markup Background="Color.DarkOrange3" Content="Note** - Send all amounts will be adjusted by the simulator like any other fleet type"></Markup>
+                    <Markup Background="Color.DarkOrange3" Content="Note*** - Send all [Type] will take priority over the Cargo type to steal"></Markup>
+                    <Newline></Newline>
 
-            <Align>
-                <p>Note* - Steal Only will send enough units to steal + 20% for losses</p>
-                <p>Note** - Send all amounts will be adjusted by the simulator like any other fleet type</p>
-                <p>Note*** - Send all [Type] will take priority over the Cargo type to steal</p>
-            </Align>
-            
-            <FlexBox>
-                <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
-                <TextButton Content="Next" OnClick="NextSimPage"></TextButton>
-            </FlexBox>
-        }
-        
+                    <FlexBox Justify="FlexJustify.SpaceBetween">
+                        <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                        <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
+                    </FlexBox>
+                }
+            </Rows>
+        </Panel>
     </Align>
+
+
+  
 }
 
 @if(BattleSimStateMachine.CurrentState == BSimState.DefenseFleetComposition)
 {
-    <Align>
-        <CheckBox @bind-Value="_isSameAsAttackerComposition" Label="Same as the attacker fleet composition"></CheckBox>
+    <Align Horizontal="HorizontalAlignment.Center">
+        <Panel Title="API (1) - Main Players" Width="80">
+            <Rows>
+                <CheckBox @bind-Value="_isSameAsAttackerComposition" Label="Same as the attacker fleet composition"></CheckBox>
+                <Newline></Newline>
 
-        @if(!_isSameAsAttackerComposition){
-            <MultiSelect @bind-Value="_selectedDefenderFleetComposition" Options="@fleetCompositionOptionsKeyValues"></MultiSelect>
-            <CheckBox @bind-Value="_isAllSmallCargosDefenderComposition" Label="Send all Small Cargos"></CheckBox>
-            <CheckBox @bind-Value="_isAllLargeCargosDefenderComposition" Label="Send all Large Cargos"></CheckBox>
-            <CheckBox @bind-Value="_isAllPathFindersDefenderComposition" Label="Send all PathFinders"></CheckBox>
+                @if(!_isSameAsAttackerComposition){
+                    <MultiSelect @bind-Value="_selectedDefenderFleetComposition" Options="@fleetCompositionOptionsKeyValues"></MultiSelect>
+                    <Newline></Newline>
 
-            <FlexBox>
-                <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
-                <TextButton Content="Next" OnClick="LoadPlayers"></TextButton>
-            </FlexBox>
-        }else{
-            <FlexBox>
-                <TextButton Content="Back" OnClick="PreviousSimPage"></TextButton>
-                <TextButton Content="Next" OnClick="LoadPlayers"></TextButton>
-            </FlexBox>
-        }
+                    <CheckBox @bind-Value="_isAllSmallCargosDefenderComposition" Label="Send all Small Cargos"></CheckBox>
+                    <CheckBox @bind-Value="_isAllLargeCargosDefenderComposition" Label="Send all Large Cargos"></CheckBox>
+                    <CheckBox @bind-Value="_isAllPathFindersDefenderComposition" Label="Send all PathFinders"></CheckBox>
+                    <Newline></Newline>
 
-       
+                    @if(_loading){
+                        <Spinner Message="@LoadingQuotes.GetRandomQuote()"></Spinner>
+                    }
+
+
+                    <FlexBox Justify="FlexJustify.SpaceBetween">
+                            <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                            <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="LoadPlayers"></TextButton>
+                    </FlexBox>
+                }else{
+                    @if(_loading){
+                        <Spinner Message="@LoadingQuotes.GetRandomQuote()"></Spinner>
+                    }
+
+                    <FlexBox Justify="FlexJustify.SpaceBetween">
+                            <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                            <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="LoadPlayers"></TextButton>
+                    </FlexBox>
+                }
+            </Rows>
+        </Panel>
     </Align>
 }
 
 @code {
+    private bool _loading = false;
     private string _attackersNumber = string.Empty;
     private int attackersNumber = 0;
     private string _defendersNumber = string.Empty;
@@ -194,12 +244,12 @@
     }
 
     private async Task OnAttackersAPIChanged(string? value, int index){
-        await Task.Delay(500);
+        await Task.Delay(200);
         _attackersAPI[index] = value ?? string.Empty;
     } 
 
     private async Task OnDefendersAPIChanged(string? value, int index){
-        await Task.Delay(500);
+        await Task.Delay(200);
         _defendersAPI[index] = value ?? string.Empty;
     }
 
@@ -260,6 +310,9 @@
     private async void LoadPlayers()
     {
         if(attackersNumber > 0 && defendersNumber > 0){
+            _loading = true;
+            StateHasChanged();
+
             DirtyCombatInformation dirtyData = await LoaderService.LoadCombatInformation(_attackersAPI, _defendersAPI);
 
             FleetComposition attackerComposition = new FleetComposition{
@@ -268,7 +321,7 @@
                 IsAccountingSpeed = _isAccountingSpeed,
                 SecondaryFleetComposition = new SecondaryFleetComposition{
                     IsStealComposition = _isStealComposition,
-                    CargoType = stealCargoType,
+                    CargoType = _isStealComposition ? stealCargoType : UnitType.NONE,
                     UnitNumber = stealUnitNumber,
                     IsAllSmallCargosComposition = _isAllSmallCargosAttackerComposition,
                     IsAllLargeCargosComposition = _isAllLargeCargosAttackerComposition,
@@ -292,12 +345,20 @@
     }
 
     private void NextSimPage(){
+        if(BattleSimStateMachine.CurrentState == BSimState.PlayerAPIs1 && attackersNumber == 1 && defendersNumber == 1){
+            BattleSimStateMachine.ChangeState(BSimTrigger.Next);
+        }
+
         var state = BattleSimStateMachine.ChangeState(BSimTrigger.Next);
         StateHasChanged();
         @* Console.WriteLine(state); *@
     }
 
     private void PreviousSimPage(){
+        if(BattleSimStateMachine.CurrentState == BSimState.MainFleetComposition && attackersNumber == 1 && defendersNumber == 1){
+            BattleSimStateMachine.ChangeState(BSimTrigger.Previous);
+        }
+
         var state = BattleSimStateMachine.ChangeState(BSimTrigger.Previous);
         StateHasChanged();
         @* Console.WriteLine(state); *@

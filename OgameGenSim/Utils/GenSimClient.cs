@@ -67,7 +67,7 @@ public class GenSimClient(HttpClient client)
     public async Task<ClientResultObject<PlayerInformation>> GetReportDataAsync(string espionageId)
     {
         var espionageResult = await client.GetAsync(FREE_API_URL + espionageId);
-        Console.WriteLine($"{FREE_API_URL + espionageId}");
+        //Console.WriteLine($"{FREE_API_URL + espionageId}");
 
         try
         {

@@ -5,26 +5,29 @@
 @using Microsoft.Extensions.Hosting
 @using OgameGenSim.Components
 @using Microsoft.AspNetCore.Components
-@using Microsoft.AspNetCore.Components.Web
 @using RazorConsole.Components
+@using Spectre.Console
 
 @inject NavigationManager Nav
 @inject IHostApplicationLifetime AppLifetime
 
-
-<h3>StartPage</h3>
-<Align Width="200">
-    <TextButton FocusOrder="1" OnClick="@(() => Nav.NavigateTo("/battleSimulator"))" Content="1 - Battle Simulator"></TextButton>
-    <TextButton FocusOrder="2" OnClick="@(() => Nav.NavigateTo("/ipmSimulator"))" Content="2 - IPM Simulator"></TextButton>
-    <TextButton FocusOrder="3" OnClick="@(() => Nav.NavigateTo("/moonDestructionSimulator"))" Content="3 - Moon Destruction Simulator"></TextButton>
-    <TextButton FocusOrder="4" OnClick="@(() => Nav.NavigateTo("/returnFlightCalculator"))" Content="4 - Return Flight Calculator"></TextButton>
-    <TextButton FocusOrder="5" OnClick="@(() => Nav.NavigateTo("/marketExchange"))" Content="5 - Market Exchange"></TextButton>
-    <TextButton FocusOrder="6" OnClick="ExitApp" Content="6 - Exit App"></TextButton>
+<Align Horizontal="HorizontalAlignment.Center">
+    <Panel Title="Main Menu" Width="80">
+        <Rows>
+            <TextButton FocusedColor="Color.Blue" FocusOrder="1" OnClick="@(() => Nav.NavigateTo("/battleSimulator"))" Content="1 - Battle Simulator"></TextButton>
+            <TextButton BackgroundColor="Color.DarkRed" FocusedColor="Color.Red" FocusOrder="2" OnClick="@(() => Nav.NavigateTo("/ipmSimulator"))" Content="2 - IPM Simulator (On a Future Version)"></TextButton>
+            <TextButton BackgroundColor="Color.DarkRed" FocusedColor="Color.Red" FocusOrder="3" OnClick="@(() => Nav.NavigateTo("/moonDestructionSimulator"))" Content="3 - Moon Destruction Simulator (On a Future Version)"></TextButton>
+            <TextButton BackgroundColor="Color.DarkRed" FocusedColor="Color.Red" FocusOrder="4" OnClick="@(() => Nav.NavigateTo("/returnFlightCalculator"))" Content="4 - Return Flight Calculator (On a Future Version)"></TextButton>
+            <TextButton BackgroundColor="Color.DarkRed" FocusedColor="Color.Red" FocusOrder="5" OnClick="@(() => Nav.NavigateTo("/marketExchange"))" Content="5 - Market Exchange (On a Future Version)"></TextButton>
+            <TextButton FocusedColor="Color.Blue" FocusOrder="6" OnClick="ExitApp" Content="6 - Exit App"></TextButton>
+        </Rows>
+    </Panel>
 </Align>
 
-@code {
+
+@code { 
     private void ExitApp()
     {
-        AppLifetime.StopApplication();
+        AppLifetime.StopApplication();  
     }
 }

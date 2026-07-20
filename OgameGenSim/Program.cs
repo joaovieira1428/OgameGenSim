@@ -28,12 +28,14 @@ hostBuilder.ConfigureServices(services =>
     services.AddSingleton<BattleStatisticsService>();
     services.AddSingleton(new Loader(httpClient));
     services.AddSingleton(new StateMachine<BSimState, BSimTrigger>(BSimState.FleetNumber)
-        .ConfigureState((BSimState.FleetNumber, BSimTrigger.Next), BSimState.PlayerAPIs)
-        .ConfigureState((BSimState.PlayerAPIs, BSimTrigger.Next), BSimState.MainFleetComposition)
+        .ConfigureState((BSimState.FleetNumber, BSimTrigger.Next), BSimState.PlayerAPIs1)
+        .ConfigureState((BSimState.PlayerAPIs1, BSimTrigger.Next), BSimState.PlayerAPIs2)
+        .ConfigureState((BSimState.PlayerAPIs2, BSimTrigger.Next), BSimState.MainFleetComposition)
         .ConfigureState((BSimState.MainFleetComposition, BSimTrigger.Next), BSimState.SecondaryFleetComposition)
         .ConfigureState((BSimState.SecondaryFleetComposition, BSimTrigger.Next), BSimState.DefenseFleetComposition)
-        .ConfigureState((BSimState.PlayerAPIs, BSimTrigger.Previous), BSimState.FleetNumber)
-        .ConfigureState((BSimState.MainFleetComposition, BSimTrigger.Previous), BSimState.PlayerAPIs)
+        .ConfigureState((BSimState.PlayerAPIs1, BSimTrigger.Previous), BSimState.FleetNumber)
+        .ConfigureState((BSimState.PlayerAPIs2, BSimTrigger.Previous), BSimState.PlayerAPIs1)
+        .ConfigureState((BSimState.MainFleetComposition, BSimTrigger.Previous), BSimState.PlayerAPIs2)
         .ConfigureState((BSimState.SecondaryFleetComposition, BSimTrigger.Previous), BSimState.MainFleetComposition)
         .ConfigureState((BSimState.DefenseFleetComposition, BSimTrigger.Previous), BSimState.SecondaryFleetComposition));
     // Configure console options

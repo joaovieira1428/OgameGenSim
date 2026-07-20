@@ -7,59 +7,70 @@
 @using OgameSimulatorPack.SimUtilities
 @using OgameSimulatorPack.Statistics
 @using RazorConsole.Components
-
+@using Spectre.Console
+@using RazorConsole.Core.Renderables
 @inject NavigationManager Nav
 @inject OgameGenSim.Services.BattleStatisticsService BattleStatisticsService
 
-<h3>BattleStatistics</h3>
-
-
 @if (BattleStatisticsService.BestStatistics != null)
 {
-    <FlexBox>
-        <Padder Padding=(new(0,0,2,0))>
-            <Border>
-                <Rows>
-                    <Select Options="attackerOptions.ToArray()" 
-                    Value="_selectedAttackingPlayer" 
-                    ValueChanged="@((string? value) => OnAttackerSelectChange(value))"></Select>
+    <Align Horizontal="HorizontalAlignment.Center">
+        <Panel Title="Battle Result">
+            <FlexBox Justify="FlexJustify.SpaceBetween">
+                <Padder Padding=(new(0,0,2,0))>
+                    <Border>
+                        <Rows>
+                            <Select Options="attackerOptions.ToArray()" 
+                            Value="_selectedAttackingPlayer" 
+                            ValueChanged="@((string? value) => OnAttackerSelectChange(value))"></Select>
 
-                    <Grid Expand="true" Columns="3">
-                    
-                            <BattleStatisticsItem 
-                            GlobalPlayerAmount="attackerAmount"
-                            LostPlayerAmount="attackerLostAmount"></BattleStatisticsItem>
-                
-                    </Grid>
-                </Rows>
-            </Border>
-        </Padder>
-         <Select Options="roundOptions.ToArray()" 
-                    Value="_selectedRound" 
-                    ValueChanged="@((string? value) => OnRoundSelectChange(value))"></Select>
-        <Padder Padding=(new(2,0,0,0))>
-            <Border>
-                <Rows>
-                    <Select Options="defenderOptions.ToArray()" 
-                    Value="_selectedDefendingPlayer" 
-                    ValueChanged="@((string? value) => OnDefenderSelectChange(value))"></Select>
+                            <Grid Expand="true" Columns="3">
+                            
+                                    <BattleStatisticsItem 
+                                    GlobalPlayerAmount="attackerAmount"
+                                    LostPlayerAmount="attackerLostAmount"></BattleStatisticsItem>
+                        
+                            </Grid>
+                        </Rows>
+                    </Border>
+                </Padder>
+                <Select Options="roundOptions.ToArray()" 
+                            Value="_selectedRound" 
+                            ValueChanged="@((string? value) => OnRoundSelectChange(value))"></Select>
+                <Padder Padding=(new(2,0,0,0))>
+                    <Border>
+                        <Rows>
+                            <Select Options="defenderOptions.ToArray()" 
+                            Value="_selectedDefendingPlayer" 
+                            ValueChanged="@((string? value) => OnDefenderSelectChange(value))"></Select>
 
-                    <Grid Expand="true" Columns="3">
-                    
-                            <BattleStatisticsItem 
-                            GlobalPlayerAmount="defenderAmount"
-                            LostPlayerAmount="defenderLostAmount"></BattleStatisticsItem>
-                
-                    </Grid>
-                </Rows>
-            </Border>
-        </Padder>
-    </FlexBox>
-    <Align>
-        <p>The Attacker fires a total of @shotsFiredByAttackers shots at the Defender with a total strength of @totalAttackersDemage.</p>
-        <p>The defender's shields absorb @totalDefendersShieldAbsorption damage points of demage.</p>
-        <p>The Defender fires a total of @shotsFiredByDefenders shots at the Attacker with a total strength of @totalDefendersDemage.</p>
-        <p>The attacker's shields absorb @totalAttackersShieldAbsorption damage points of demage.</p>
+                            <Grid Expand="true" Columns="3">
+                            
+                                    <BattleStatisticsItem 
+                                    GlobalPlayerAmount="defenderAmount"
+                                    LostPlayerAmount="defenderLostAmount"></BattleStatisticsItem>
+                        
+                            </Grid>
+                        </Rows>
+                    </Border>
+                </Padder>
+                <Padder Padding=(new(0,0,2,0))>
+                    <Border>
+                        <Rows>
+                            <Markup Content="@attackersResultLabel"></Markup>
+                            <Markup Content="@defendersResultLabel"></Markup>
+                            <Markup Content="@drawResultLabel"></Markup>
+                        </Rows>
+                    </Border>
+                </Padder>
+            </FlexBox>
+            <Align>
+                <Markup Content="@($"The Attacker fires a total of {shotsFiredByAttackers} shots at the Defender with a total strength of {totalAttackersDemage}.")"></Markup>
+                <Markup Content="@($"The defender's shields absorb {totalDefendersShieldAbsorption} damage points of demage.")"></Markup>
+                <Markup Content="@($"The Defender fires a total of {shotsFiredByDefenders} shots at the Attacker with a total strength of {totalDefendersDemage}.")"></Markup>
+                <Markup Content="@($"The attacker's shields absorb {totalAttackersShieldAbsorption} damage points of demage.")"></Markup>
+            </Align>
+        </Panel>
     </Align>
 }
 else
@@ -81,6 +92,9 @@ else
     private double totalDefendersDemage = 0;
     private double totalAttackersShieldAbsorption = 0;
     private double totalDefendersShieldAbsorption = 0;
+    private string attackersResultLabel = string.Empty;
+    private string defendersResultLabel = string.Empty;
+    private string drawResultLabel = string.Empty;
 
     private List<string> attackerOptions = [];
     private List<string> defenderOptions = [];
@@ -174,12 +188,12 @@ else
     }
 
     private void PopulatePlayer(Dictionary<UnitType, int>unitAmount, Dictionary<UnitType, int> unitAmountToSum){
-        foreach (var kvp in unitAmountToSum)
+        foreach (var item in unitAmountToSum)
         {
-            if (unitAmount.ContainsKey(kvp.Key))
-                unitAmount[kvp.Key] += kvp.Value;
+            if (unitAmount.ContainsKey(item.Key))
+                unitAmount[item.Key] += item.Value;
             else
-                unitAmount[kvp.Key] = kvp.Value;
+                unitAmount[item.Key] = item.Value;
         }
     }
 
@@ -190,6 +204,10 @@ else
         totalDefendersDemage = BattleStatisticsService.BestStatistics.TotalDemageDealtByDefenders;
         totalAttackersShieldAbsorption = BattleStatisticsService.BestStatistics.DemageAbsorbedByAttackers;
         totalDefendersShieldAbsorption = BattleStatisticsService.BestStatistics.DemageAbsorbedByDefenders;
+
+        attackersResultLabel = BattleStatisticsService.BestStatistics.BattleResult == BattleResult.AttackerWon ? "Attackers Win: :check_mark_button:" : "Attackers Win: :cross_mark:";
+        defendersResultLabel = BattleStatisticsService.BestStatistics.BattleResult == BattleResult.DefenderWon ? "Defenders Win: :check_mark_button:" : "Defenders Wind: :cross_mark:";
+        drawResultLabel = BattleStatisticsService.BestStatistics.BattleResult == BattleResult.Draw ? "Draw: :check_mark_button:" : "Draw: :cross_mark:";
     }
     
     private void PopulateGlobalStatsByRound(RoundStatistics round){
