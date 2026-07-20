@@ -50,7 +50,7 @@ public class BattleBenchmark
         List<OgameSimulatorPack.SimUtilities.UnitType> attackersTypes = BattleStatisticsService.GetFleetTypes(attackerFleetComposition.MainFleetComposition, attackerFleetComposition.SecondaryFleetComposition);
         List<OgameSimulatorPack.SimUtilities.UnitType> defendersTypes = BattleStatisticsService.GetFleetTypes(attackerFleetComposition.MainFleetComposition, attackerFleetComposition.SecondaryFleetComposition);
 
-        _cleanData = DataCleaner.GetCleanData(dirtyData.Attackers, attackersTypes, dirtyData.Defenders, defendersTypes, dirtyData.Universe, 1, null);
+        _cleanData = DataCleaner.GetCleanData(dirtyData.Attackers, attackersTypes, dirtyData.Defenders, defendersTypes, dirtyData.Universe, 1, OgameSimulatorPack.SimUtilities.UnitType.NONE);
     }
 
     [Benchmark]

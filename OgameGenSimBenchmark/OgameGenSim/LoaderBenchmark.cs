@@ -68,6 +68,6 @@ public class LoaderBenchmark()
     [Benchmark]
     public async Task LoadCombatInformationAsync()
     {
-        DataCleaner.GetCleanData(_attackers, _attackersTypes, _defenders, _defendersTypes, _universeInfo, 1, null);
+        DataCleaner.GetCleanData(_attackers, _attackersTypes, _defenders, _defendersTypes, _universeInfo, 1, OgameSimulatorPack.SimUtilities.UnitType.NONE);
     }
 }

@@ -17,7 +17,7 @@ public static class DataCleaner
     /// <param name="divisor">Divisor for multiple attemps with multiple amounts</param>
     /// <param name="cargoUnit">Unit type to be used as cargo ship for the attackers</param>
     /// <returns>Clean data to send to the simulator</returns>
-    public static SimCombatInformation GetCleanData(List<PlayerInformation> attakcers, List<UnitType> attackerTypes, List<PlayerInformation> defenders, List<UnitType> defenderTypes, UniverseInformation universeInformation, int divisor,  UnitType? cargoUnit)
+    public static SimCombatInformation GetCleanData(List<PlayerInformation> attakcers, List<UnitType> attackerTypes, List<PlayerInformation> defenders, List<UnitType> defenderTypes, UniverseInformation universeInformation, int divisor,  UnitType cargoUnit)
     {        
         SimCombatInformation combatInfo = new();
         
@@ -130,7 +130,7 @@ public static class DataCleaner
     /// <param name="cargoUnit">Unit type to be used as cargo ship for the attackers</param>
     /// <param name="universeFuelConsumptionModifier">Universe fuel consumption modifier</param>
     /// <returns>Clean data to send to the simulator</returns>
-    private static Player GetCleanAttackerData(PlayerInformation playerInformation, int lootPercentage, int loot, int id, List<UnitType> attackerTypes, int divisor, UnitType? cargoUnit, double universeFuelConsumptionModifier)
+    private static Player GetCleanAttackerData(PlayerInformation playerInformation, int lootPercentage, int loot, int id, List<UnitType> attackerTypes, int divisor, UnitType cargoUnit, double universeFuelConsumptionModifier)
     {
         //Solar statllites are a ship so we have to whipe the out from the attacker unit list
         var shipsToAdd = playerInformation.Ships.Where(x => x.Key != UnitType.SOLAR_SATELLITE)
@@ -147,13 +147,13 @@ public static class DataCleaner
 
         var unitTypeStatistics = GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, shipsToAdd, attackerTypes);
 
-        if (cargoUnit != null && unitTypeStatistics.TryGetValue(cargoUnit.Value, out var cargoUnitDefaultValues))
+        if (cargoUnit != UnitType.NONE && unitTypeStatistics.TryGetValue(cargoUnit, out var cargoUnitDefaultValues))
         {
             var cargoAmount = loot * 1.2 / cargoUnitDefaultValues.Cargo / (lootPercentage / 100);
 
-            if (shipsToAdd.TryGetValue(cargoUnit.Value, out var cargoShipStats))
+            if (shipsToAdd.TryGetValue(cargoUnit, out var cargoShipStats))
             {
-                unitTypeStatistics[cargoUnit.Value].Amount = Math.Min(cargoShipStats.Amount, (int)Math.Ceiling(cargoAmount));;
+                unitTypeStatistics[cargoUnit].Amount = Math.Min(cargoShipStats.Amount, (int)Math.Ceiling(cargoAmount));;
             }
         }
 
