@@ -14,9 +14,9 @@ public sealed class UnitStats
     public double Speed { get; init; }
     public double Fuel { get; init; }
     public int Energy { get; init; }
-    public int MetalCost { get; init; }
-    public int CrystalCost { get; init; }
-    public int DeuteriumCost { get; init; }
+    public long MetalCost { get; init; }
+    public long CrystalCost { get; init; }
+    public long DeuteriumCost { get; init; }
     public double FuelConsumption { get; init; }
 
 }

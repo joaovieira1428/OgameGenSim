@@ -112,19 +112,28 @@ public class Battle()
         var firstAttacker = simCombatInformation.Attackers.First();
         var firstDefender = simCombatInformation.Defenders.First();
 
+        double lootMultiplier = firstDefender.LootPercentage / 100.0;
+
         if (cargoCapacity >= firstAttacker.PossibleLoot)
         { 
-            loot = firstDefender.Metal / firstDefender.LootPercentage + 
-                  (firstDefender.Crystal / firstDefender.LootPercentage * 2) + 
-                  (firstDefender.Deuterium / firstDefender.LootPercentage * 3);
+            battleStatistics.Loot = firstDefender.Metal / lootMultiplier + 
+                  (firstDefender.Crystal / lootMultiplier * 2) + 
+                  (firstDefender.Deuterium / lootMultiplier * 3);
+            
+            battleStatistics.MetalLoot = firstDefender.Metal / lootMultiplier;
+            battleStatistics.CrystalLoot = firstDefender.Crystal / lootMultiplier;
+            battleStatistics.DeuteriumLoot = firstDefender.Deuterium / lootMultiplier;
+
         }
         else
         {
             var equalDistribution = cargoCapacity / 3;
-            loot = equalDistribution + (equalDistribution * 2) + (equalDistribution * 3);
-        }
+            battleStatistics.Loot = equalDistribution + (equalDistribution * 2) + (equalDistribution * 3);
 
-        battleStatistics.Loot = loot;
+            battleStatistics.MetalLoot = equalDistribution;
+            battleStatistics.CrystalLoot = equalDistribution;
+            battleStatistics.DeuteriumLoot = equalDistribution;
+        }
 
         battleStatistics.BattleResult = defendersUnits.Count == 0 ? BattleResult.AttackerWon : 
                                         attackersUnits.Count == 0 ? BattleResult.DefenderWon : 

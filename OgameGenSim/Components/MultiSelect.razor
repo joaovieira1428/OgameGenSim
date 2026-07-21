@@ -43,7 +43,7 @@
 
     public string GetContentString(MultiSelectObject item)
     {
-        return item.IsSelected ? $"[x]{item.Content}" : $"[]{item.Content}";
+        return item.IsSelected ? $"[✓]{item.Content}" : $"[]{item.Content}";
     }
 
     private async Task ToggleSelection(MultiSelectObject item)

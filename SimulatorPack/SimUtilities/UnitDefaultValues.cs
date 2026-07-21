@@ -59,7 +59,7 @@ public class UnitDefaultValues
         // Utility Ships
         { UnitType.REAPER, new UnitStats() { Speed = 7000, Cargo = 10000, FuelConsumption = 1100, Hull = 14000, Shield = 700, Weapon = 2800, MetalCost = 85000, CrystalCost = 55000, DeuteriumCost = 20000, Energy = 15 } },
         { UnitType.PATHFINDER, new UnitStats() { Speed = 12000, Cargo = 10000, FuelConsumption = 300, Hull = 2300, Shield = 100, Weapon = 200, MetalCost = 8000, CrystalCost = 15000, DeuteriumCost = 8000, Energy = 2 } },
-        { UnitType.RECYCLER, new UnitStats() { Speed = 2000, Cargo = 20000, FuelConsumption = 300, Hull = 1600, Shield = 10, Weapon = 1, MetalCost = 10000, CrystalCost = 60000, DeuteriumCost = 2000, Energy = 1 } },
+        { UnitType.RECYCLER, new UnitStats() { Speed = 2000, Cargo = 20000, FuelConsumption = 300, Hull = 1600, Shield = 10, Weapon = 1, MetalCost = 10000, CrystalCost = 6000, DeuteriumCost = 2000, Energy = 1 } },
         { UnitType.ESPIONAGE_PROBE, new UnitStats() { Speed = 100000000, Cargo = 0, FuelConsumption = 1, Hull = 100, Shield = 0, Weapon = 0, CrystalCost = 1000, Energy = 1 } },
         { UnitType.SOLAR_SATELLITE, new UnitStats() { Hull = 200, Shield = 1, Weapon = 1, CrystalCost = 2000, DeuteriumCost = 500 } },
         { UnitType.COLONY_SHIP, new UnitStats() { Speed = 2500, Cargo = 7500, FuelConsumption = 1000, Hull = 3000, Shield = 100, Weapon = 50, MetalCost = 10000, CrystalCost = 20000, DeuteriumCost = 10000, Energy = 3 } },

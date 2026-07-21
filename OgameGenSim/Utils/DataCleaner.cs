@@ -98,7 +98,7 @@ public static class DataCleaner
 
         var loot = (playerInformation.Resources.Metal + 
             playerInformation.Resources.Crystal + 
-            playerInformation.Resources.Deuterium) / (playerInformation.LootPercentage / 100);
+            playerInformation.Resources.Deuterium) / (playerInformation.LootPercentage / 100.0);
             
         return new Player()
         {
@@ -113,7 +113,7 @@ public static class DataCleaner
             Crystal = playerInformation.Resources.Crystal,
             Deuterium = playerInformation.Resources.Deuterium,
             LootPercentage = playerInformation.LootPercentage,
-            PossibleLoot = loot,
+            PossibleLoot = Convert.ToInt64(loot),
             UnitTypeAmounts = unitAmounts,
             Units = units
         };
@@ -130,7 +130,7 @@ public static class DataCleaner
     /// <param name="cargoUnit">Unit type to be used as cargo ship for the attackers</param>
     /// <param name="universeFuelConsumptionModifier">Universe fuel consumption modifier</param>
     /// <returns>Clean data to send to the simulator</returns>
-    private static Player GetCleanAttackerData(PlayerInformation playerInformation, int lootPercentage, int loot, int id, List<UnitType> attackerTypes, int divisor, UnitType cargoUnit, double universeFuelConsumptionModifier)
+    private static Player GetCleanAttackerData(PlayerInformation playerInformation, int lootPercentage, long loot, int id, List<UnitType> attackerTypes, int divisor, UnitType cargoUnit, double universeFuelConsumptionModifier)
     {
         //Solar statllites are a ship so we have to whipe the out from the attacker unit list
         var shipsToAdd = playerInformation.Ships.Where(x => x.Key != UnitType.SOLAR_SATELLITE)

@@ -13,6 +13,8 @@ public class BattleStatisticsService
     public BattleStatistics? BestStatistics { get; set; }
     public double BestFitness { get; set; }
     public List<DebugStuff> DebugStuff { get; set; } = [];
+    public DebriStatistics? DebriStatistics { get; set; }
+
 
     
     public static readonly Dictionary<MainFleetComposition, UnitType[]> FleetCompositionToUnitTypeMapping = 
@@ -80,23 +82,38 @@ public class BattleStatisticsService
 
     public double ComputeFitness(FleetComposition fleetComposition, BattleStatistics currentStatistics)
     {
+        DebriStatistics = new();
         var firstAttacker = currentStatistics.Attackers.First();
 
         long unitsLoss = 0;
 
         var energy = 0;
 
+
         foreach (var lostType in currentStatistics.GlobalAttackersLostAmount)
         {
-            if (UnitDefaultValues.DefaultValues.TryGetValue(lostType.Key, out var defaultValue))
+            if (UnitDefaultValues.DefaultValues.TryGetValue(lostType.Key, out var defaultValue) && lostType.Value > 0)
             {
                 unitsLoss += (defaultValue.MetalCost * lostType.Value) +
                             (defaultValue.CrystalCost * lostType.Value * 2) +
                             (defaultValue.DeuteriumCost * lostType.Value * 3);
 
+                DebriStatistics.AttackersMetalLoss += defaultValue.MetalCost * lostType.Value;
+                DebriStatistics.AttackersCrystalLoss += defaultValue.CrystalCost * lostType.Value;
+                DebriStatistics.AttackersDeuteriumLoss += defaultValue.DeuteriumCost * lostType.Value; 
+
                 energy += defaultValue.Energy * lostType.Value;
             }
-            
+        }
+
+        foreach (var lostType in currentStatistics.GlobalDefendersLostAmount)
+        {
+            if (UnitDefaultValues.DefaultValues.TryGetValue(lostType.Key, out var defaultValue) && lostType.Value > 0)
+            {
+                DebriStatistics.DefendersMetalLoss += defaultValue.MetalCost * lostType.Value;
+                DebriStatistics.DefendersCrystalLoss += defaultValue.CrystalCost * lostType.Value;
+                DebriStatistics.DefendersDeuteriumLoss += defaultValue.DeuteriumCost * lostType.Value; 
+            }
         }
 
         var statsAttackers = currentStatistics.Attackers.SelectMany(x => x.UnitTypeStats);
@@ -208,4 +225,14 @@ public class SimulationContext
     public IReadOnlyList<MainFleetComposition> MainComposition { get; set; } = [];
     public int Divisor { get; set; }
     public double Fitness { get; set; }
+}
+
+public class DebriStatistics
+{
+    public long AttackersMetalLoss { get; set; }
+    public long AttackersCrystalLoss { get; set; }
+    public long AttackersDeuteriumLoss { get; set; }
+    public long DefendersMetalLoss { get; set; }
+    public long DefendersCrystalLoss { get; set; }
+    public long DefendersDeuteriumLoss { get; set; }
 }

@@ -49,6 +49,9 @@ public class BattleStatistics
     public List<CombatUnit> SurvivingAttackerUnits { get; set; } = [];
     public List<CombatUnit> SurvivingDefenderUnits { get; set; } = [];
     public double Loot { get; set; }
+    public double MetalLoot { get; set; }
+    public double CrystalLoot { get; set; }
+    public double DeuteriumLoot { get; set; }
 
     public BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, 
                             Dictionary<UnitType, int> defendersGlobalUnitAmount, 

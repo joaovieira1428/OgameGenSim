@@ -19,7 +19,7 @@ public class Player
     public Dictionary<UnitType, UnitStats> UnitTypeStats { get; set; } = [];
     public List<CombatUnit> Units { get; set; } = [];
     public int LootPercentage { get; set; }
-    public int PossibleLoot { get; set; }
+    public long PossibleLoot { get; set; }
 }
 
 //TODO: Save Plunder somewhere else
