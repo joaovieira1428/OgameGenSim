@@ -149,6 +149,22 @@ public class Loader(HttpClient client)
         try
         {
             JsonNode.Parse(attackerJson);
+
+            var jsonObject = JsonNode.Parse(attackerJson);
+
+            var combatInformation = jsonObject.Deserialize<PlayerInformation>(new JsonSerializerOptions()
+            {
+                PropertyNameCaseInsensitive = true
+            });
+            
+            if(combatInformation == null)
+            {
+                Console.WriteLine($"Warning: Failed to deserialize attacker data for attacker {index}. Please check the input format.");
+
+                attackerJson = Console.ReadLine();
+
+                return ParseAttackerData(attackerJson, index);
+            }
         }
         catch (JsonException)
         {
@@ -159,23 +175,9 @@ public class Loader(HttpClient client)
 
             return ParseAttackerData(attackerJson, index);
         }
-        var jsonObject = JsonNode.Parse(attackerJson);
-
-        var combatInformation = jsonObject.Deserialize<PlayerInformation>(new JsonSerializerOptions()
-        {
-            PropertyNameCaseInsensitive = true
-        });
         
-        if(combatInformation == null)
-        {
-            Console.WriteLine($"Warning: Failed to deserialize attacker data for attacker {index}. Please check the input format.");
-
-            attackerJson = Console.ReadLine();
-
-            return ParseAttackerData(attackerJson, index);
-        }
      
-        return combatInformation;
+        return new PlayerInformation();
     }
     #endregion
 }

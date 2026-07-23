@@ -7,6 +7,7 @@
 @using OgameGenSim.StateMachine
 @using OgameGenSim.Classes
 @using OgameGenSim.Classes.Views
+@using OgameGenSim.Utils
 @using OgameGenSim.Services
 @using OgameSimulatorPack.SimUtilities
 @using RazorConsole.Components
@@ -26,10 +27,22 @@
                 <TextInput FocusedBorderColor="Color.Blue" Value="@_defendersNumber" ValueChanged="OnDefendersChanged" Label="Number of defenders"></TextInput>
                 <Newline></Newline>
 
-                <FlexBox Justify="FlexJustify.SpaceBetween">
-                    <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="@(() => Nav.NavigateTo("/"))"></TextButton>
-                    <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
-                </FlexBox>
+                @if(isError){
+                    <Markup Foreground="Color.Red" Content="Number of attackers and defenders have to be bigger than 0."></Markup>
+
+                    <Newline></Newline>
+
+                    <FlexBox Justify="FlexJustify.SpaceBetween">
+                        <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="@(() => Nav.NavigateTo("/"))"></TextButton>
+                        <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
+                    </FlexBox>
+                }else{
+                    <FlexBox Justify="FlexJustify.SpaceBetween">
+                        <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="@(() => Nav.NavigateTo("/"))"></TextButton>
+                        <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
+                    </FlexBox>
+                }
+
             </Rows>
         </Panel>
     </Align>
@@ -43,10 +56,20 @@
                 <TextInput FocusedBorderColor="Color.Blue" Value="@_defendersAPI[0]" ValueChanged="@(value => OnDefendersAPIChanged(value, 0))" Label="@("Defender")"></TextInput>
                 <Newline></Newline>
 
-                <FlexBox Justify="FlexJustify.SpaceBetween">
-                    <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
-                    <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
-                </FlexBox>
+                @if(isError){
+                    <Markup Foreground="Color.Red" Content="Attackers or Defenders can't be empty."></Markup>
+                    <Newline></Newline>
+                    
+                    <FlexBox Justify="FlexJustify.SpaceBetween">
+                        <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                        <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPageAPI1"></TextButton>
+                    </FlexBox>
+                }else{
+                    <FlexBox Justify="FlexJustify.SpaceBetween">
+                        <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                        <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPageAPI1"></TextButton>
+                    </FlexBox>
+                }
             </Rows>
         </Panel>
     </Align>
@@ -67,10 +90,20 @@
                 }
                 <Newline></Newline>
 
-                <FlexBox Justify="FlexJustify.SpaceBetween">
+                @if(isError){
+                    <Markup Foreground="Color.Red" Content="Attackers or Defenders can't be empty."></Markup>
+                    <Newline></Newline>
+
+                                    <FlexBox Justify="FlexJustify.SpaceBetween">
                     <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
-                    <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
-                </FlexBox>
+                        <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
+                    </FlexBox>
+                }else{
+                    <FlexBox Justify="FlexJustify.SpaceBetween">
+                        <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                        <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
+                    </FlexBox>
+                }
             </Rows>
         </Panel>
     </Align>
@@ -88,12 +121,12 @@
                     <CheckBox @bind-Value="_isAccountingSpeed" Label="Use speed to decide"></CheckBox>
 
                     <FlexBox Justify="FlexJustify.SpaceBetween">
-                        <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                        <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPageMainFleetComposition"></TextButton>
                         <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
                     </FlexBox>
                 }else{
                     <FlexBox Justify="FlexJustify.SpaceBetween">
-                        <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                        <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPageMainFleetComposition"></TextButton>
                         <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
                     </FlexBox>
                 } 
@@ -123,15 +156,25 @@
                     <CheckBox @bind-Value="_isAllPathFindersAttackerComposition" Label="Send all PathFinders"></CheckBox>
                     <Newline></Newline>
                 
-                    <Markup Background="Color.DarkOrange3" Content="Note* - Steal Only will send enough units to steal + 20% for losses"></Markup>
+                    <Markup Background="Color.DarkOrange3" Content="Note* - Steal Only will send enough units to steal + 20% for losses (unless 'Number of units to send' has a value)")"></Markup>
                     <Markup Background="Color.DarkOrange3" Content="Note** - Send all amounts will be adjusted by the simulator like any other fleet type"></Markup>
                     <Markup Background="Color.DarkOrange3" Content="Note*** - Send all [Type] will take priority over the Cargo type to steal"></Markup>
                     <Newline></Newline>
 
-                    <FlexBox Justify="FlexJustify.SpaceBetween">
-                        <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
-                        <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
-                    </FlexBox>
+                    @if(isError){
+                        <Markup Foreground="Color.Red" Content="Select at least one fleet type."></Markup>
+                        <Newline></Newline>
+
+                        <FlexBox Justify="FlexJustify.SpaceBetween">
+                            <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                            <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPageFleetComposition2"></TextButton>
+                        </FlexBox>
+                    }else{
+                        <FlexBox Justify="FlexJustify.SpaceBetween">
+                            <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                            <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPageFleetComposition2"></TextButton>
+                        </FlexBox>
+                    }
                 }else{
                     <CheckBox @bind-Value="_isAllSmallCargosAttackerComposition" Label="Send all Small Cargos"></CheckBox>
                     <CheckBox @bind-Value="_isAllLargeCargosAttackerComposition" Label="Send all Large Cargos"></CheckBox>
@@ -143,10 +186,20 @@
                     <Markup Background="Color.DarkOrange3" Content="Note*** - Send all [Type] will take priority over the Cargo type to steal"></Markup>
                     <Newline></Newline>
 
-                    <FlexBox Justify="FlexJustify.SpaceBetween">
-                        <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
-                        <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPage"></TextButton>
-                    </FlexBox>
+                    @if(isError){
+                        <Markup Foreground="Color.Red" Content="Select at least one fleet type."></Markup>
+                        <Newline></Newline>
+
+                        <FlexBox Justify="FlexJustify.SpaceBetween">
+                            <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                            <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPageFleetComposition2"></TextButton>
+                        </FlexBox>
+                    }else{
+                        <FlexBox Justify="FlexJustify.SpaceBetween">
+                            <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
+                            <TextButton FocusedColor="Color.Blue" Content="Next" OnClick="NextSimPageFleetComposition2"></TextButton>
+                        </FlexBox>
+                    }
                 }
             </Rows>
         </Panel>
@@ -173,10 +226,17 @@
                     <CheckBox @bind-Value="_isAllPathFindersDefenderComposition" Label="Send all PathFinders"></CheckBox>
                     <Newline></Newline>
 
+                    <Markup Background="Color.DarkOrange3" Content="Note* - This fleet composition only counts for ACS Defend"></Markup>
+                    <Newline></Newline>
+
                     @if(_loading){
                         <Spinner Message="@LoadingQuotes.GetRandomQuote()"></Spinner>
                     }
-
+                    
+                    @if(isError){
+                        <Markup Foreground="Color.Red" Content="Select at least one fleet type."></Markup>
+                        <Newline></Newline>
+                    }
 
                     <FlexBox Justify="FlexJustify.SpaceBetween">
                             <TextButton FocusedColor="Color.Blue" Content="Back" OnClick="PreviousSimPage"></TextButton>
@@ -185,6 +245,14 @@
                 }else{
                     @if(_loading){
                         <Spinner Message="@LoadingQuotes.GetRandomQuote()"></Spinner>
+                    }
+
+                    <Markup Background="Color.DarkOrange3" Content="Note* - This fleet composition only counts for ACS Defend"></Markup>
+                    <Newline></Newline>
+
+                    @if(isError){
+                        <Markup Foreground="Color.Red" Content="Select at least one fleet type."></Markup>
+                        <Newline></Newline>
                     }
 
                     <FlexBox Justify="FlexJustify.SpaceBetween">
@@ -198,6 +266,7 @@
 }
 
 @code {
+    private bool isError = false;
     private bool _loading = false;
     private string _attackersNumber = string.Empty;
     private int attackersNumber = 0;
@@ -243,14 +312,36 @@
         _selectedDefenderFleetComposition = value;
     }
 
-    private async Task OnAttackersAPIChanged(string? value, int index){
+    private async Task OnAttackersAPIChanged(string? value, int index){        
         await Task.Delay(200);
         _attackersAPI[index] = value ?? string.Empty;
+        isError = IsAPIError(index);
     } 
 
-    private async Task OnDefendersAPIChanged(string? value, int index){
+    private async Task OnDefendersAPIChanged(string? value, int index){ 
         await Task.Delay(200);
         _defendersAPI[index] = value ?? string.Empty;
+        isError = IsAPIError(index);
+    }
+
+    private bool IsAPIError(int index){
+        if(index == 0){
+            return _attackersAPI[index].IsWhiteSpaceOrNullOrEmpty() || _defendersAPI[index].IsWhiteSpaceOrNullOrEmpty(); 
+        }
+
+        foreach(var item in _attackersAPI){
+            if(item.IsWhiteSpaceOrNullOrEmpty()){
+                return true;
+            }     
+        }
+
+        foreach(var item in _defendersAPI){
+            if(item.IsWhiteSpaceOrNullOrEmpty()){
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     private List<string> RecreateFleetApiList(int size){
@@ -266,9 +357,12 @@
     private Task OnAttackersChanged(string? value)
     {
         _attackersNumber = value ?? string.Empty;
-        int.TryParse(_attackersNumber, out attackersNumber);
-
-        _attackersAPI = RecreateFleetApiList(attackersNumber);
+        if(int.TryParse(_attackersNumber, out attackersNumber)){
+            _attackersAPI = RecreateFleetApiList(attackersNumber);
+            isError = attackersNumber == 0 || defendersNumber == 0;
+        }else{
+            isError = true;
+        }
 
         StateHasChanged();
         return Task.CompletedTask;
@@ -277,10 +371,13 @@
     private Task OnDefendersChanged(string? value)
     {
         _defendersNumber = value ?? string.Empty;   
-        int.TryParse(_defendersNumber, out defendersNumber);  
-
-        _defendersAPI = RecreateFleetApiList(defendersNumber);
-
+        if(int.TryParse(_defendersNumber, out defendersNumber)){
+            _defendersAPI = RecreateFleetApiList(defendersNumber);
+            isError = attackersNumber == 0 || defendersNumber == 0;
+        }else{
+            isError = true;
+        }
+        
         StateHasChanged();
         return Task.CompletedTask;
     }
@@ -309,45 +406,100 @@
 
     private async void LoadPlayers()
     {
-        if(attackersNumber > 0 && defendersNumber > 0){
-            _loading = true;
-            StateHasChanged();
+        isError = false;
 
-            DirtyCombatInformation dirtyData = await LoaderService.LoadCombatInformation(_attackersAPI, _defendersAPI);
+        if(attackersNumber == 0 && defendersNumber == 0) return;
 
-            FleetComposition attackerComposition = new FleetComposition{
-                MainFleetComposition = _selectedAttackerFleetComposition,
-                IsAllCombinations = _isAllCombinations,
-                IsAccountingSpeed = _isAccountingSpeed,
-                SecondaryFleetComposition = new SecondaryFleetComposition{
-                    IsStealComposition = _isStealComposition,
-                    CargoType = _isStealComposition ? stealCargoType : UnitType.NONE,
-                    UnitNumber = stealUnitNumber,
-                    IsAllSmallCargosComposition = _isAllSmallCargosAttackerComposition,
-                    IsAllLargeCargosComposition = _isAllLargeCargosAttackerComposition,
-                    IsAllPathFindersComposition = _isAllPathFindersAttackerComposition
-                }
-            };
+        _loading = true;
+        StateHasChanged();
 
-            FleetComposition defenderFleetComposition = _isSameAsAttackerComposition ? attackerComposition : new FleetComposition{
-                MainFleetComposition = _selectedDefenderFleetComposition,
-                SecondaryFleetComposition = new SecondaryFleetComposition{
-                    IsAllSmallCargosComposition = _isAllSmallCargosDefenderComposition,
-                    IsAllLargeCargosComposition = _isAllLargeCargosDefenderComposition,
-                    IsAllPathFindersComposition = _isAllPathFindersDefenderComposition
-                }
-            };
+        DirtyCombatInformation dirtyData = await LoaderService.LoadCombatInformation(_attackersAPI, _defendersAPI);
 
-            BattleStatisticsService.BestStatistics = BattleStatisticsService.DoBattles(attackerComposition, defenderFleetComposition, dirtyData, 5);
+        FleetComposition attackerComposition = new FleetComposition{
+            MainFleetComposition = _selectedAttackerFleetComposition,
+            IsAllCombinations = _isAllCombinations,
+            IsAccountingSpeed = _isAccountingSpeed,
+            SecondaryFleetComposition = new SecondaryFleetComposition{
+                IsStealComposition = _isStealComposition,
+                CargoType = _isStealComposition ? stealCargoType : UnitType.NONE,
+                UnitNumber = stealUnitNumber,
+                IsAllSmallCargosComposition = _isAllSmallCargosAttackerComposition,
+                IsAllLargeCargosComposition = _isAllLargeCargosAttackerComposition,
+                IsAllPathFindersComposition = _isAllPathFindersAttackerComposition
+            }
+        };
 
-            Nav.NavigateTo("/battleStatistics");
-        } 
+        FleetComposition defenderFleetComposition = _isSameAsAttackerComposition ? attackerComposition : new FleetComposition{
+            MainFleetComposition = _selectedDefenderFleetComposition,
+            SecondaryFleetComposition = new SecondaryFleetComposition{
+                IsAllSmallCargosComposition = _isAllSmallCargosDefenderComposition,
+                IsAllLargeCargosComposition = _isAllLargeCargosDefenderComposition,
+                IsAllPathFindersComposition = _isAllPathFindersDefenderComposition
+            }
+        };
+
+        BattleStatisticsService.BestStatistics = BattleStatisticsService.DoBattles(attackerComposition, defenderFleetComposition, dirtyData, 5);
+
+        Nav.NavigateTo("/battleStatistics");
     }
 
-    private void NextSimPage(){
+
+
+    private void NextSimPageAPI1(){
+        if(isError) return;
+
         if(BattleSimStateMachine.CurrentState == BSimState.PlayerAPIs1 && attackersNumber == 1 && defendersNumber == 1){
             BattleSimStateMachine.ChangeState(BSimTrigger.Next);
         }
+
+        NextSimPage();
+    }
+
+    private void PreviousSimPageMainFleetComposition(){
+        if(isError) return;
+
+        if(BattleSimStateMachine.CurrentState == BSimState.MainFleetComposition && attackersNumber == 1 && defendersNumber == 1){
+            BattleSimStateMachine.ChangeState(BSimTrigger.Previous);
+        }
+
+        PreviousSimPage();
+    }
+
+    private void NextSimPageFleetComposition2(){
+
+        bool isStealInvalid = !_isStealComposition || (_isStealComposition && stealCargoType == UnitType.NONE);
+
+        if(_selectedAttackerFleetComposition.Count() == 0
+            && isStealInvalid
+            && !_isAllSmallCargosAttackerComposition 
+            && !_isAllLargeCargosAttackerComposition
+            && !_isAllPathFindersAttackerComposition){
+                isError = true;
+                return;
+        }else{
+            isError = false;
+        }
+
+        if(defendersNumber == 1) LoadPlayers();
+         
+        NextSimPage();
+    }
+
+    private void NextSimPageDefenseFleetComposition(){
+        if(_selectedDefenderFleetComposition.Count() == 0
+            && !_isAllSmallCargosDefenderComposition 
+            && !_isAllLargeCargosDefenderComposition
+            && !_isAllPathFindersDefenderComposition){
+                isError = true;
+                return;
+        }
+        isError = false;
+        LoadPlayers();
+    }
+
+
+    private void NextSimPage(){
+        if(isError) return;
 
         var state = BattleSimStateMachine.ChangeState(BSimTrigger.Next);
         StateHasChanged();
@@ -355,9 +507,7 @@
     }
 
     private void PreviousSimPage(){
-        if(BattleSimStateMachine.CurrentState == BSimState.MainFleetComposition && attackersNumber == 1 && defendersNumber == 1){
-            BattleSimStateMachine.ChangeState(BSimTrigger.Previous);
-        }
+        isError = false;
 
         var state = BattleSimStateMachine.ChangeState(BSimTrigger.Previous);
         StateHasChanged();
