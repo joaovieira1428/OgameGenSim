@@ -52,6 +52,9 @@ public class BattleStatistics
     public double MetalLoot { get; set; }
     public double CrystalLoot { get; set; }
     public double DeuteriumLoot { get; set; }
+    public double PossibleMetalLoot { get; set; }
+    public double PossibleCrystalLoot { get; set; }
+    public double PossibleDeuteriumLoot { get; set; }
 
     public BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, 
                             Dictionary<UnitType, int> defendersGlobalUnitAmount, 

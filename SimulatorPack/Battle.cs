@@ -114,6 +114,10 @@ public class Battle()
 
         double lootMultiplier = firstDefender.LootPercentage / 100.0;
 
+        battleStatistics.PossibleMetalLoot = firstDefender.Metal / lootMultiplier;
+        battleStatistics.PossibleCrystalLoot = firstDefender.Crystal / lootMultiplier;
+        battleStatistics.PossibleDeuteriumLoot = firstDefender.Deuterium / lootMultiplier;;
+
         if (cargoCapacity >= firstAttacker.PossibleLoot)
         { 
             battleStatistics.Loot = firstDefender.Metal / lootMultiplier + 

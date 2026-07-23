@@ -4,14 +4,20 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Web
 @using RazorConsole.Components
+@using System.Globalization
 
 @foreach(var unit in GlobalPlayerAmount){
     <div>@unit.Key</div>
-    <div>-@LostPlayerAmount[unit.Key]</div>
-    <div>: @unit.Value</div>
+    <div>-@LostPlayerAmount[unit.Key].ToString("N0", numberFormat)</div>
+    <div>: @unit.Value.ToString("N0", numberFormat)</div>
 }
 
 @code {
+    private readonly NumberFormatInfo numberFormat = new NumberFormatInfo
+    {
+        NumberGroupSeparator = ".",
+    };
+
     [Parameter]
     public Dictionary<UnitType, int> GlobalPlayerAmount {get;set;} = [];
 

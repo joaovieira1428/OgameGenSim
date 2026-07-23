@@ -9,6 +9,8 @@
 @using RazorConsole.Components
 @using Spectre.Console
 @using RazorConsole.Core.Renderables
+@using System.Globalization
+
 @inject NavigationManager Nav
 @inject OgameGenSim.Services.BattleStatisticsService BattleStatisticsService
 
@@ -79,9 +81,9 @@
                                         <Newline></Newline>
                                 </Rows>
                                 <Rows>
-                                    <Markup Content="@BattleStatisticsService.BestStatistics.MetalDebri.ToString()"></Markup>
-                                    <Markup Content="@BattleStatisticsService.BestStatistics.CrystalDebri.ToString()"></Markup>
-                                    <Markup Content="@BattleStatisticsService.BestStatistics.DeuteriumDebri.ToString()"></Markup>
+                                    <Markup Content="@BattleStatisticsService.BestStatistics.MetalDebri.ToString("N0", numberFormat)"></Markup>
+                                    <Markup Content="@BattleStatisticsService.BestStatistics.CrystalDebri.ToString("N0", numberFormat)"></Markup>
+                                    <Markup Content="@BattleStatisticsService.BestStatistics.DeuteriumDebri.ToString("N0", numberFormat)"></Markup>
                                     <Newline></Newline>
                                 </Rows>
                             </Panel>
@@ -97,20 +99,20 @@
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td>🔨 Metal: @BattleStatisticsService.DebriStatistics.AttackersMetalLoss</td>
-                                            <td>🔨 Metal: @attackersMetalProfit</td>
+                                            <td>🔨 Metal: @BattleStatisticsService.DebriStatistics.AttackersMetalLoss.ToString("N0", numberFormat)</td>
+                                            <td>🔨 Metal: @attackersMetalProfit.ToString("N0", numberFormat)</td>
                                         </tr>
                                         <tr>
-                                            <td>💎 Crystal: @BattleStatisticsService.DebriStatistics.AttackersCrystalLoss</td>
-                                            <td>💎 Crystal: @attackersCrystalProfit</td>
+                                            <td>💎 Crystal: @BattleStatisticsService.DebriStatistics.AttackersCrystalLoss.ToString("N0", numberFormat)</td>
+                                            <td>💎 Crystal: @attackersCrystalProfit.ToString("N0", numberFormat)</td>
                                         </tr>
                                         <tr>
-                                            <td>⛽ Deuterium: @BattleStatisticsService.DebriStatistics.AttackersDeuteriumLoss</td>
-                                            <td>⛽ Deuterium: @attackersDeuteriumProfit</td>
+                                            <td>⛽ Deuterium: @BattleStatisticsService.DebriStatistics.AttackersDeuteriumLoss.ToString("N0", numberFormat)</td>
+                                            <td>⛽ Deuterium: @attackersDeuteriumProfit.ToString("N0", numberFormat)</td>
                                         </tr>
                                         <tr>
-                                            <td>Total: @attackersTotalLoss</td>
-                                            <td>Total: @attackersTotalProfit</td>
+                                            <td>Total: @attackersTotalLoss.ToString("N0", numberFormat)</td>
+                                            <td>Total: @attackersTotalProfit.ToString("N0", numberFormat)</td>
                                         </tr>
                                     </tbody>
                                 </Table>
@@ -127,20 +129,50 @@
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td>🔨 Metal: @BattleStatisticsService.DebriStatistics.DefendersMetalLoss</td>
-                                            <td>🔨 Metal: @defendersMetalProfit</td>
+                                            <td>🔨 Metal: @BattleStatisticsService.DebriStatistics.DefendersMetalLoss.ToString("N0", numberFormat)</td>
+                                            <td>🔨 Metal: @defendersMetalProfit.ToString("N0", numberFormat)</td>
                                         </tr>
                                         <tr>
-                                            <td>💎 Crystal: @BattleStatisticsService.DebriStatistics.DefendersCrystalLoss</td>
-                                            <td>💎 Crystal: @defendersCrystalProfit</td>
+                                            <td>💎 Crystal: @BattleStatisticsService.DebriStatistics.DefendersCrystalLoss.ToString("N0", numberFormat)</td>
+                                            <td>💎 Crystal: @defendersCrystalProfit.ToString("N0", numberFormat)</td>
                                         </tr>
                                         <tr>
-                                            <td>⛽ Deuterium: @BattleStatisticsService.DebriStatistics.DefendersDeuteriumLoss</td>
-                                            <td>⛽ Deuterium: @defendersDeuteriumProfit</td>
+                                            <td>⛽ Deuterium: @BattleStatisticsService.DebriStatistics.DefendersDeuteriumLoss.ToString("N0", numberFormat)</td>
+                                            <td>⛽ Deuterium: @defendersDeuteriumProfit.ToString("N0", numberFormat)</td>
                                         </tr>
                                         <tr>
-                                            <td>Total: @defendersTotalLoss</td>
-                                            <td>Total: @defendersTotalProfit</td>
+                                            <td>Total: @defendersTotalLoss.ToString("N0", numberFormat)</td>
+                                            <td>Total: @defendersTotalProfit.ToString("N0", numberFormat)</td>
+                                        </tr>
+                                    </tbody>
+                                </Table>
+                            </Panel>
+                        </FlexBox>
+                        <FlexBox>
+                            <Panel Title="Plunder">
+                                <Table Expand="true" Border="TableBorder.Heavy">
+                                    <thead>
+                                        <tr>
+                                            <th data-align="left">Captured</th>
+                                            <th data-align="left">Possible</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>🔨 Metal: @BattleStatisticsService.BestStatistics.MetalLoot.ToString("N0", numberFormat)</td>
+                                            <td>🔨 Metal: @BattleStatisticsService.BestStatistics.PossibleMetalLoot.ToString("N0", numberFormat)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>💎 Crystal: @BattleStatisticsService.BestStatistics.CrystalLoot.ToString("N0", numberFormat)</td>
+                                            <td>💎 Crystal: @BattleStatisticsService.BestStatistics.PossibleCrystalLoot.ToString("N0", numberFormat)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>⛽ Deuterium: @BattleStatisticsService.BestStatistics.DeuteriumLoot.ToString("N0", numberFormat)</td>
+                                            <td>⛽ Deuterium: @BattleStatisticsService.BestStatistics.PossibleDeuteriumLoot.ToString("N0", numberFormat)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Total: @totalLoot.ToString("N0", numberFormat)</td>
+                                            <td>Total: @totalPossibleLoot.ToString("N0", numberFormat)</td>
                                         </tr>
                                     </tbody>
                                 </Table>
@@ -150,13 +182,13 @@
                 </Padder>
             </FlexBox>
             <Rows>
-                <Markup Content="@($"The Attacker fires a total of {shotsFiredByAttackers} shots at the Defender with a total strength of {totalAttackersDemage}.")"></Markup>
+                <Markup Content="@($"The Attacker fires a total of {shotsFiredByAttackers.ToString("N0", numberFormat)} shots at the Defender with a total strength of {totalAttackersDemage}.")"></Markup>
                 <Newline></Newline>
-                <Markup Content="@($"The defender's shields absorb {totalDefendersShieldAbsorption} damage points of demage.")"></Markup>
+                <Markup Content="@($"The defender's shields absorb {totalDefendersShieldAbsorption.ToString("N0", numberFormat)} damage points of demage.")"></Markup>
                 <Newline></Newline>
-                <Markup Content="@($"The Defender fires a total of {shotsFiredByDefenders} shots at the Attacker with a total strength of {totalDefendersDemage}.")"></Markup>
+                <Markup Content="@($"The Defender fires a total of {shotsFiredByDefenders.ToString("N0", numberFormat)} shots at the Attacker with a total strength of {totalDefendersDemage}.")"></Markup>
                 <Newline></Newline>
-                <Markup Content="@($"The attacker's shields absorb {totalAttackersShieldAbsorption} damage points of demage.")"></Markup>
+                <Markup Content="@($"The attacker's shields absorb {totalAttackersShieldAbsorption.ToString("N0", numberFormat)} damage points of demage.")"></Markup>
             </Rows>
         </Panel>
     </Align>
@@ -169,11 +201,15 @@ else
 
 
 @code {
+    private readonly NumberFormatInfo numberFormat = new NumberFormatInfo
+    {
+        NumberGroupSeparator = ".",
+    };
+
     private Dictionary<UnitType, int> attackerAmount = Utils.GetInitialUnitTypeAmounts();
     private Dictionary<UnitType, int> defenderAmount = Utils.GetInitialUnitTypeAmounts();
     private Dictionary<UnitType, int> attackerLostAmount = Utils.GetInitialUnitTypeAmounts();
     private Dictionary<UnitType, int> defenderLostAmount = Utils.GetInitialUnitTypeAmounts();
-
     private int shotsFiredByAttackers = 0;
     private int shotsFiredByDefenders = 0;
     private double totalAttackersDemage = 0;
@@ -195,6 +231,8 @@ else
     private double defendersDeuteriumProfit;
     private long defendersTotalLoss;
     private double defendersTotalProfit;
+    private double totalPossibleLoot;
+    private double totalLoot;
 
     private List<string> attackerOptions = [];
     private List<string> defenderOptions = [];
@@ -331,6 +369,14 @@ else
             BattleStatisticsService.DebriStatistics.DefendersCrystalLoss +
             BattleStatisticsService.DebriStatistics.DefendersDeuteriumLoss;
         defendersTotalProfit = defendersMetalProfit + defendersCrystalProfit + defendersDeuteriumProfit;
+
+        totalLoot = BattleStatisticsService.BestStatistics.MetalLoot +
+                    BattleStatisticsService.BestStatistics.CrystalLoot +
+                    BattleStatisticsService.BestStatistics.DeuteriumLoot;
+
+        totalPossibleLoot = BattleStatisticsService.BestStatistics.PossibleMetalLoot +
+                    BattleStatisticsService.BestStatistics.PossibleCrystalLoot +
+                    BattleStatisticsService.BestStatistics.PossibleDeuteriumLoot;
 
         attackersResultLabel = BattleStatisticsService.BestStatistics.BattleResult == BattleResult.AttackerWon ? "✅" : "❌";
         defendersResultLabel = BattleStatisticsService.BestStatistics.BattleResult == BattleResult.DefenderWon ? "✅" : "❌";
