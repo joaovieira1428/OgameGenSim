@@ -190,6 +190,11 @@
                 <Newline></Newline>
                 <Markup Content="@($"The attacker's shields absorb {totalAttackersShieldAbsorption.ToString("N0", numberFormat)} damage points of demage.")"></Markup>
             </Rows>
+            <Newline></Newline>
+            <FlexBox Justify="FlexJustify.SpaceBetween">
+                <TextButton FocusedColor="Color.Blue" Content="Main Menu" OnClick="@(() => Nav.NavigateTo("/"))"></TextButton>
+                <TextButton FocusedColor="Color.Blue" Content="Next Simulation" OnClick="@(() => Nav.NavigateTo("/battleSimulator"))"></TextButton>
+            </FlexBox>
         </Panel>
     </Align>
 }
@@ -380,7 +385,7 @@ else
 
         attackersResultLabel = BattleStatisticsService.BestStatistics.BattleResult == BattleResult.AttackerWon ? "✅" : "❌";
         defendersResultLabel = BattleStatisticsService.BestStatistics.BattleResult == BattleResult.DefenderWon ? "✅" : "❌";
-            
+        drawResultLabel = BattleStatisticsService.BestStatistics.BattleResult == BattleResult.Draw ? "✅" : "❌";   
     }
     
     private void PopulateGlobalStatsByRound(RoundStatistics round){

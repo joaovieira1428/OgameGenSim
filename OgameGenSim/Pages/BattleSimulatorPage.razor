@@ -161,6 +161,10 @@
                     <Markup Background="Color.DarkOrange3" Content="Note*** - Send all [Type] will take priority over the Cargo type to steal"></Markup>
                     <Newline></Newline>
 
+                    @if(_loading){
+                        <Spinner Message="@LoadingQuotes.GetRandomQuote()"></Spinner>
+                    }
+
                     @if(isError){
                         <Markup Foreground="Color.Red" Content="Select at least one fleet type."></Markup>
                         <Newline></Newline>
@@ -185,6 +189,10 @@
                     <Markup Background="Color.DarkOrange3" Content="Note** - Send all amounts will be adjusted by the simulator like any other fleet type"></Markup>
                     <Markup Background="Color.DarkOrange3" Content="Note*** - Send all [Type] will take priority over the Cargo type to steal"></Markup>
                     <Newline></Newline>
+
+                    @if(_loading){
+                        <Spinner Message="@LoadingQuotes.GetRandomQuote()"></Spinner>
+                    }
 
                     @if(isError){
                         <Markup Foreground="Color.Red" Content="Select at least one fleet type."></Markup>
@@ -212,7 +220,7 @@
 @if(BattleSimStateMachine.CurrentState == BSimState.DefenseFleetComposition)
 {
     <Align Horizontal="HorizontalAlignment.Center">
-        <Panel Title="API (1) - Main Players" Width="80">
+        <Panel Title="Defender Fleet Composition" Width="80">
             <Rows>
                 <CheckBox @bind-Value="_isSameAsAttackerComposition" Label="Same as the attacker fleet composition"></CheckBox>
                 <Newline></Newline>
@@ -306,6 +314,10 @@
         {UnitType.PATHFINDER, "Pathfinder"}, 
     };
 
+    protected override void OnInitialized()
+    {
+        BattleSimStateMachine.CurrentState = BSimState.FleetNumber;
+    }
 
     
     private void OnSelectCompositionChanged(List<MainFleetComposition> value){
@@ -329,6 +341,10 @@
             return _attackersAPI[index].IsWhiteSpaceOrNullOrEmpty() || _defendersAPI[index].IsWhiteSpaceOrNullOrEmpty(); 
         }
 
+        return IsAPIErrorAPI2();
+    }
+
+    private bool IsAPIErrorAPI2(){
         foreach(var item in _attackersAPI){
             if(item.IsWhiteSpaceOrNullOrEmpty()){
                 return true;
@@ -340,7 +356,7 @@
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -438,15 +454,53 @@
             }
         };
 
-        BattleStatisticsService.BestStatistics = BattleStatisticsService.DoBattles(attackerComposition, defenderFleetComposition, dirtyData, 5);
+        BattleStatisticsService.BestStatistics = BattleStatisticsService.DoBattles(attackerComposition, defenderFleetComposition, dirtyData, 1);
 
         Nav.NavigateTo("/battleStatistics");
     }
 
 
 
+    private bool GetErrorState(){
+        switch(BattleSimStateMachine.CurrentState){
+            case BSimState.FleetNumber:
+                isError = attackersNumber == 0 || defendersNumber == 0;
+                break;
+            case BSimState.PlayerAPIs1:
+                isError = _attackersAPI[0].IsWhiteSpaceOrNullOrEmpty() || _defendersAPI[0].IsWhiteSpaceOrNullOrEmpty();
+                break;
+            case BSimState.PlayerAPIs2:
+                isError = IsAPIErrorAPI2();
+                break;
+            case BSimState.SecondaryFleetComposition:
+                bool isStealInvalid = !_isStealComposition || (_isStealComposition && stealCargoType == UnitType.NONE);
+                if(_selectedAttackerFleetComposition.Count() == 0
+                    && isStealInvalid
+                    && !_isAllSmallCargosAttackerComposition 
+                    && !_isAllLargeCargosAttackerComposition
+                    && !_isAllPathFindersAttackerComposition){
+                        isError = true;
+                }else{
+                    isError = false;
+                }
+                break;
+            case BSimState.DefenseFleetComposition:
+                if(_selectedDefenderFleetComposition.Count() == 0
+                && !_isAllSmallCargosDefenderComposition 
+                && !_isAllLargeCargosDefenderComposition
+                && !_isAllPathFindersDefenderComposition){
+                    isError = true;
+                }
+                isError = false;
+                break;
+        }
+
+        return isError;
+    }
+
+
     private void NextSimPageAPI1(){
-        if(isError) return;
+        if(GetErrorState()) return;
 
         if(BattleSimStateMachine.CurrentState == BSimState.PlayerAPIs1 && attackersNumber == 1 && defendersNumber == 1){
             BattleSimStateMachine.ChangeState(BSimTrigger.Next);
@@ -456,7 +510,7 @@
     }
 
     private void PreviousSimPageMainFleetComposition(){
-        if(isError) return;
+        if(GetErrorState()) return;
 
         if(BattleSimStateMachine.CurrentState == BSimState.MainFleetComposition && attackersNumber == 1 && defendersNumber == 1){
             BattleSimStateMachine.ChangeState(BSimTrigger.Previous);
@@ -467,7 +521,7 @@
 
     private void NextSimPageFleetComposition2(){
 
-        bool isStealInvalid = !_isStealComposition || (_isStealComposition && stealCargoType == UnitType.NONE);
+        @* bool isStealInvalid = !_isStealComposition || (_isStealComposition && stealCargoType == UnitType.NONE);
 
         if(_selectedAttackerFleetComposition.Count() == 0
             && isStealInvalid
@@ -478,28 +532,31 @@
                 return;
         }else{
             isError = false;
-        }
+        } *@
 
+        if(GetErrorState()) return;
         if(defendersNumber == 1) LoadPlayers();
-         
-        NextSimPage();
+        else NextSimPage();
     }
 
     private void NextSimPageDefenseFleetComposition(){
-        if(_selectedDefenderFleetComposition.Count() == 0
+        @* if(_selectedDefenderFleetComposition.Count() == 0
             && !_isAllSmallCargosDefenderComposition 
             && !_isAllLargeCargosDefenderComposition
             && !_isAllPathFindersDefenderComposition){
                 isError = true;
                 return;
         }
-        isError = false;
+        isError = false; *@
+
+        if(GetErrorState()) return;
+
         LoadPlayers();
     }
 
 
     private void NextSimPage(){
-        if(isError) return;
+        if(GetErrorState()) return;
 
         var state = BattleSimStateMachine.ChangeState(BSimTrigger.Next);
         StateHasChanged();

@@ -165,6 +165,7 @@ public class Loader(HttpClient client)
 
                 return ParseAttackerData(attackerJson, index);
             }
+            return combatInformation;
         }
         catch (JsonException)
         {
@@ -175,9 +176,6 @@ public class Loader(HttpClient client)
 
             return ParseAttackerData(attackerJson, index);
         }
-        
-     
-        return new PlayerInformation();
     }
     #endregion
 }

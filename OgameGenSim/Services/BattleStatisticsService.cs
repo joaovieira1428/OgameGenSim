@@ -53,7 +53,7 @@ public class BattleStatisticsService
           MaxDegreeOfParallelism = 8  
         };
 
-        int nextSimulation = 0;
+        int nextSimulation = -1;
 
         Parallel.For(0, 4, workerId =>
         {
@@ -67,7 +67,7 @@ public class BattleStatisticsService
                 var context = simulationContextList[index];
                 var cleanData = BuildFleetComposition(context.MainComposition, fleetComposition.SecondaryFleetComposition, defendersFleetComposition, dirtyData, context.Divisor);      
                 var statistics = simlator.DoBattle(cleanData);
-                context.Fitness =  ComputeFitness(fleetComposition, statistics);
+                context.Fitness =  ComputeFitness(fleetComposition, statistics, context.Divisor);
             }
         });
 
@@ -77,15 +77,19 @@ public class BattleStatisticsService
 
         var cleanData = BuildFleetComposition(bestFitnessContext.MainComposition, fleetComposition.SecondaryFleetComposition, defendersFleetComposition, dirtyData, bestFitnessContext.Divisor);      
         var statistics = simlator.DoBattle(cleanData);
+        BestFitness =  ComputeFitness(fleetComposition, statistics, 1);
+        
         return statistics;
     }
 
-    public double ComputeFitness(FleetComposition fleetComposition, BattleStatistics currentStatistics)
+    public double ComputeFitness(FleetComposition fleetComposition, BattleStatistics currentStatistics, int divisor)
     {
         DebriStatistics = new();
+        DebugStuff = [];
         var firstAttacker = currentStatistics.Attackers.First();
 
         long unitsLoss = 0;
+        long unitsLoss1 = 0;
 
         var energy = 0;
 
@@ -95,8 +99,12 @@ public class BattleStatisticsService
             if (UnitDefaultValues.DefaultValues.TryGetValue(lostType.Key, out var defaultValue) && lostType.Value > 0)
             {
                 unitsLoss += (defaultValue.MetalCost * lostType.Value) +
-                            (defaultValue.CrystalCost * lostType.Value * 2) +
-                            (defaultValue.DeuteriumCost * lostType.Value * 3);
+                            (defaultValue.CrystalCost * lostType.Value ) +
+                            (defaultValue.DeuteriumCost * lostType.Value );
+
+                unitsLoss1 += (defaultValue.MetalCost * lostType.Value) +
+                            (defaultValue.CrystalCost * lostType.Value) +
+                            (defaultValue.DeuteriumCost * lostType.Value);
 
                 DebriStatistics.AttackersMetalLoss += defaultValue.MetalCost * lostType.Value;
                 DebriStatistics.AttackersCrystalLoss += defaultValue.CrystalCost * lostType.Value;
@@ -116,17 +124,37 @@ public class BattleStatisticsService
             }
         }
 
+        var debriProfit = currentStatistics.MetalDebri + currentStatistics.CrystalDebri + currentStatistics.DeuteriumDebri;
+
+        var debriLoot = currentStatistics.MetalDebri + (currentStatistics.CrystalDebri * 2) + (currentStatistics.DeuteriumDebri * 3);
+
         var statsAttackers = currentStatistics.Attackers.SelectMany(x => x.UnitTypeStats);
 
         var deuteriumSpent = statsAttackers.Sum(x => x.Value.Fuel * x.Value.Amount);
 
-        var profit = (currentStatistics.Loot - unitsLoss - deuteriumSpent) / 1000;
+        var profit = (currentStatistics.Loot + debriLoot - unitsLoss - deuteriumSpent) / 1000;
 
         var speed = firstAttacker.UnitTypeStats.Min(x => x.Value.Speed);
 
+        var debufStuff = new DebugStuff()
+        {
+            DeuteriumCost = deuteriumSpent,
+            Divisor = divisor,
+            Energy = energy,
+            Fitness = fleetComposition.IsAccountingSpeed ? 
+                -speed * 0.3 - profit * 0.6 + energy * 0.1 :
+                -profit * 0.9 + energy * 0.1,
+            Loot = currentStatistics.Loot,
+            Profit = profit,
+            UnitsLoss = unitsLoss1,
+            DebriProfit = debriProfit
+        };
+
+        DebugStuff.Add(debufStuff);
+
         return fleetComposition.IsAccountingSpeed ? 
                 -speed * 0.3 - profit * 0.6 + energy * 0.1 :
-                -profit * 0.9 + energy * 0.1;;
+                -profit * 0.9 + energy * 0.1;
     }
 
     public SimCombatInformation BuildFleetComposition(IReadOnlyList<MainFleetComposition> mainFleetCompositionOptions, SecondaryFleetComposition secondaryFleetComposition, FleetComposition defendersFleetComposition, DirtyCombatInformation dirtyData, int fleetDivisor)
@@ -178,7 +206,7 @@ public class BattleStatisticsService
             {
                 var context = new SimulationContext()
                 {
-                    Divisor = divisor,
+                    Divisor = currentDivisor,
                     MainComposition = attackerComposition.MainFleetComposition
                 };
 
@@ -218,6 +246,7 @@ public class DebugStuff
     public double DeuteriumCost { get; set; }
     public double UnitsLoss { get; set; }
     public int Divisor { get; set; }
+    public long DebriProfit { get; set; }
 }
 
 public class SimulationContext
