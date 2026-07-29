@@ -48,11 +48,6 @@ public class BattleStatisticsService
         
         var simulationContextList = GetSimulationContexts(fleetComposition, fleetDivisor);
 
-        var options = new ParallelOptions()
-        {
-          MaxDegreeOfParallelism = 8  
-        };
-
         int nextSimulation = -1;
 
         Parallel.For(0, 4, workerId =>
@@ -164,6 +159,7 @@ public class BattleStatisticsService
         var defendersTypes = GetFleetTypes(defendersFleetComposition.MainFleetComposition, defendersFleetComposition.SecondaryFleetComposition);
 
         var newSimCombatInformation = DataCleaner.GetCleanData(dirtyData.Attackers, attackersTypes, dirtyData.Defenders, defendersTypes, dirtyData.Universe, fleetDivisor, secondaryFleetComposition.CargoType);
+        //var newSimCombatInformation = DataCleaner.GetCleanData(dirtyData.Attackers, dirtyData.Defenders, dirtyData.Universe);
 
         return newSimCombatInformation;
     }
