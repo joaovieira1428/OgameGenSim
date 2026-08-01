@@ -14,6 +14,7 @@ public class BattleStatisticsService
     public double BestFitness { get; set; }
     public List<DebugStuff> DebugStuff { get; set; } = [];
     public DebriStatistics? DebriStatistics { get; set; }
+    public double DeuteriumSpent;
 
 
     
@@ -81,6 +82,8 @@ public class BattleStatisticsService
     {
         DebriStatistics = new();
         DebugStuff = [];
+        DeuteriumSpent = 0;
+
         var firstAttacker = currentStatistics.Attackers.First();
 
         long unitsLoss = 0;
@@ -119,21 +122,21 @@ public class BattleStatisticsService
             }
         }
 
+        var statsAttackers = currentStatistics.Attackers.SelectMany(x => x.UnitTypeStats).ToList();
+
+        //DeuteriumSpent = statsAttackers.Sum(x => x.Value.FuelConsumption * x.Value.Amount);
+
         var debriProfit = currentStatistics.MetalDebri + currentStatistics.CrystalDebri + currentStatistics.DeuteriumDebri;
 
         var debriLoot = currentStatistics.MetalDebri + (currentStatistics.CrystalDebri * 2) + (currentStatistics.DeuteriumDebri * 3);
 
-        var statsAttackers = currentStatistics.Attackers.SelectMany(x => x.UnitTypeStats);
-
-        var deuteriumSpent = statsAttackers.Sum(x => x.Value.Fuel * x.Value.Amount);
-
-        var profit = (currentStatistics.Loot + debriLoot - unitsLoss - deuteriumSpent) / 1000;
+        var profit = (currentStatistics.Loot + debriLoot - unitsLoss - DeuteriumSpent) / 1000;
 
         var speed = firstAttacker.UnitTypeStats.Min(x => x.Value.Speed);
 
         var debufStuff = new DebugStuff()
         {
-            DeuteriumCost = deuteriumSpent,
+            DeuteriumCost = DeuteriumSpent,
             Divisor = divisor,
             Energy = energy,
             Fitness = fleetComposition.IsAccountingSpeed ? 
@@ -218,7 +221,7 @@ public class BattleStatisticsService
                 {
                     var context = new SimulationContext()
                     {
-                        Divisor = divisor,
+                        Divisor = currentDivisor,
                         MainComposition = item
                     };
 

@@ -12,7 +12,6 @@ public sealed class UnitStats
     public double Hull { get; init; }
     public double Cargo { get; init; }
     public double Speed { get; init; }
-    public double Fuel { get; init; }
     public int Energy { get; init; }
     public long MetalCost { get; init; }
     public long CrystalCost { get; init; }

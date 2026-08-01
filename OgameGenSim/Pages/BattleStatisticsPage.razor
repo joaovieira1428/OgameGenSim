@@ -78,12 +78,13 @@
                                     <Markup Content="🔨 Metal: "></Markup>
                                     <Markup Content="💎 Crystal:"></Markup>
                                     <Markup Content="⛽ Deuterium:"></Markup>
-                                        <Newline></Newline>
+                                    <Markup Content="⛽ Total:"></Markup>
                                 </Rows>
                                 <Rows>
                                     <Markup Content="@BattleStatisticsService.BestStatistics.MetalDebri.ToString("N0", numberFormat)"></Markup>
                                     <Markup Content="@BattleStatisticsService.BestStatistics.CrystalDebri.ToString("N0", numberFormat)"></Markup>
                                     <Markup Content="@BattleStatisticsService.BestStatistics.DeuteriumDebri.ToString("N0", numberFormat)"></Markup>
+                                    <Markup Content="@totalDebri.ToString("N0", numberFormat)"></Markup>
                                     <Newline></Newline>
                                 </Rows>
                             </Panel>
@@ -225,6 +226,7 @@ else
     private string defendersResultLabel = string.Empty;
     private string drawResultLabel = string.Empty;
 
+    private long totalDebri;
     private double attackersMetalProfit;
     private double attackersCrystalProfit;
     private double attackersDeuteriumProfit;
@@ -349,6 +351,10 @@ else
         totalDefendersDemage = BattleStatisticsService.BestStatistics.TotalDemageDealtByDefenders;
         totalAttackersShieldAbsorption = BattleStatisticsService.BestStatistics.DemageAbsorbedByAttackers;
         totalDefendersShieldAbsorption = BattleStatisticsService.BestStatistics.DemageAbsorbedByDefenders;
+
+        totalDebri = BattleStatisticsService.BestStatistics.MetalDebri +
+                    BattleStatisticsService.BestStatistics.CrystalDebri +
+                    BattleStatisticsService.BestStatistics.DeuteriumDebri;
 
         attackersMetalProfit = BattleStatisticsService.BestStatistics.MetalDebri +
             BattleStatisticsService.BestStatistics.MetalLoot -

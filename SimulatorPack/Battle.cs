@@ -105,7 +105,7 @@ public class Battle()
             //var asd = round.AttackersRoundStatistics.Players[0].UnitAmount;
         }
 
-        long cargoCapacity = (long) battleStatistics.SurvivingAttackerUnits.Sum(x => x.UnitStats.Cargo);
+        long cargoCapacity = (long) attackersUnits.Sum(x => x.UnitStats.Cargo);
 
         double loot = 0;
         
