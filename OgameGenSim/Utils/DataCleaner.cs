@@ -127,11 +127,12 @@ public static class DataCleaner
     /// <returns>Clean data to send to the simulator</returns>
     private static Player GetCleanAttackerData(PlayerInformation playerInformation, int lootPercentage, long loot, int id, List<UnitType> attackerTypes, int divisor, UnitType cargoUnit, double universeFuelConsumptionModifier)
     {
+        double divider = divisor / 5.0;
         //Solar statllites are a ship so we have to whipe the out from the attacker unit list
         var shipsToAdd = playerInformation.Ships.Where(x => x.Key != UnitType.SOLAR_SATELLITE)
         .ToDictionary(x => x.Key, x => new UnitStatistics()
         {
-            Amount = x.Value.Amount / divisor,
+            Amount = (int)Math.Ceiling(x.Value.Amount * divider),
             StructuralIntegrity = x.Value.StructuralIntegrity,
             Cargo = x.Value.Cargo,
             Fuel = x.Value.Fuel,

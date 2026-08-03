@@ -424,7 +424,7 @@
     {
         isError = false;
 
-        if(attackersNumber == 0 && defendersNumber == 0) return;
+        if(attackersNumber == 0 || defendersNumber == 0 || _loading) return;
 
         _loading = true;
         StateHasChanged();
