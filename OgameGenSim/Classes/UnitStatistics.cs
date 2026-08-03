@@ -15,9 +15,9 @@ public class UnitStatistics
     public double Speed { get; set; }
     public double Fuel { get; set; }
     public int Energy { get; set; }
-    public int MetalCost { get; set; }
-    public int CrystalCost { get; set; }
-    public int DeuteriumCost { get; set; }
+    public long MetalCost { get; set; }
+    public long CrystalCost { get; set; }
+    public long DeuteriumCost { get; set; }
     public double FuelConsumption { get; set; }
 
 }

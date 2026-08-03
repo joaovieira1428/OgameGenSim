@@ -7,59 +7,196 @@
 @using OgameSimulatorPack.SimUtilities
 @using OgameSimulatorPack.Statistics
 @using RazorConsole.Components
+@using Spectre.Console
+@using RazorConsole.Core.Renderables
+@using System.Globalization
 
 @inject NavigationManager Nav
 @inject OgameGenSim.Services.BattleStatisticsService BattleStatisticsService
 
-<h3>BattleStatistics</h3>
-
-
 @if (BattleStatisticsService.BestStatistics != null)
 {
-    <FlexBox>
-        <Padder Padding=(new(0,0,2,0))>
-            <Border>
-                <Rows>
-                    <Select Options="attackerOptions.ToArray()" 
-                    Value="_selectedAttackingPlayer" 
-                    ValueChanged="@((string? value) => OnAttackerSelectChange(value))"></Select>
+    <Align Horizontal="HorizontalAlignment.Center">
+        <Panel Title="Battle Result">
+            <FlexBox Justify="FlexJustify.SpaceBetween">
+                <Padder Padding=(new(0,0,2,0))>
+                    <Border>
+                        <Rows>
+                            <Select Options="attackerOptions.ToArray()" 
+                            Value="_selectedAttackingPlayer" 
+                            ValueChanged="@((string? value) => OnAttackerSelectChange(value))"></Select>
 
-                    <Grid Expand="true" Columns="3">
-                    
-                            <BattleStatisticsItem 
-                            GlobalPlayerAmount="attackerAmount"
-                            LostPlayerAmount="attackerLostAmount"></BattleStatisticsItem>
-                
-                    </Grid>
-                </Rows>
-            </Border>
-        </Padder>
-         <Select Options="roundOptions.ToArray()" 
-                    Value="_selectedRound" 
-                    ValueChanged="@((string? value) => OnRoundSelectChange(value))"></Select>
-        <Padder Padding=(new(2,0,0,0))>
-            <Border>
-                <Rows>
-                    <Select Options="defenderOptions.ToArray()" 
-                    Value="_selectedDefendingPlayer" 
-                    ValueChanged="@((string? value) => OnDefenderSelectChange(value))"></Select>
+                            <Grid Expand="true" Columns="3">
+                            
+                                    <BattleStatisticsItem 
+                                    GlobalPlayerAmount="attackerAmount"
+                                    LostPlayerAmount="attackerLostAmount"></BattleStatisticsItem>
+                        
+                            </Grid>
+                        </Rows>
+                    </Border>
+                </Padder>
+                <Select Options="roundOptions.ToArray()" 
+                            Value="_selectedRound" 
+                            ValueChanged="@((string? value) => OnRoundSelectChange(value))"></Select>
+                <Padder Padding=(new(2,0,0,0))>
+                    <Border>
+                        <Rows>
+                            <Select Options="defenderOptions.ToArray()" 
+                            Value="_selectedDefendingPlayer" 
+                            ValueChanged="@((string? value) => OnDefenderSelectChange(value))"></Select>
 
-                    <Grid Expand="true" Columns="3">
-                    
-                            <BattleStatisticsItem 
-                            GlobalPlayerAmount="defenderAmount"
-                            LostPlayerAmount="defenderLostAmount"></BattleStatisticsItem>
-                
-                    </Grid>
-                </Rows>
-            </Border>
-        </Padder>
-    </FlexBox>
-    <Align>
-        <p>The Attacker fires a total of @shotsFiredByAttackers shots at the Defender with a total strength of @totalAttackersDemage.</p>
-        <p>The defender's shields absorb @totalDefendersShieldAbsorption damage points of demage.</p>
-        <p>The Defender fires a total of @shotsFiredByDefenders shots at the Attacker with a total strength of @totalDefendersDemage.</p>
-        <p>The attacker's shields absorb @totalAttackersShieldAbsorption damage points of demage.</p>
+                            <Grid Expand="true" Columns="3">
+                            
+                                    <BattleStatisticsItem 
+                                    GlobalPlayerAmount="defenderAmount"
+                                    LostPlayerAmount="defenderLostAmount"></BattleStatisticsItem>
+                        
+                            </Grid>
+                        </Rows>
+                    </Border>
+                </Padder>
+                <Padder Padding=(new(0,0,2,0))>
+                    <Rows>
+                        <FlexBox>
+                            <Panel Title="Result">
+                                <Rows>
+                                    <Markup Content="Attackers Win:"></Markup>
+                                    <Markup Content="Defenders Win:"></Markup>
+                                    <Markup Content="Draw:"></Markup>
+                                    <Markup Content="Rounds:"></Markup>
+                                </Rows>
+                                <Rows>
+                                    <Markup Content="@attackersResultLabel"></Markup>
+                                    <Markup Content="@defendersResultLabel"></Markup>
+                                    <Markup Content="@drawResultLabel"></Markup>
+                                    <Markup Content="@BattleStatisticsService.BestStatistics.RoundStatistics.Count().ToString()"></Markup>
+                                </Rows>
+                            </Panel>
+                            <Panel Title="Debri">
+                                <Rows>
+                                    <Markup Content="🔨 Metal: "></Markup>
+                                    <Markup Content="💎 Crystal:"></Markup>
+                                    <Markup Content="⛽ Deuterium:"></Markup>
+                                    <Markup Content="⛽ Total:"></Markup>
+                                </Rows>
+                                <Rows>
+                                    <Markup Content="@BattleStatisticsService.BestStatistics.MetalDebri.ToString("N0", numberFormat)"></Markup>
+                                    <Markup Content="@BattleStatisticsService.BestStatistics.CrystalDebri.ToString("N0", numberFormat)"></Markup>
+                                    <Markup Content="@BattleStatisticsService.BestStatistics.DeuteriumDebri.ToString("N0", numberFormat)"></Markup>
+                                    <Markup Content="@totalDebri.ToString("N0", numberFormat)"></Markup>
+                                    <Newline></Newline>
+                                </Rows>
+                            </Panel>
+                        </FlexBox>
+                        <FlexBox>
+                            <Panel Title="Attackers">
+                                <Table Expand="true" Border="TableBorder.Heavy">
+                                    <thead>
+                                        <tr>
+                                            <th data-align="left">Losses</th>
+                                            <th data-align="left">Profit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>🔨 Metal: @BattleStatisticsService.DebriStatistics.AttackersMetalLoss.ToString("N0", numberFormat)</td>
+                                            <td>🔨 Metal: @attackersMetalProfit.ToString("N0", numberFormat)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>💎 Crystal: @BattleStatisticsService.DebriStatistics.AttackersCrystalLoss.ToString("N0", numberFormat)</td>
+                                            <td>💎 Crystal: @attackersCrystalProfit.ToString("N0", numberFormat)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>⛽ Deuterium: @BattleStatisticsService.DebriStatistics.AttackersDeuteriumLoss.ToString("N0", numberFormat)</td>
+                                            <td>⛽ Deuterium: @attackersDeuteriumProfit.ToString("N0", numberFormat)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Total: @attackersTotalLoss.ToString("N0", numberFormat)</td>
+                                            <td>Total: @attackersTotalProfit.ToString("N0", numberFormat)</td>
+                                        </tr>
+                                    </tbody>
+                                </Table>
+                            </Panel>
+                        </FlexBox>
+                        <FlexBox>
+                            <Panel Title="Defenders">
+                                <Table Expand="true" Border="TableBorder.Heavy">
+                                    <thead>
+                                        <tr>
+                                            <th data-align="left">Losses</th>
+                                            <th data-align="left">Profit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>🔨 Metal: @BattleStatisticsService.DebriStatistics.DefendersMetalLoss.ToString("N0", numberFormat)</td>
+                                            <td>🔨 Metal: @defendersMetalProfit.ToString("N0", numberFormat)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>💎 Crystal: @BattleStatisticsService.DebriStatistics.DefendersCrystalLoss.ToString("N0", numberFormat)</td>
+                                            <td>💎 Crystal: @defendersCrystalProfit.ToString("N0", numberFormat)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>⛽ Deuterium: @BattleStatisticsService.DebriStatistics.DefendersDeuteriumLoss.ToString("N0", numberFormat)</td>
+                                            <td>⛽ Deuterium: @defendersDeuteriumProfit.ToString("N0", numberFormat)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Total: @defendersTotalLoss.ToString("N0", numberFormat)</td>
+                                            <td>Total: @defendersTotalProfit.ToString("N0", numberFormat)</td>
+                                        </tr>
+                                    </tbody>
+                                </Table>
+                            </Panel>
+                        </FlexBox>
+                        <FlexBox>
+                            <Panel Title="Plunder">
+                                <Table Expand="true" Border="TableBorder.Heavy">
+                                    <thead>
+                                        <tr>
+                                            <th data-align="left">Captured</th>
+                                            <th data-align="left">Possible</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>🔨 Metal: @BattleStatisticsService.BestStatistics.MetalLoot.ToString("N0", numberFormat)</td>
+                                            <td>🔨 Metal: @BattleStatisticsService.BestStatistics.PossibleMetalLoot.ToString("N0", numberFormat)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>💎 Crystal: @BattleStatisticsService.BestStatistics.CrystalLoot.ToString("N0", numberFormat)</td>
+                                            <td>💎 Crystal: @BattleStatisticsService.BestStatistics.PossibleCrystalLoot.ToString("N0", numberFormat)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>⛽ Deuterium: @BattleStatisticsService.BestStatistics.DeuteriumLoot.ToString("N0", numberFormat)</td>
+                                            <td>⛽ Deuterium: @BattleStatisticsService.BestStatistics.PossibleDeuteriumLoot.ToString("N0", numberFormat)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Total: @totalLoot.ToString("N0", numberFormat)</td>
+                                            <td>Total: @totalPossibleLoot.ToString("N0", numberFormat)</td>
+                                        </tr>
+                                    </tbody>
+                                </Table>
+                            </Panel>
+                        </FlexBox>
+                    </Rows>
+                </Padder>
+            </FlexBox>
+            <Rows>
+                <Markup Content="@($"The Attacker fires a total of {shotsFiredByAttackers.ToString("N0", numberFormat)} shots at the Defender with a total strength of {totalAttackersDemage}.")"></Markup>
+                <Newline></Newline>
+                <Markup Content="@($"The defender's shields absorb {totalDefendersShieldAbsorption.ToString("N0", numberFormat)} damage points of demage.")"></Markup>
+                <Newline></Newline>
+                <Markup Content="@($"The Defender fires a total of {shotsFiredByDefenders.ToString("N0", numberFormat)} shots at the Attacker with a total strength of {totalDefendersDemage}.")"></Markup>
+                <Newline></Newline>
+                <Markup Content="@($"The attacker's shields absorb {totalAttackersShieldAbsorption.ToString("N0", numberFormat)} damage points of demage.")"></Markup>
+            </Rows>
+            <Newline></Newline>
+            <FlexBox Justify="FlexJustify.SpaceBetween">
+                <TextButton FocusedColor="Color.Blue" Content="Main Menu" OnClick="@(() => Nav.NavigateTo("/"))"></TextButton>
+                <TextButton FocusedColor="Color.Blue" Content="Next Simulation" OnClick="@(() => Nav.NavigateTo("/battleSimulator"))"></TextButton>
+            </FlexBox>
+        </Panel>
     </Align>
 }
 else
@@ -70,17 +207,39 @@ else
 
 
 @code {
+    private readonly NumberFormatInfo numberFormat = new NumberFormatInfo
+    {
+        NumberGroupSeparator = ".",
+    };
+
     private Dictionary<UnitType, int> attackerAmount = Utils.GetInitialUnitTypeAmounts();
     private Dictionary<UnitType, int> defenderAmount = Utils.GetInitialUnitTypeAmounts();
     private Dictionary<UnitType, int> attackerLostAmount = Utils.GetInitialUnitTypeAmounts();
     private Dictionary<UnitType, int> defenderLostAmount = Utils.GetInitialUnitTypeAmounts();
-
     private int shotsFiredByAttackers = 0;
     private int shotsFiredByDefenders = 0;
     private double totalAttackersDemage = 0;
     private double totalDefendersDemage = 0;
     private double totalAttackersShieldAbsorption = 0;
     private double totalDefendersShieldAbsorption = 0;
+    private string attackersResultLabel = string.Empty;
+    private string defendersResultLabel = string.Empty;
+    private string drawResultLabel = string.Empty;
+
+    private long totalDebri;
+    private double attackersMetalProfit;
+    private double attackersCrystalProfit;
+    private double attackersDeuteriumProfit;
+    private long attackersTotalLoss;
+    private double attackersTotalProfit;
+
+    private double defendersMetalProfit;
+    private double defendersCrystalProfit;
+    private double defendersDeuteriumProfit;
+    private long defendersTotalLoss;
+    private double defendersTotalProfit;
+    private double totalPossibleLoot;
+    private double totalLoot;
 
     private List<string> attackerOptions = [];
     private List<string> defenderOptions = [];
@@ -174,22 +333,65 @@ else
     }
 
     private void PopulatePlayer(Dictionary<UnitType, int>unitAmount, Dictionary<UnitType, int> unitAmountToSum){
-        foreach (var kvp in unitAmountToSum)
+        foreach (var item in unitAmountToSum)
         {
-            if (unitAmount.ContainsKey(kvp.Key))
-                unitAmount[kvp.Key] += kvp.Value;
+            if (unitAmount.ContainsKey(item.Key))
+                unitAmount[item.Key] += item.Value;
             else
-                unitAmount[kvp.Key] = kvp.Value;
+                unitAmount[item.Key] = item.Value;
         }
     }
 
     private void PopulateGlobalStats(){
+        if (BattleStatisticsService.BestStatistics == null) return;
+
         shotsFiredByAttackers = BattleStatisticsService.BestStatistics.ShotsFiredByAttackers;
         shotsFiredByDefenders = BattleStatisticsService.BestStatistics.ShotsFiredByDefenders;
         totalAttackersDemage = BattleStatisticsService.BestStatistics.TotalDemageDealtByAttackers;
         totalDefendersDemage = BattleStatisticsService.BestStatistics.TotalDemageDealtByDefenders;
         totalAttackersShieldAbsorption = BattleStatisticsService.BestStatistics.DemageAbsorbedByAttackers;
         totalDefendersShieldAbsorption = BattleStatisticsService.BestStatistics.DemageAbsorbedByDefenders;
+
+        totalDebri = BattleStatisticsService.BestStatistics.MetalDebri +
+                    BattleStatisticsService.BestStatistics.CrystalDebri +
+                    BattleStatisticsService.BestStatistics.DeuteriumDebri;
+
+        attackersMetalProfit = BattleStatisticsService.BestStatistics.MetalDebri +
+            BattleStatisticsService.BestStatistics.MetalLoot -
+            BattleStatisticsService.DebriStatistics.AttackersMetalLoss;
+        attackersCrystalProfit = BattleStatisticsService.BestStatistics.CrystalDebri +
+            BattleStatisticsService.BestStatistics.CrystalLoot -
+            BattleStatisticsService.DebriStatistics.AttackersCrystalLoss;
+        attackersDeuteriumProfit = BattleStatisticsService.BestStatistics.DeuteriumDebri +
+            BattleStatisticsService.BestStatistics.DeuteriumLoot -
+            BattleStatisticsService.DebriStatistics.AttackersDeuteriumLoss;
+        attackersTotalLoss = BattleStatisticsService.DebriStatistics.AttackersMetalLoss +
+            BattleStatisticsService.DebriStatistics.AttackersCrystalLoss +
+            BattleStatisticsService.DebriStatistics.AttackersDeuteriumLoss;
+        attackersTotalProfit = attackersMetalProfit + attackersCrystalProfit + attackersDeuteriumProfit;
+
+        defendersMetalProfit = BattleStatisticsService.BestStatistics.MetalDebri -
+            BattleStatisticsService.DebriStatistics.DefendersMetalLoss;
+        defendersCrystalProfit = BattleStatisticsService.BestStatistics.CrystalDebri -
+            BattleStatisticsService.DebriStatistics.DefendersCrystalLoss;
+        defendersDeuteriumProfit = BattleStatisticsService.BestStatistics.DeuteriumDebri -
+            BattleStatisticsService.DebriStatistics.DefendersDeuteriumLoss;
+        defendersTotalLoss = BattleStatisticsService.DebriStatistics.DefendersMetalLoss +
+            BattleStatisticsService.DebriStatistics.DefendersCrystalLoss +
+            BattleStatisticsService.DebriStatistics.DefendersDeuteriumLoss;
+        defendersTotalProfit = defendersMetalProfit + defendersCrystalProfit + defendersDeuteriumProfit;
+
+        totalLoot = BattleStatisticsService.BestStatistics.MetalLoot +
+                    BattleStatisticsService.BestStatistics.CrystalLoot +
+                    BattleStatisticsService.BestStatistics.DeuteriumLoot;
+
+        totalPossibleLoot = BattleStatisticsService.BestStatistics.PossibleMetalLoot +
+                    BattleStatisticsService.BestStatistics.PossibleCrystalLoot +
+                    BattleStatisticsService.BestStatistics.PossibleDeuteriumLoot;
+
+        attackersResultLabel = BattleStatisticsService.BestStatistics.BattleResult == BattleResult.AttackerWon ? "✅" : "❌";
+        defendersResultLabel = BattleStatisticsService.BestStatistics.BattleResult == BattleResult.DefenderWon ? "✅" : "❌";
+        drawResultLabel = BattleStatisticsService.BestStatistics.BattleResult == BattleResult.Draw ? "✅" : "❌";   
     }
     
     private void PopulateGlobalStatsByRound(RoundStatistics round){

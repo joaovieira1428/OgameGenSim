@@ -105,26 +105,39 @@ public class Battle()
             //var asd = round.AttackersRoundStatistics.Players[0].UnitAmount;
         }
 
-        var cargoCapacity = battleStatistics.SurvivingAttackerUnits.Sum(x => x.UnitStats.Cargo);
+        long cargoCapacity = (long) attackersUnits.Sum(x => x.UnitStats.Cargo);
 
         double loot = 0;
         
         var firstAttacker = simCombatInformation.Attackers.First();
         var firstDefender = simCombatInformation.Defenders.First();
 
+        double lootMultiplier = firstDefender.LootPercentage / 100;
+
+        battleStatistics.PossibleMetalLoot = firstDefender.Metal / lootMultiplier;
+        battleStatistics.PossibleCrystalLoot = firstDefender.Crystal / lootMultiplier;
+        battleStatistics.PossibleDeuteriumLoot = firstDefender.Deuterium / lootMultiplier;;
+
         if (cargoCapacity >= firstAttacker.PossibleLoot)
         { 
-            loot = firstDefender.Metal / firstDefender.LootPercentage + 
-                  (firstDefender.Crystal / firstDefender.LootPercentage * 2) + 
-                  (firstDefender.Deuterium / firstDefender.LootPercentage * 3);
+            battleStatistics.Loot = (long) (firstDefender.Metal / lootMultiplier + 
+                  (firstDefender.Crystal / lootMultiplier * 2) + 
+                  (firstDefender.Deuterium / lootMultiplier * 3));
+            
+            battleStatistics.MetalLoot = firstDefender.Metal / lootMultiplier;
+            battleStatistics.CrystalLoot = firstDefender.Crystal / lootMultiplier;
+            battleStatistics.DeuteriumLoot = firstDefender.Deuterium / lootMultiplier;
+
         }
         else
         {
-            var equalDistribution = cargoCapacity / 3;
-            loot = equalDistribution + (equalDistribution * 2) + (equalDistribution * 3);
-        }
+            long equalDistribution = cargoCapacity / 3;
+            battleStatistics.Loot = equalDistribution + (equalDistribution * 2) + (equalDistribution * 3);
 
-        battleStatistics.Loot = loot;
+            battleStatistics.MetalLoot = equalDistribution;
+            battleStatistics.CrystalLoot = equalDistribution;
+            battleStatistics.DeuteriumLoot = equalDistribution;
+        }
 
         battleStatistics.BattleResult = defendersUnits.Count == 0 ? BattleResult.AttackerWon : 
                                         attackersUnits.Count == 0 ? BattleResult.DefenderWon : 
@@ -222,19 +235,19 @@ public class Battle()
 
             if (defender.IsShip)
             {
-                defenderRoundStats.MetalDebri += (int)(defender.UnitStats.MetalCost * DebriFactor);
-                defenderRoundStats.CrystalDebri += (int)(defender.UnitStats.CrystalCost * DebriFactor);
+                defenderRoundStats.MetalDebri += (long)(defender.UnitStats.MetalCost * DebriFactor);
+                defenderRoundStats.CrystalDebri += (long)(defender.UnitStats.CrystalCost * DebriFactor);
 
                 if(DeuteriumOnDebris) 
-                    defenderRoundStats.DeuteriumDebri += (int)(defender.UnitStats.DeuteriumCost * DebriFactor);
+                    defenderRoundStats.DeuteriumDebri += (long)(defender.UnitStats.DeuteriumCost * DebriFactor);
             }
             else
             {
-                defenderRoundStats.MetalDebri += (int)(defender.UnitStats.MetalCost * DefenseDebrisFactor);
-                defenderRoundStats.CrystalDebri += (int)(defender.UnitStats.CrystalCost * DefenseDebrisFactor);
+                defenderRoundStats.MetalDebri += (long)(defender.UnitStats.MetalCost * DefenseDebrisFactor);
+                defenderRoundStats.CrystalDebri += (long)(defender.UnitStats.CrystalCost * DefenseDebrisFactor);
 
                 if(DeuteriumOnDebris) 
-                    defenderRoundStats.DeuteriumDebri += (int)(defender.UnitStats.DeuteriumCost * DefenseDebrisFactor);
+                    defenderRoundStats.DeuteriumDebri += (long)(defender.UnitStats.DeuteriumCost * DefenseDebrisFactor);
             }
         }
 

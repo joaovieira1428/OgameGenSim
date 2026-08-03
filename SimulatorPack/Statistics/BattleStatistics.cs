@@ -48,7 +48,13 @@ public class BattleStatistics
     public BattleResult BattleResult { get; set; }
     public List<CombatUnit> SurvivingAttackerUnits { get; set; } = [];
     public List<CombatUnit> SurvivingDefenderUnits { get; set; } = [];
-    public double Loot { get; set; }
+    public long Loot { get; set; }
+    public double MetalLoot { get; set; }
+    public double CrystalLoot { get; set; }
+    public double DeuteriumLoot { get; set; }
+    public double PossibleMetalLoot { get; set; }
+    public double PossibleCrystalLoot { get; set; }
+    public double PossibleDeuteriumLoot { get; set; }
 
     public BattleStatistics(Dictionary<UnitType, int> attackersGlobalUnitAmount, 
                             Dictionary<UnitType, int> defendersGlobalUnitAmount, 
@@ -183,9 +189,9 @@ public class PlayersRoundStatistics
     public double DamageDealt { get; set; } = 0;
     public double DamageAbsorbedByDefendingPlayer { get; set; } = 0;
     public double DamageTakenByDefendingPlayer { get; set; } = 0;
-    public int MetalDebri { get; set; }
-    public int CrystalDebri { get; set; }
-    public int DeuteriumDebri { get; set; }
+    public long MetalDebri { get; set; }
+    public long CrystalDebri { get; set; }
+    public long DeuteriumDebri { get; set; }
     public Dictionary<UnitType, int> GlobalUnitAmount { get; set; } = [];
     public Dictionary<UnitType, int> GlobalUnitLostAmount { get; set; } = [];
     public List<PlayerStatistics> Players { get; set; }

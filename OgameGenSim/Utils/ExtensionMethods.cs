@@ -14,7 +14,6 @@ public static class ExtensionMethods
             CrystalCost = unit.CrystalCost,
             DeuteriumCost = unit.DeuteriumCost,
             Energy = unit.Energy,
-            Fuel = unit.Fuel,
             FuelConsumption = unit.FuelConsumption,
             Hull = unit.Hull,
             MetalCost = unit.MetalCost,

@@ -12,7 +12,9 @@ public class BattleStatisticsService
 {
     public BattleStatistics? BestStatistics { get; set; }
     public double BestFitness { get; set; }
-    public List<DebugStuff> DebugStuff { get; set; } = [];
+    public DebriStatistics? DebriStatistics { get; set; }
+    public double DeuteriumSpent;
+
 
     
     public static readonly Dictionary<MainFleetComposition, UnitType[]> FleetCompositionToUnitTypeMapping = 
@@ -46,15 +48,11 @@ public class BattleStatisticsService
         
         var simulationContextList = GetSimulationContexts(fleetComposition, fleetDivisor);
 
-        var options = new ParallelOptions()
-        {
-          MaxDegreeOfParallelism = 8  
-        };
-
-        int nextSimulation = 0;
+        int nextSimulation = -1;
 
         Parallel.For(0, 4, workerId =>
         {
+            
             while (true)
             {
                 int index = Interlocked.Increment(ref nextSimulation);
@@ -64,52 +62,125 @@ public class BattleStatisticsService
 
                 var context = simulationContextList[index];
                 var cleanData = BuildFleetComposition(context.MainComposition, fleetComposition.SecondaryFleetComposition, defendersFleetComposition, dirtyData, context.Divisor);      
+                
+                simulationContextList[index].AttakcerUnitNumber = cleanData.GlobalAttackersUnitAmount.Sum(x => x.Value);
+
                 var statistics = simlator.DoBattle(cleanData);
-                context.Fitness =  ComputeFitness(fleetComposition, statistics);
+                simulationContextList[index] = ComputeFitnessValues(fleetComposition, statistics, context);
             }
         });
 
-        var bestFitnessContext = simulationContextList.MinBy(x => x.Fitness);
+        var bestFitnessContext = CalculateBestFitness(fleetComposition.IsAccountingSpeed, simulationContextList);
         
         bestFitnessContext ??= new SimulationContext();
 
         var cleanData = BuildFleetComposition(bestFitnessContext.MainComposition, fleetComposition.SecondaryFleetComposition, defendersFleetComposition, dirtyData, bestFitnessContext.Divisor);      
         var statistics = simlator.DoBattle(cleanData);
+        ComputeFitnessValues(fleetComposition, statistics, bestFitnessContext);
+
         return statistics;
     }
 
-    public double ComputeFitness(FleetComposition fleetComposition, BattleStatistics currentStatistics)
+    public SimulationContext CalculateBestFitness(bool isAcounttingSpeed, List<SimulationContext> contexts)
     {
+        var minProfit = contexts.Min(x => x.Profit);
+        var maxProfit = contexts.Max(x => x.Profit);
+        
+        var minEnergy = contexts.Min(x => x.Energy);
+        var maxEnergy = contexts.Max(x => x.Energy);
+
+        var minSpeed = contexts.Min(x => x.Speed);
+        var maxSpeed = contexts.Max(x => x.Speed);
+
+        foreach (var fitnessValue in contexts)
+        {
+            var normalizedProfit = (fitnessValue.Profit - minProfit) / (maxProfit - minProfit);
+            var normalizedEnergy = (fitnessValue.Energy - minEnergy) / (maxEnergy - minEnergy);
+
+            var speedRange = maxSpeed - minSpeed;
+            var normalizedSpeed = speedRange == 0 ? 0 : (fitnessValue.Speed - minSpeed) / (maxSpeed - minSpeed);
+
+            fitnessValue.Fitness = isAcounttingSpeed || normalizedSpeed > 0 ? 
+                -normalizedSpeed * 0.3 -normalizedProfit * 0.5 + normalizedEnergy * 0.2 :
+                -normalizedProfit * 0.8 + normalizedEnergy * 0.2;
+        }
+
+        var minFitness = contexts.Min(x => x.Fitness);
+        var margin = Math.Abs(minFitness * 0.20);
+
+        var contextToReturn = contexts
+        .Where(x => x.Fitness <= minFitness + margin)
+        .MinBy(x => x.AttakcerUnitNumber) ?? new SimulationContext();
+
+        return contextToReturn;
+    }
+
+    public SimulationContext ComputeFitnessValues(FleetComposition fleetComposition, BattleStatistics currentStatistics, SimulationContext context)
+    {
+        DebriStatistics = new();
+        DeuteriumSpent = 0;
+
         var firstAttacker = currentStatistics.Attackers.First();
 
         long unitsLoss = 0;
+        long unitsLoss1 = 0;
 
         var energy = 0;
 
+
         foreach (var lostType in currentStatistics.GlobalAttackersLostAmount)
         {
-            if (UnitDefaultValues.DefaultValues.TryGetValue(lostType.Key, out var defaultValue))
+            if (UnitDefaultValues.DefaultValues.TryGetValue(lostType.Key, out var defaultValue) && lostType.Value > 0)
             {
                 unitsLoss += (defaultValue.MetalCost * lostType.Value) +
                             (defaultValue.CrystalCost * lostType.Value * 2) +
                             (defaultValue.DeuteriumCost * lostType.Value * 3);
 
+                unitsLoss1 += (defaultValue.MetalCost * lostType.Value) +
+                            (defaultValue.CrystalCost * lostType.Value) +
+                            (defaultValue.DeuteriumCost * lostType.Value);
+
+                DebriStatistics.AttackersMetalLoss += defaultValue.MetalCost * lostType.Value;
+                DebriStatistics.AttackersCrystalLoss += defaultValue.CrystalCost * lostType.Value;
+                DebriStatistics.AttackersDeuteriumLoss += defaultValue.DeuteriumCost * lostType.Value; 
+
                 energy += defaultValue.Energy * lostType.Value;
             }
-            
         }
 
-        var statsAttackers = currentStatistics.Attackers.SelectMany(x => x.UnitTypeStats);
+        foreach (var lostType in currentStatistics.GlobalDefendersLostAmount)
+        {
+            if (UnitDefaultValues.DefaultValues.TryGetValue(lostType.Key, out var defaultValue) && lostType.Value > 0)
+            {
+                DebriStatistics.DefendersMetalLoss += defaultValue.MetalCost * lostType.Value;
+                DebriStatistics.DefendersCrystalLoss += defaultValue.CrystalCost * lostType.Value;
+                DebriStatistics.DefendersDeuteriumLoss += defaultValue.DeuteriumCost * lostType.Value; 
+            }
+        }
 
-        var deuteriumSpent = statsAttackers.Sum(x => x.Value.Fuel * x.Value.Amount);
+        var statsAttackers = currentStatistics.Attackers.SelectMany(x => x.UnitTypeStats).ToList();
 
-        var profit = (currentStatistics.Loot - unitsLoss - deuteriumSpent) / 1000;
+        //DeuteriumSpent = statsAttackers.Sum(x => x.Value.FuelConsumption * x.Value.Amount);
+
+        var debriProfit = currentStatistics.MetalDebri + currentStatistics.CrystalDebri + currentStatistics.DeuteriumDebri;
+
+        var debriLoot = currentStatistics.MetalDebri + (currentStatistics.CrystalDebri * 2) + (currentStatistics.DeuteriumDebri * 3);
+
+        var profit = currentStatistics.Loot + debriLoot - unitsLoss - DeuteriumSpent;
+
+        var loot2 = currentStatistics.MetalLoot + currentStatistics.CrystalLoot + currentStatistics.DeuteriumLoot;
+        var debriLoot2 = currentStatistics.MetalDebri + currentStatistics.CrystalDebri + currentStatistics.DeuteriumDebri;
+        var profit2 = loot2 + debriLoot2 - unitsLoss1 - DeuteriumSpent;
 
         var speed = firstAttacker.UnitTypeStats.Min(x => x.Value.Speed);
 
-        return fleetComposition.IsAccountingSpeed ? 
-                -speed * 0.3 - profit * 0.6 + energy * 0.1 :
-                -profit * 0.9 + energy * 0.1;;
+        context.Energy = energy;
+        context.Loot = currentStatistics.Loot;
+        context.Profit = profit;
+        context.Speed = speed;
+        context.ProfitWithoutMultipliers = profit2;
+
+        return context;
     }
 
     public SimCombatInformation BuildFleetComposition(IReadOnlyList<MainFleetComposition> mainFleetCompositionOptions, SecondaryFleetComposition secondaryFleetComposition, FleetComposition defendersFleetComposition, DirtyCombatInformation dirtyData, int fleetDivisor)
@@ -119,6 +190,7 @@ public class BattleStatisticsService
         var defendersTypes = GetFleetTypes(defendersFleetComposition.MainFleetComposition, defendersFleetComposition.SecondaryFleetComposition);
 
         var newSimCombatInformation = DataCleaner.GetCleanData(dirtyData.Attackers, attackersTypes, dirtyData.Defenders, defendersTypes, dirtyData.Universe, fleetDivisor, secondaryFleetComposition.CargoType);
+        //var newSimCombatInformation = DataCleaner.GetCleanData(dirtyData.Attackers, dirtyData.Defenders, dirtyData.Universe);
 
         return newSimCombatInformation;
     }
@@ -161,7 +233,7 @@ public class BattleStatisticsService
             {
                 var context = new SimulationContext()
                 {
-                    Divisor = divisor,
+                    Divisor = currentDivisor,
                     MainComposition = attackerComposition.MainFleetComposition
                 };
 
@@ -177,7 +249,7 @@ public class BattleStatisticsService
                 {
                     var context = new SimulationContext()
                     {
-                        Divisor = divisor,
+                        Divisor = currentDivisor,
                         MainComposition = item
                     };
 
@@ -191,7 +263,7 @@ public class BattleStatisticsService
 }
 
 
-public class DebugStuff
+public class FitnessValues
 {
     public double Fitness { get; set; }
     public Dictionary<UnitType, int> AttackUits { get; set; } = [];
@@ -201,6 +273,8 @@ public class DebugStuff
     public double DeuteriumCost { get; set; }
     public double UnitsLoss { get; set; }
     public int Divisor { get; set; }
+    public long DebriProfit { get; set; }
+    public double Speed { get; set; }
 }
 
 public class SimulationContext
@@ -208,4 +282,20 @@ public class SimulationContext
     public IReadOnlyList<MainFleetComposition> MainComposition { get; set; } = [];
     public int Divisor { get; set; }
     public double Fitness { get; set; }
+    public double Energy { get; set; }
+    public double Profit { get; set; }
+    public double ProfitWithoutMultipliers { get; set; }
+    public double Loot { get; set; }
+    public double Speed { get; set; }
+    public int AttakcerUnitNumber { get; set; }
+}
+
+public class DebriStatistics
+{
+    public long AttackersMetalLoss { get; set; }
+    public long AttackersCrystalLoss { get; set; }
+    public long AttackersDeuteriumLoss { get; set; }
+    public long DefendersMetalLoss { get; set; }
+    public long DefendersCrystalLoss { get; set; }
+    public long DefendersDeuteriumLoss { get; set; }
 }

@@ -2,11 +2,13 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Web
 @using RazorConsole.Components
+@using Spectre.Console
+
 
 @typeparam TEnum where TEnum : struct, Enum
 
 @foreach(var item in Objects){
-    <TextButton Content="@GetContentString(item)" OnClick="@( () => ToggleSelection(item))"></TextButton>
+    <TextButton FocusedColor="Color.Blue" Content="@GetContentString(item)" OnClick="@( () => ToggleSelection(item))"></TextButton>
 }
 @code {
     [Parameter]
@@ -41,7 +43,7 @@
 
     public string GetContentString(MultiSelectObject item)
     {
-        return item.IsSelected ? $"[x]{item.Content}" : $"[]{item.Content}";
+        return item.IsSelected ? $"[✓]{item.Content}" : $"[]{item.Content}";
     }
 
     private async Task ToggleSelection(MultiSelectObject item)

@@ -5,7 +5,8 @@ namespace OgameGenSim.StateMachine;
 public enum BSimState
 {
     FleetNumber,
-    PlayerAPIs,
+    PlayerAPIs1,
+    PlayerAPIs2,
     MainFleetComposition,
     SecondaryFleetComposition,
     DefenseFleetComposition

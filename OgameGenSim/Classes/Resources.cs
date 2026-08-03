@@ -2,7 +2,7 @@ namespace OgameGenSim.Classes;
 
 public class Resources
 {
-    public int Metal { get; set; }
-    public int Crystal { get; set; }
-    public int Deuterium { get; set; }
+    public long Metal { get; set; }
+    public long Crystal { get; set; }
+    public long Deuterium { get; set; }
 }

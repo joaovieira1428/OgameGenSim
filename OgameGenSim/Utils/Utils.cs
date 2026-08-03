@@ -8,4 +8,9 @@ public static class Utils
     {
         return [.. Enum.GetValues<UnitType>()];
     }
+
+    public static bool IsWhiteSpaceOrNullOrEmpty(this string? value)
+    {
+        return value == null || value.IsWhiteSpace() || string.Empty == value;
+    }
 }

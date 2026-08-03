@@ -87,33 +87,28 @@ public static class DataCleaner
     /// <returns></returns>
     private static Player GetCleanDefenderData(PlayerInformation playerInformation, int id, List<UnitType> unitTypes, double universeFuelConsumptionModifier)
     {
-        var shipTypeStatistics = GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, playerInformation.Ships, unitTypes);
-        var defTypeStatistics = GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, playerInformation.Defenses, unitTypes);
+        var shipTypeStatistics = GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, playerInformation.Ships, unitTypes)
+                                .Union(GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, playerInformation.Defenses, unitTypes))
+                                .OrderBy(x => x.Key)
+                                .ToDictionary(x => x.Key, x => x.Value);
 
         var units = GetCleanUnitData(shipTypeStatistics, id);
-        units.AddRange(GetCleanUnitData(defTypeStatistics, id));
 
-        var unitAmounts = shipTypeStatistics.Union(defTypeStatistics)
-            .ToDictionary(x => x.Key, x => x.Value.Amount);
+        var unitAmounts = shipTypeStatistics.ToDictionary(x => x.Key, x => x.Value.Amount);
 
         var loot = (playerInformation.Resources.Metal + 
             playerInformation.Resources.Crystal + 
-            playerInformation.Resources.Deuterium) / (playerInformation.LootPercentage / 100);
+            playerInformation.Resources.Deuterium) / (playerInformation.LootPercentage / 100.0);
             
         return new Player()
         {
             Id = id,
             Coordinates = playerInformation.Coordinates,
-//            AllianceClass = (AllianceClass)playerInformation.AllianceClassId,
-//            PlayerClass = (PlayerClass)playerInformation.CharacterClassId,
-//            Armor = playerInformation.Researches.ArmourTechnology,
-//            Shield = playerInformation.Researches.ShieldingTechnology,
-//            Weapon = playerInformation.Researches.WeaponsTechnology,
             Metal = playerInformation.Resources.Metal,
             Crystal = playerInformation.Resources.Crystal,
             Deuterium = playerInformation.Resources.Deuterium,
             LootPercentage = playerInformation.LootPercentage,
-            PossibleLoot = loot,
+            PossibleLoot = Convert.ToInt64(loot),
             UnitTypeAmounts = unitAmounts,
             Units = units
         };
@@ -130,13 +125,14 @@ public static class DataCleaner
     /// <param name="cargoUnit">Unit type to be used as cargo ship for the attackers</param>
     /// <param name="universeFuelConsumptionModifier">Universe fuel consumption modifier</param>
     /// <returns>Clean data to send to the simulator</returns>
-    private static Player GetCleanAttackerData(PlayerInformation playerInformation, int lootPercentage, int loot, int id, List<UnitType> attackerTypes, int divisor, UnitType cargoUnit, double universeFuelConsumptionModifier)
+    private static Player GetCleanAttackerData(PlayerInformation playerInformation, int lootPercentage, long loot, int id, List<UnitType> attackerTypes, int divisor, UnitType cargoUnit, double universeFuelConsumptionModifier)
     {
+        double divider = divisor / 5.0;
         //Solar statllites are a ship so we have to whipe the out from the attacker unit list
         var shipsToAdd = playerInformation.Ships.Where(x => x.Key != UnitType.SOLAR_SATELLITE)
         .ToDictionary(x => x.Key, x => new UnitStatistics()
         {
-            Amount = x.Value.Amount / divisor,
+            Amount = (int)Math.Ceiling(x.Value.Amount * divider),
             StructuralIntegrity = x.Value.StructuralIntegrity,
             Cargo = x.Value.Cargo,
             Fuel = x.Value.Fuel,
@@ -145,7 +141,8 @@ public static class DataCleaner
             Weapon = x.Value.Weapon
         });
 
-        var unitTypeStatistics = GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, shipsToAdd, attackerTypes);
+        var unitTypeStatistics = GetUnitTypeStatsWithBonuses(playerInformation, universeFuelConsumptionModifier, shipsToAdd, attackerTypes)
+                                .OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value);
 
         if (cargoUnit != UnitType.NONE && unitTypeStatistics.TryGetValue(cargoUnit, out var cargoUnitDefaultValues))
         {
@@ -161,11 +158,6 @@ public static class DataCleaner
         {
             Id = id,
             Coordinates = playerInformation.Coordinates,
-//            AllianceClass = (AllianceClass)playerInformation.AllianceClassId,
-//            PlayerClass = (PlayerClass)playerInformation.CharacterClassId,
-//            Armor = playerInformation.Researches.ArmourTechnology,
-//            Shield = playerInformation.Researches.ShieldingTechnology,
-//            Weapon = playerInformation.Researches.WeaponsTechnology,
             UnitTypeAmounts = unitTypeStatistics.ToDictionary(x => x.Key, x => x.Value.Amount),
             Units = GetCleanUnitData(unitTypeStatistics, id),
             LootPercentage = lootPercentage,
