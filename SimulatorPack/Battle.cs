@@ -1,4 +1,5 @@
 using System;
+using OgameGenSim.Classes;
 using OgameSimulatorPack.Classes;
 using OgameSimulatorPack.SimUtilities;
 using OgameSimulatorPack.Statistics;
@@ -11,32 +12,26 @@ namespace OgameSimulatorPack;
 /// <param name="debriFactor"></param>
 /// <param name="DefenseDebrisFactor"></param>
 /// <param name="DeuteriumOnDebris"></param>
-public class Battle(double debriFactor, double DefenseDebrisFactor, bool DeuteriumOnDebris)
-{
-    public double DebriFactor = debriFactor;
-    public double DefenseDebrisFactor = DefenseDebrisFactor;
-    public bool DeuteriumOnDebris = DeuteriumOnDebris;
 
-    /// <summary>
-    /// Initiallizes the battle and controles the rounds
-    /// </summary>
-    /// <param name="simCombatInformation"></param>
-    /// <returns></returns>
+public class Battle()
+{
+    public double DebriFactor;
+    public double DefenseDebrisFactor;
+    public bool DeuteriumOnDebris;
+
     public BattleStatistics DoBattle(SimCombatInformation simCombatInformation)
     {
-        //Joining of the units of all attackers and defenders
+        DebriFactor = simCombatInformation.Universe.Debrifactor;
+        DefenseDebrisFactor = simCombatInformation.Universe.DefenseDebrisFactor;
+        DeuteriumOnDebris = simCombatInformation.Universe.DeuteriumOnDebris;
+
         var attackersUnits = simCombatInformation.Attackers.SelectMany(a => a.Units).ToList();
         var defendersUnits = simCombatInformation.Defenders.SelectMany(d => d.Units).ToList();
 
-        // Gather amount per type of all players before the battle
         var globalAttackersUnitAmount = simCombatInformation.GlobalAttackersUnitAmount;
         var globalDefendersUnitAmount = simCombatInformation.GlobalDefendersUnitAmount;
-        
-        //Initializes the lost amounts per type of all players
         var globalAttackersUnitLostAmount = Utils.GetInitialUnitTypeAmounts();
         var globalDefendersUnitLostAmount = Utils.GetInitialUnitTypeAmounts();
-
-        //Divides all attackers and defenders to track the individual statistics
         var attackers = simCombatInformation.Attackers.Select(x => new PlayerStatistics(x)).ToList();
         var defenders = simCombatInformation.Defenders.Select(x => new PlayerStatistics(x)).ToList();
 
@@ -46,19 +41,15 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
                                                 attackers, defenders);
         
 
-        //Round loop
         while(rounds < 6 && attackersUnits.Count > 0 && defendersUnits.Count > 0)
-        {         
-            //Initializes the round statistics    
+        {            
             var roundStats = new RoundStatistics(globalAttackersUnitAmount, globalDefendersUnitAmount, 
                                                 globalAttackersUnitLostAmount, globalDefendersUnitLostAmount,
                                                 attackers, defenders);
                                                 
-            //Do round
             (attackersUnits, defendersUnits) = DoRound(attackersUnits, defendersUnits, roundStats);
             battleStatistics.RoundStatistics.Add(roundStats);
 
-            //Refreshes the statistics for next round
             globalAttackersUnitAmount = roundStats.AttackersRoundStatistics.GlobalUnitAmount;
             globalDefendersUnitAmount = roundStats.DefendersRoundStatistics.GlobalUnitAmount;
             globalAttackersUnitLostAmount = roundStats.AttackersRoundStatistics.GlobalUnitLostAmount;
@@ -69,11 +60,8 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
             rounds++;
         }
 
-        //Do debri field, sum all debri of all rounds
-        //Do sum of the global unit lost amounts per type of all rounds
         foreach(var round in battleStatistics.RoundStatistics)
         {
-            //debri
             battleStatistics.MetalDebri += round.AttackersRoundStatistics.MetalDebri;
             battleStatistics.CrystalDebri += round.AttackersRoundStatistics.CrystalDebri;
             battleStatistics.DeuteriumDebri += round.AttackersRoundStatistics.DeuteriumDebri;
@@ -91,32 +79,24 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
             battleStatistics.DemageAbsorbedByDefenders += round.DefendersRoundStatistics.DamageAbsorbedByDefendingPlayer;
 
             if(battleStatistics.RoundStatistics.IndexOf(round) != rounds-1) continue;
-
-            //Loops attacking players per round
+        
             foreach(var attacker in round.AttackersRoundStatistics.Players)
             {
-                var globalAttacker = battleStatistics.Attackers.FirstOrDefault(x => x.Coordinates == attacker.Coordinates);
+                var globalAttacker = battleStatistics.Attackers.FirstOrDefault(x => x.Id == attacker.Id);
                 
                 if(globalAttacker == null) continue;
 
-                //Sums amounts to player per battle
                 globalAttacker.UnitLostAmount = globalAttacker.UnitLostAmount.ToDictionary(x => x.Key, x => x.Value + attacker.UnitLostAmount[x.Key]);   
-                
-                //Sums amounts to all players per battle
                 battleStatistics.GlobalAttackersLostAmount = battleStatistics.GlobalAttackersLostAmount.ToDictionary(x => x.Key, x => x.Value + attacker.UnitLostAmount[x.Key]);
             }
 
-            //Loops defending players per round
             foreach(var defender in round.DefendersRoundStatistics.Players)
             {
-                var globalDefender = battleStatistics.Defenders.FirstOrDefault(x => x.Coordinates == defender.Coordinates);
+                var globalDefender = battleStatistics.Defenders.FirstOrDefault(x => x.Id == defender.Id);
                 
                 if(globalDefender == null) continue;
 
-                //Sums amounts to player per battle
                 globalDefender.UnitLostAmount = globalDefender.UnitLostAmount.ToDictionary(x => x.Key, x => x.Value + defender.UnitLostAmount[x.Key]);   
-                
-                //Sums amounts to all players per batle
                 battleStatistics.GlobalDefendersLostAmount = battleStatistics.GlobalDefendersLostAmount.ToDictionary(x => x.Key, x => x.Value + defender.UnitLostAmount[x.Key]); 
             }
         
@@ -125,29 +105,59 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
             //var asd = round.AttackersRoundStatistics.Players[0].UnitAmount;
         }
 
-        //Sees who won
-        battleStatistics.AttackerWon = defendersUnits.Count == 0;
+        long cargoCapacity = (long) attackersUnits.Sum(x => x.UnitStats.Cargo);
+
+        double loot = 0;
+        
+        var firstAttacker = simCombatInformation.Attackers.First();
+        var firstDefender = simCombatInformation.Defenders.First();
+
+        double lootMultiplier = firstDefender.LootPercentage / 100;
+
+        battleStatistics.PossibleMetalLoot = firstDefender.Metal / lootMultiplier;
+        battleStatistics.PossibleCrystalLoot = firstDefender.Crystal / lootMultiplier;
+        battleStatistics.PossibleDeuteriumLoot = firstDefender.Deuterium / lootMultiplier;;
+
+        if (cargoCapacity >= firstAttacker.PossibleLoot)
+        { 
+            battleStatistics.Loot = (long) (firstDefender.Metal / lootMultiplier + 
+                  (firstDefender.Crystal / lootMultiplier * 2) + 
+                  (firstDefender.Deuterium / lootMultiplier * 3));
+            
+            battleStatistics.MetalLoot = firstDefender.Metal / lootMultiplier;
+            battleStatistics.CrystalLoot = firstDefender.Crystal / lootMultiplier;
+            battleStatistics.DeuteriumLoot = firstDefender.Deuterium / lootMultiplier;
+
+        }
+        else
+        {
+            long equalDistribution = cargoCapacity / 3;
+            battleStatistics.Loot = equalDistribution + (equalDistribution * 2) + (equalDistribution * 3);
+
+            battleStatistics.MetalLoot = equalDistribution;
+            battleStatistics.CrystalLoot = equalDistribution;
+            battleStatistics.DeuteriumLoot = equalDistribution;
+        }
+
+        battleStatistics.BattleResult = defendersUnits.Count == 0 ? BattleResult.AttackerWon : 
+                                        attackersUnits.Count == 0 ? BattleResult.DefenderWon : 
+                                        BattleResult.Draw;
+        
+        battleStatistics.SurvivingAttackerUnits = attackersUnits;
+        battleStatistics.SurvivingDefenderUnits = defendersUnits;
 
         return battleStatistics;
     }
 
-    /// <summary>
-    /// Do Battle rounds
-    /// </summary>
-    /// <param name="attackersUnits">all unis of all attacking players</param>
-    /// <param name="defendersUnits">all units of all defending players</param>
-    /// <param name="roundStatistics">specific round statistics</param>
-    /// <returns></returns>
+
     private (List<CombatUnit>, List<CombatUnit>) DoRound(List<CombatUnit> attackersUnits, List<CombatUnit> defendersUnits, RoundStatistics roundStatistics)
     {
-        //Loops for each attacking unit
         foreach(var a_Unit in attackersUnits)
         {
             //Attack random unit from defender's fleet or defense
             defendersUnits = Combat(a_Unit, defendersUnits, roundStatistics.AttackersRoundStatistics, roundStatistics.DefendersRoundStatistics);
         }
         
-        //Loops for each defending unit
         foreach(var d_Unit in defendersUnits)
         {
 
@@ -155,44 +165,27 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
             attackersUnits = Combat(d_Unit, attackersUnits, roundStatistics.DefendersRoundStatistics, roundStatistics.AttackersRoundStatistics);
         }
 
-        //Removes destryed units
         var count1 = defendersUnits.Count(x => x.IsDestroyed);
         defendersUnits.RemoveAll(x => x.IsDestroyed);
         var count2 = attackersUnits.Count(x => x.IsDestroyed);
         attackersUnits.RemoveAll(x => x.IsDestroyed);
 
-        //Refreshes unit shields
-        foreach(var a_Unit in attackersUnits) a_Unit.Shield = a_Unit.FullShieldValue;
-        foreach(var d_Unit in defendersUnits) d_Unit.Shield = d_Unit.FullShieldValue;
+        foreach(var a_Unit in attackersUnits) a_Unit.CurrentShield = a_Unit.UnitStats.Shield;
+        foreach(var d_Unit in defendersUnits) d_Unit.CurrentShield = d_Unit.UnitStats.Shield;
         
         return (attackersUnits, defendersUnits);
     }
 
-    /// <summary>
-    /// Combat of individual units
-    /// </summary>
-    /// <param name="attacker">attacking unit Note: can be from attacking player or defending player (defending units also attack ships) </param>
-    /// <param name="defenders">all defending units Note: can be from attacking player of defending player, depending on the attacking unit</param>
-    /// <param name="attackerRoundStats">Statistics of attacking unit player Note: Can be attacking or defending player, depending on the attacking unit</param>
-    /// <param name="defenderRoundStats">Statistics of defending unit player Note: Can be attacking or defending player, depending on the attacking unit</param>
-    /// <returns></returns>
     private List<CombatUnit> Combat(CombatUnit attacker, List<CombatUnit> defenders, PlayersRoundStatistics attackerRoundStats, PlayersRoundStatistics defenderRoundStats)
     {    
-        //Adds a shot fired to statistics
         attackerRoundStats.ShotsFired++;
     
-        //Get a random index of a defending unit 
-        //Note: Can be from attcking player of defending player, depending on the attacking unit
         var index = Utils.GetRandomUnitIndex(defenders.Count);
         var defender = defenders[index];
 
-        //If defending unit is already destroyed or the attacking weapon demage is less than 1% from defending shield
-        //Go straight to Rapid fire calculations 
-        //Note: Defending units can be targeted more than once in one round. So they can be already destroyed
-        //It happens because on the conceptual level, the attacking units already chose their target
-        if(defender.IsDestroyed || attacker.Weapon < defender.Shield * 0.01)
+        if(defender.IsDestroyed || attacker.UnitStats.Weapon < defender.CurrentShield * 0.01)
         {     
-            attackerRoundStats.DamageDealt += attacker.Weapon; 
+            attackerRoundStats.DamageDealt += attacker.UnitStats.Weapon; 
 
             if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
                 Combat(attacker, defenders, attackerRoundStats, defenderRoundStats);
@@ -201,48 +194,36 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
             return defenders; 
         }
 
-        //Main simulator algorythm
-        //If the defending player still has a shield
-        //      Do all the calculations needed to see if defending unit still takes demage or not
-        //Else
-        //      Since there's no shield, take hull directly, not demage absorbed by shields this time  
-        if(defender.Shield > 0)
+        if(defender.CurrentShield > 0)
         {
-            //If weapon is less than shield, then the demage is absorbed by shield
-            //      Update the shield of defening unit for this round
-            //Else it means that the shield will be completely depleated and the unit will take some demage
-            //      Put the shild at zero and update the hull value with the new value, 
-            //      don't forget the shild will take some demage away from the hull 
-            if (attacker.Weapon < defender.Shield)
+            if (attacker.UnitStats.Weapon < defender.CurrentShield)
             {
-                attackerRoundStats.DamageDealt += attacker.Weapon;
-                attackerRoundStats.DamageAbsorbedByDefendingPlayer += attacker.Weapon;
+                attackerRoundStats.DamageDealt += attacker.UnitStats.Weapon;
+                attackerRoundStats.DamageAbsorbedByDefendingPlayer += attacker.UnitStats.Weapon;
 
-                defender.Shield -= attacker.Weapon;
+                defender.CurrentShield -= attacker.UnitStats.Weapon;
             }else
             {
-                attackerRoundStats.DamageDealt += attacker.Weapon;
-                attackerRoundStats.DamageAbsorbedByDefendingPlayer += defender.Shield;
-                attackerRoundStats.DamageTakenByDefendingPlayer += attacker.Weapon - defender.Shield;
+                attackerRoundStats.DamageDealt += attacker.UnitStats.Weapon;
+                attackerRoundStats.DamageAbsorbedByDefendingPlayer += defender.CurrentShield;
+                attackerRoundStats.DamageTakenByDefendingPlayer += attacker.UnitStats.Weapon - defender.CurrentShield;
 
-                defender.Hull -= attacker.Weapon - defender.Shield;
-                defender.Shield = 0;
+                defender.CurrentHull -= attacker.UnitStats.Weapon - defender.CurrentShield;
+                defender.CurrentShield = 0;
             }
         }
         else
         {
-            attackerRoundStats.DamageDealt += attacker.Weapon;
-            attackerRoundStats.DamageTakenByDefendingPlayer += attacker.Weapon;
+            attackerRoundStats.DamageDealt += attacker.UnitStats.Weapon;
+            attackerRoundStats.DamageTakenByDefendingPlayer += attacker.UnitStats.Weapon;
 
-            defender.Hull -= attacker.Weapon;
+            defender.CurrentHull -= attacker.UnitStats.Weapon;
         }
-        
-        // Sees if target is destroyed in the combat
-        // And updates all statistics accordingly
+
         if (IsTargetDestroyed(defender))
         {
-            defender.Hull = 0;
-            defender.Shield = 0;
+            defender.CurrentHull = 0;
+            defender.CurrentShield = 0;
             defender.IsDestroyed = true;
 
             var defenderPlayerStats = defenderRoundStats.Players.First(x => x.Id == defender.Id);
@@ -252,25 +233,24 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
             defenderPlayerStats.UnitLostAmount[defender.ShipType]++;
             defenderPlayerStats.UnitAmount[defender.ShipType]--;
 
-            if (defender.IsShip())
+            if (defender.IsShip)
             {
-                defenderRoundStats.MetalDebri += (int)(defender.MetalCost * DebriFactor);
-                defenderRoundStats.CrystalDebri += (int)(defender.CrystalCost * DebriFactor);
+                defenderRoundStats.MetalDebri += (long)(defender.UnitStats.MetalCost * DebriFactor);
+                defenderRoundStats.CrystalDebri += (long)(defender.UnitStats.CrystalCost * DebriFactor);
 
                 if(DeuteriumOnDebris) 
-                    defenderRoundStats.DeuteriumDebri += (int)(defender.DeuteriumCost * DebriFactor);
+                    defenderRoundStats.DeuteriumDebri += (long)(defender.UnitStats.DeuteriumCost * DebriFactor);
             }
             else
             {
-                defenderRoundStats.MetalDebri += (int)(defender.MetalCost * DefenseDebrisFactor);
-                defenderRoundStats.CrystalDebri += (int)(defender.CrystalCost * DefenseDebrisFactor);
+                defenderRoundStats.MetalDebri += (long)(defender.UnitStats.MetalCost * DefenseDebrisFactor);
+                defenderRoundStats.CrystalDebri += (long)(defender.UnitStats.CrystalCost * DefenseDebrisFactor);
 
                 if(DeuteriumOnDebris) 
-                    defenderRoundStats.DeuteriumDebri += (int)(defender.DeuteriumCost * DefenseDebrisFactor);
+                    defenderRoundStats.DeuteriumDebri += (long)(defender.UnitStats.DeuteriumCost * DefenseDebrisFactor);
             }
         }
 
-        //Finally, sees if attacking unit has rapid fire and if successfull do a recursive call to combat to attack another defending unit
         if(RapidFire.IsRapidFire(attacker.ShipType, defender.ShipType)){
             Combat(attacker, defenders, attackerRoundStats, defenderRoundStats);
         }  
@@ -278,18 +258,14 @@ public class Battle(double debriFactor, double DefenseDebrisFactor, bool Deuteri
         return defenders; 
     }
 
-    //Sees if target is destroyed
-    //If the target has less than 70% of hull value from its initial hull value, than it can be destroyed
-    //The calculation of the probability in wich can be destroyed is in relation of how much demage the target has already taken
-    //  - The less hull it has, higher the probability it can be destroyed 
     private bool IsTargetDestroyed(CombatUnit target)
     {
-        if(target.Hull <= 0) return true;
+        if(target.CurrentHull <= 0) return true;
         
 
-        if(target.Hull / target.FullHullValue < 0.7)
+        if(target.CurrentHull / target.UnitStats.Hull < 0.7)
         {
-            var probability = 1 - (target.Hull / target.FullHullValue);
+            var probability = 1 - (target.CurrentHull / target.UnitStats.Hull);
 
             bool isDestroyed = Utils.RollSuccess(probability);
 

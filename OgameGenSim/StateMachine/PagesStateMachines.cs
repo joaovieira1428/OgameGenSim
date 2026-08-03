@@ -2,14 +2,14 @@ using System;
 
 namespace OgameGenSim.StateMachine;
 
-/// <summary>
-/// Simulator page state machine to better manage shell pages
-/// </summary>
 public enum BSimState
 {
     FleetNumber,
-    PlayerAPIs,
-    FleetComposition
+    PlayerAPIs1,
+    PlayerAPIs2,
+    MainFleetComposition,
+    SecondaryFleetComposition,
+    DefenseFleetComposition
 }
 
 public enum BSimTrigger

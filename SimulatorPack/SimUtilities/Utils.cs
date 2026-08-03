@@ -10,7 +10,7 @@ public static class Utils
     /// 
     /// PS: Changed some things though
     /// </summary>
-    /// <param name="probability">probability of rapid fire</param>
+    /// <param name="probability"></param>
     /// <returns>True if is successfull and False if is unsuccessful</returns>
     public static bool RollSuccess(double probability)
     {
@@ -23,23 +23,19 @@ public static class Utils
         return Random.Shared.NextDouble() < probability;
     }
 
-    /// <summary>
-    /// Used to get a random unit to attack
-    /// </summary>
-    /// <param name="count"></param>
-    /// <returns></returns>
     public static int GetRandomUnitIndex(int count)
     {
         return Random.Shared.Next(0, count);
     }
 
-    /// <summary>
-    /// Just a handy initializer for the unitTypeAmount mappings
-    /// </summary>
-    /// <returns></returns>
     public static Dictionary<UnitType, int> GetInitialUnitTypeAmounts()
     {
-        return Enum.GetValues<UnitType>().Select(x => new KeyValuePair<UnitType, int>(x, 0)).ToDictionary();
+        return Enum.GetValues<UnitType>().Where(x => x != UnitType.NONE).ToDictionary(x => x, x => 0);
     }
 
+
+    public static bool IsShip(this UnitType unitType)
+    {
+        return (int)unitType < 400 && unitType != UnitType.NONE;
+    }
 }

@@ -1,0 +1,46 @@
+@using System.Security.AccessControl
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using RazorConsole.Components
+@using Spectre.Console
+
+
+<TextButton FocusedColor="Color.Blue" Content="@GetContentString(Label)" OnClick="@( () => ToggleSelection(Value))"></TextButton>
+
+@code {
+    [Parameter]
+    public string Label { get; set; } = "";
+
+    [Parameter]
+    public bool Value { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<bool> ValueChanged { get; set; }
+
+    @* protected override void OnParametersSet()
+    {
+        Value ??= new();
+
+        if (Options != default)
+        {
+            Objects = Options
+                .Select(x => new MultiSelectObject { Key = x.Key, Content = x.Value, IsSelected = Value.Contains(x.Key) })
+                .ToList();
+        }
+    } *@
+
+
+    public string GetContentString(string item)
+    {
+        return Value ? $"[✓]{item}" : $"[]{item}";
+    }
+
+    private async Task ToggleSelection(bool value)
+    {
+        Value = !Value;
+        
+        await ValueChanged.InvokeAsync(Value);
+        StateHasChanged();
+
+    }
+}

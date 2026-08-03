@@ -12,6 +12,7 @@ using OgameGenSim.StateMachine;
 
 //sr-en-271-c5a37ce8be7144f68f295f5acea2c7b834708113
 //sr-en-273-15332eba4207ef4bbce946173dcc5ecb7cb0b7ea
+//sr-en-273-8f5e1b4aafd845d4c5d45db13458c32662d506bc
 
 HttpClient httpClient = new();
 
@@ -27,15 +28,20 @@ hostBuilder.ConfigureServices(services =>
     services.AddSingleton<BattleStatisticsService>();
     services.AddSingleton(new Loader(httpClient));
     services.AddSingleton(new StateMachine<BSimState, BSimTrigger>(BSimState.FleetNumber)
-        .ConfigureState((BSimState.FleetNumber, BSimTrigger.Next), BSimState.PlayerAPIs)
-        .ConfigureState((BSimState.PlayerAPIs, BSimTrigger.Next), BSimState.FleetComposition)
-        .ConfigureState((BSimState.PlayerAPIs, BSimTrigger.Previous), BSimState.FleetNumber)
-        .ConfigureState((BSimState.FleetComposition, BSimTrigger.Previous), BSimState.PlayerAPIs));
-
+        .ConfigureState((BSimState.FleetNumber, BSimTrigger.Next), BSimState.PlayerAPIs1)
+        .ConfigureState((BSimState.PlayerAPIs1, BSimTrigger.Next), BSimState.PlayerAPIs2)
+        .ConfigureState((BSimState.PlayerAPIs2, BSimTrigger.Next), BSimState.MainFleetComposition)
+        .ConfigureState((BSimState.MainFleetComposition, BSimTrigger.Next), BSimState.SecondaryFleetComposition)
+        .ConfigureState((BSimState.SecondaryFleetComposition, BSimTrigger.Next), BSimState.DefenseFleetComposition)
+        .ConfigureState((BSimState.PlayerAPIs1, BSimTrigger.Previous), BSimState.FleetNumber)
+        .ConfigureState((BSimState.PlayerAPIs2, BSimTrigger.Previous), BSimState.PlayerAPIs1)
+        .ConfigureState((BSimState.MainFleetComposition, BSimTrigger.Previous), BSimState.PlayerAPIs2)
+        .ConfigureState((BSimState.SecondaryFleetComposition, BSimTrigger.Previous), BSimState.MainFleetComposition)
+        .ConfigureState((BSimState.DefenseFleetComposition, BSimTrigger.Previous), BSimState.SecondaryFleetComposition));
     // Configure console options
     services.Configure<ConsoleAppOptions>(options =>
     {
-        options.AutoClearConsole = false;
+        options.AutoClearConsole = true;
         options.EnableTerminalResizing = true;
     });
 

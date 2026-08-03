@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Xml;
 using OgameGenSim.Classes;
+using OgameSimulatorPack.SimUtilities;
 using static OgameGenSim.Utils.ClientResult;
 
 namespace OgameGenSim.Utils;
@@ -66,6 +67,7 @@ public class GenSimClient(HttpClient client)
     public async Task<ClientResultObject<PlayerInformation>> GetReportDataAsync(string espionageId)
     {
         var espionageResult = await client.GetAsync(FREE_API_URL + espionageId);
+        //Console.WriteLine($"{FREE_API_URL + espionageId}");
 
         try
         {
@@ -89,6 +91,11 @@ public class GenSimClient(HttpClient client)
             PropertyNameCaseInsensitive = true
         });
 
+        var lootPercentage = jsonObject["RESULT_DATA"]["generic"]["loot_percentage"].GetValue<int>();
+
+        playerInformation.Ships = playerInformation.Ships.Where(x => UnitIds.Ships.Contains((int)x.Key))
+                                  .ToDictionary(x => x.Key, x => x.Value);
+
         if(playerInformation == null)
         {
             return new ClientResultObject<PlayerInformation>
@@ -97,6 +104,8 @@ public class GenSimClient(HttpClient client)
                 ErrorMessage = "Failed to deserialize espionage report"
             };
         }
+
+        playerInformation.LootPercentage = lootPercentage;
 
         return  new ClientResultObject<PlayerInformation>
         {
