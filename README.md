@@ -1,6 +1,6 @@
 # What OGameGenSim is?
-What OGameGenSim is, a "different" combat simulator for ogame, no, it does not use genetic algorithms (although it was the original ideia), but who knows, it might still go that route.
-So, what is so different about this simulator. Well, it runs only on a command line on your computer, so just an executable. You can download the latest version from the releases menu. You also don't have to manually put or adjust any fleet values, just insert your fleet API, the defender report ID, fleet compositions that you might want to simulate and the simulator will give you an answer.
+What OGameGenSim is, a "different" combat simulator for OGame, no, it does not use genetic algorithms (although it was the original ideia), but who knows, it might still go that route.
+So, what is so different about this simulator. Well, it runs only on a terminal, so just an executable. You can download the latest version from the releases menu. You also don't have to manually put or adjust any fleet values, just insert your fleet API, the defender report ID, fleet compositions that you might want to simulate and the simulator will give you an answer.
 For now, that answer will depend on your chosen options, but the one that is not so obvious is that the simulation will divide your fleet in 5 to see how many ships you actually need to send to get a good profit, it will not choose the one with most profit because that would always be the most fleet sent.
 
 Here's a guide with some print screens to help you get your first simulations and explain how some of the options work.
